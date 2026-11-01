@@ -1,0 +1,194 @@
+substitutions:
+  device_name: lwz303-sol
+  friendly_name: "LWZ 303 SOL"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  on_boot:
+    priority: -10
+    then:
+      - lambda: |-
+          id(lwz303).set_firmware(id(lwz_firmware).current_option());
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+  baud_rate: 0
+
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+web_server:
+  port: 80
+  version: 3
+
+external_components:
+  - source: components
+    components: [lwz2]
+
+# Old LWZ/THZ serial interface: 9600 baud, 8N1 is the documented legacy setting.
+# IMPORTANT: Use a MAX3232 (or equivalent RS232 <-> 3.3 V TTL level shifter).
+uart:
+  id: lwz_uart
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  rx_buffer_size: 512
+
+lwz2:
+  id: lwz303
+  uart_id: lwz_uart
+  firmware: "2.14j"
+
+  # FB contains the common 2.x compressor/pump state and is therefore the fast poll.
+  status_interval: 5s
+  heating_interval: 10s
+  fan_interval: 30s
+  fan_config_interval: 5min
+  history_interval: 5min
+  stale_after: 30s
+
+  outside_temperature:
+    name: "Outside Temperature"
+  flow_temperature:
+    name: "Flow Temperature"
+  return_temperature:
+    name: "Return Temperature"
+  hot_gas_temperature:
+    name: "Hot Gas Temperature"
+  dhw_temperature:
+    name: "DHW Temperature"
+  flow_temperature_hc2:
+    name: "HC2 Flow Temperature"
+  inside_temperature:
+    name: "Inside Temperature"
+  evaporator_temperature:
+    name: "Evaporator Temperature"
+  condenser_temperature:
+    name: "Condenser Temperature"
+
+  supply_fan_power:
+    name: "Supply Fan Power"
+  exhaust_fan_power:
+    name: "Exhaust Fan Power"
+  main_fan_power:
+    name: "Main Fan Power"
+  supply_fan_speed_percent:
+    name: "Supply Fan Speed"
+  exhaust_fan_speed_percent:
+    name: "Exhaust Fan Speed"
+  main_fan_speed_percent:
+    name: "Main Fan Speed"
+
+  supply_fan_speed:
+    name: "Supply Fan Speed Raw"
+  exhaust_fan_speed:
+    name: "Exhaust Fan Speed Raw"
+  supply_fan_airflow_set:
+    name: "Supply Fan Airflow Set"
+  exhaust_fan_airflow_set:
+    name: "Exhaust Fan Airflow Set"
+  supply_fan_speed_target:
+    name: "Supply Fan Speed Target"
+  exhaust_fan_speed_target:
+    name: "Exhaust Fan Speed Target"
+
+  supply_stage1_airflow:
+    name: "Supply Airflow Stage 1"
+  supply_stage2_airflow:
+    name: "Supply Airflow Stage 2"
+  supply_stage3_airflow:
+    name: "Supply Airflow Stage 3"
+  exhaust_stage1_airflow:
+    name: "Exhaust Airflow Stage 1"
+  exhaust_stage2_airflow:
+    name: "Exhaust Airflow Stage 2"
+  exhaust_stage3_airflow:
+    name: "Exhaust Airflow Stage 3"
+
+  operating_hours_1:
+    name: "Operating Hours 1"
+  operating_hours_2:
+    name: "Operating Hours 2"
+  heating_hours:
+    name: "Heating Hours"
+  dhw_hours:
+    name: "DHW Hours"
+  cooling_hours:
+    name: "Cooling Hours"
+
+  compressor:
+    name: "Compressor"
+  heating_circuit_pump:
+    name: "Heating Circuit Pump"
+  dhw_pump:
+    name: "DHW Pump"
+  solar_pump:
+    name: "Solar Pump"
+  booster_stage1:
+    name: "Booster Stage 1"
+  booster_stage2:
+    name: "Booster Stage 2"
+  diverter_valve:
+    name: "Diverter Valve"
+  heat_pipe_valve:
+    name: "Heat Pipe Valve"
+
+  # Semantic V0.1 states. They intentionally follow the physical circuit pumps.
+  heating_active:
+    name: "Heating Active"
+  dhw_active:
+    name: "DHW Active"
+
+  communication_ok:
+    name: "Communication OK"
+  communication_status:
+    name: "Communication Status"
+  last_error:
+    name: "Last Communication Error"
+
+  # Optional during commissioning. These can cause frequent HA state updates.
+  # raw_fb:
+  #   name: "Raw FB"
+  # raw_f4:
+  #   name: "Raw F4"
+  # raw_e8:
+  #   name: "Raw E8"
+  # raw_01:
+  #   name: "Raw 01"
+  # raw_09:
+  #   name: "Raw 09"
+
+# Firmware selection is intentionally a normal ESPHome select so it is available
+# in Web Server v3 and Home Assistant and can persist across reboots.
+select:
+  - platform: template
+    name: "LWZ Firmware Profile"
+    id: lwz_firmware
+    icon: mdi:chip
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "2.14j"
+    options:
+      - "2.06"
+      - "2.14"
+      - "2.14j"
+    on_value:
+      then:
+        - lambda: |-
+            id(lwz303).set_firmware(x);
