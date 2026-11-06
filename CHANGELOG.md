@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 – 2026-11-06
+
+- Benutzergeänderte Auswahl übernommen: 31 Ja und 47 Optional; Dateihash und 78 Einträge in `components/lwz2/selection.json`.
+- F3, EE, FC und 17 in die serielle Abfrageplanung aufgenommen; ausgewählte F4-/FB-Felder mit profilierten FHEM-Offsets ergänzt. Vorhandene E8-/09-/05-Parser weiterverwendet.
+- Optionale Entitäten vollständig mit erzeugt, in Home Assistant zunächst deaktiviert; Basis-/Expert-Gruppen im Geräteweb. Nicht gewählte Entitäten aus den beiden Beispiel-/Nutzerkonfigurationen entfernt.
+- Unabhängige Global- und HK1-Decoderlayouts; Raum-/Stufenwerte ohne belegtes Layout bleiben ungültig. FB bleibt alleinige Quelle gemeinsamer Mess-/Aktorzustände; kein F4-Überschreiben.
+- Pro Block Ablauf-/Längenprüfung für neue Werte, separate Innentemperaturquellen und Unknown statt erfundener Nullwerte bei fehlenden Daten.
+- Vier Number-Sollwerte P01/P02/P04/P05 und manuelle Uhrbuttons ±1h; Schreibfreigabe nach Boot aus. Frischer Read–Modify–Write, vollständiges Rücklesen, kein blindes SET-Retry und keine doppelte Zeitverschiebung.
+- UI-Grenzen 15–25 °C Raum und 35–55 °C WW ausdrücklich Vorschläge. Kalender-/Tageswechsel abgelehnt; weitere Schreibbereiche unverändert ausgeschlossen.
+- Hosttests für Decodermappings, Blockalterung, alle vier Schreibfelder, ACK-Verlust, Fremdfeldänderung, Uhrvergleich, Tageswechsel und Freigaberücknahme ergänzt. Hardwaretest und kompletter ESP32-Build weiter offen.
+
 ## 0.2.0 – 2026-11-03
 
 ### Detaillierte Deltas v0.1 → v0.2

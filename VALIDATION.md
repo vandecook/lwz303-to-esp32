@@ -1,3 +1,9 @@
+# Validierung v0.3.0
+
+Aktueller Bericht: [Softwarevalidierung v0.3](docs/VALIDATION-v0.3.md). Die gespeicherte Auswahl mit 31 Ja und 47 Optional ist integriert. Beispiel-Schema, C++-Codegenerierung und synthetische Transport-/Schreibtests sind geprüft; physische Hardwaretests und ein ESP32-Binärbuild stehen aus.
+
+Der folgende Bericht beschreibt den historischen v0.2-Stand; Aussagen zu dort noch fehlenden Schreibfunktionen gelten nicht für die neue v0.3-Implementierung.
+
 # Validierung v0.2.0
 
 Stand: 2026-11-03. Ausgangspunkt: `f936515` (v0.1). Zielhardware laut Anwender: ESP32-C3, UART RX5/TX6, 9600 8N1, RS232-Pegelwandler. Die funktionierende v0.1 ist eine Anwenderbestätigung; es gab hier keinen Zugriff auf die physische Anlage.

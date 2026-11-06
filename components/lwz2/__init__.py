@@ -1,6 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import binary_sensor, sensor, text_sensor, uart
+from esphome.components import binary_sensor, sensor, text_sensor, uart, number
+from .metadata import SELECTED_ENTITIES
 from esphome.const import (
     CONF_ID,
     DEVICE_CLASS_TEMPERATURE,
@@ -13,7 +14,7 @@ from esphome.const import (
 
 CODEOWNERS = []
 DEPENDENCIES = ["uart"]
-AUTO_LOAD = ["sensor", "binary_sensor", "text_sensor"]
+AUTO_LOAD = ["sensor", "binary_sensor", "text_sensor", "number"]
 
 CONF_FIRMWARE = "firmware"
 CONF_STATUS_INTERVAL = "status_interval"
@@ -117,10 +118,35 @@ def hours_sensor_schema():
     )
 
 
+LWZSetpointNumber = lwz2_ns.class_("LWZSetpointNumber", number.Number)
+
+def selected_schema():
+    result = {}
+    for entry in SELECTED_ENTITIES:
+        if entry["kind"] == "action" or entry.get("legacy"):
+            continue
+        if entry["kind"] == "number":
+            schema = number.number_schema(LWZSetpointNumber, unit_of_measurement="°C")
+        elif entry["kind"] == "binary_sensor":
+            schema = binary_sensor.binary_sensor_schema()
+        elif entry["kind"] == "text_sensor":
+            schema = text_sensor.text_sensor_schema()
+        else:
+            options = {"accuracy_decimals": 1 if entry.get("unit") == "°C" else 0}
+            if entry.get("unit"):
+                options["unit_of_measurement"] = entry["unit"]
+            schema = sensor.sensor_schema(**options)
+        result[cv.Optional(entry["key"])] = schema
+    return result
+
 CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(LWZ2Component),
+            cv.Optional("enable_v03", default=True): cv.boolean,
+            cv.Optional("hc1_layout", default="2.06"): cv.one_of("2.06", "2.14", "2.14j"),
+            cv.Optional("write_status"): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC),
+            **selected_schema(),
             cv.Optional(CONF_FIRMWARE, default="2.14j"): cv.one_of(
                 "2.06", "2.14", "2.14j", lower=False
             ),
@@ -224,6 +250,30 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
+    cg.add(var.set_v03_enabled(config["enable_v03"]))
+    cg.add(var.set_hc1_layout(config["hc1_layout"]))
+    if "write_status" in config:
+        status = await text_sensor.new_text_sensor(config["write_status"])
+        cg.add(var.set_write_status_text_sensor(status))
+    for entry in SELECTED_ENTITIES:
+        key, kind = entry["key"], entry["kind"]
+        if entry.get("legacy") or kind == "action" or key not in config:
+            continue
+        if kind == "number":
+            index = entry["index"]
+            obj = await number.new_number(config[key], min_value=15 if index < 2 else 35,
+                                          max_value=25 if index < 2 else 55, step=0.1)
+            cg.add(obj.set_parent(var, index))
+            cg.add(var.set_setpoint_number(index, obj))
+        elif kind == "sensor":
+            obj = await sensor.new_sensor(config[key])
+            cg.add(var.set_selected_sensor(key, obj))
+        elif kind == "binary_sensor":
+            obj = await binary_sensor.new_binary_sensor(config[key])
+            cg.add(var.set_selected_binary_sensor(key, obj))
+        else:
+            obj = await text_sensor.new_text_sensor(config[key])
+            cg.add(var.set_selected_text_sensor(key, obj))
 
     cg.add(var.set_firmware(config[CONF_FIRMWARE]))
     cg.add(var.set_status_interval(config[CONF_STATUS_INTERVAL].total_milliseconds))

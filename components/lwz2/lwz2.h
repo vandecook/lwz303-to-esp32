@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <map>
+#include "esphome/components/number/number.h"
+#include "selected_fields.h"
 
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/sensor/sensor.h"
@@ -30,6 +33,16 @@ enum class CommState : uint8_t {
 
 class LWZ2Component : public Component, public uart::UARTDevice {
  public:
+  void set_v03_enabled(bool enabled) { v03_enabled_ = enabled; }
+  void set_hc1_layout(const std::string &profile);
+  void set_selected_sensor(const std::string &key, sensor::Sensor *s) { selected_sensors_[key] = s; }
+  void set_selected_binary_sensor(const std::string &key, binary_sensor::BinarySensor *s) { selected_binary_[key] = s; }
+  void set_selected_text_sensor(const std::string &key, text_sensor::TextSensor *s) { selected_text_[key] = s; }
+  void set_setpoint_number(uint8_t index, number::Number *n) { if (index < 4) setpoints_[index] = n; }
+  void set_writes_enabled(bool enabled);
+  bool request_setpoint(uint8_t index, float value);
+  bool request_clock_shift(int hours);
+  void set_write_status_text_sensor(text_sensor::TextSensor *s) { write_status_ = s; }
   // Local controls only; none writes LWZ parameters.
   void set_dynamic_interval(uint32_t v) { dynamic_interval_ms_ = v; reschedule_poll_(); }
   void set_config_interval(uint32_t v) { config_interval_ms_ = v; next_config_ms_ = millis() + v; }
@@ -132,6 +145,35 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 #undef LWZ2_TEXT_SETTER
 
  protected:
+  enum class WriteStage : uint8_t { NONE, READ, SET, VERIFY };
+  bool v03_enabled_{false}, writes_enabled_{false}, sending_set_{false}, write_transaction_{false};
+  FirmwareProfile hc1_layout_{FirmwareProfile::FW_206};
+  WriteStage write_stage_{WriteStage::NONE};
+  uint8_t write_command_{0}, write_index_{0};
+  int clock_shift_{0};
+  float write_value_{0};
+  uint32_t write_read_ms_{0}, last_clock_request_ms_{0};
+  bool clock_request_seen_{false};
+  std::vector<uint8_t> write_expected_;
+  number::Number *setpoints_[4]{nullptr, nullptr, nullptr, nullptr};
+  text_sensor::TextSensor *write_status_{nullptr};
+  std::map<std::string, sensor::Sensor *> selected_sensors_;
+  std::map<std::string, binary_sensor::BinarySensor *> selected_binary_;
+  std::map<std::string, text_sensor::TextSensor *> selected_text_;
+  uint32_t v03_due_[4]{0, 0, 0, 0};
+  uint32_t block_success_[256]{};
+  bool block_stale_[256]{};
+  void parse_selected_(uint8_t command, const uint8_t *data, size_t len, bool invalidate = false);
+  void v03_stale_();
+  void invalidate_block_(uint8_t command);
+  bool v03_schedule_();
+  void v03_schedule_result_(uint8_t command);
+  void write_response_(const std::vector<uint8_t> &frame);
+  void write_failed_(const std::string &reason);
+  void finish_write_(const std::string &status);
+  void publish_write_status_(const std::string &status);
+  const SelectedField *selected_rule_(const std::string &key, uint8_t command, bool &belongs) const;
+  float selected_value_(const SelectedField &rule, const uint8_t *data) const;
   static constexpr uint32_t ACK_TIMEOUT_MS = 1800;
   static constexpr uint32_t FRAME_TIMEOUT_MS = 1800;
   static constexpr uint32_t RETRY_DELAY_MS = 250;
@@ -158,7 +200,11 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   bool compressor_{false}, heating_{false}, dhw_{false};
   bool config_pending_{true}, firmware_pending_{true};
   void publish_diagnostics_();
-  void reschedule_poll_() { if (setup_complete_) next_fb_ms_ = millis() + effective_interval(); }
+  void reschedule_poll_() {
+    // Restoring controls at boot must not postpone the first live-data poll.
+    if (setup_complete_ && last_fb_success_ms_ != 0)
+      next_fb_ms_ = last_fb_success_ms_ + effective_interval();
+  }
   uint32_t next_fb_ms_{0};
   uint32_t next_f4_ms_{0};
   uint32_t next_e8_ms_{0};
@@ -289,3 +335,14 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 };
 
 }  // namespace esphome::lwz2
+
+namespace esphome::lwz2 {
+class LWZSetpointNumber : public number::Number {
+ public:
+  void set_parent(LWZ2Component *parent, uint8_t index) { parent_ = parent; index_ = index; }
+ protected:
+  void control(float value) override { if (parent_) parent_->request_setpoint(index_, value); }
+  LWZ2Component *parent_{nullptr};
+  uint8_t index_{0};
+};
+}

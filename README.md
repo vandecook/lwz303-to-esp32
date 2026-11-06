@@ -1,6 +1,42 @@
-# LWZ303 to ESP32 – v0.2.0
+# LWZ303 to ESP32 – v0.3.0
 
-Lesende ESPHome-Komponente für Firmwareprofile **2.06, 2.14 und 2.14j**. Basis: die vom Anwender als funktionierend bestätigte v0.1 (`f936515`). Neue v0.2-Funktionen sind noch nicht an der Hardware getestet. Kein 4.x/5.x-Support, keine LWZ-Parameterschreibfunktionen vor v0.5.
+Die gespeicherte Excel-Auswahl ist umgesetzt: **31 Ja + 47 Optional = 78 Einträge**. Die konkrete Anlage läuft laut Nutzer mit **Geräte-Firmware 2.16**. `2.06`, `2.14` und `2.14j` sind die auswählbaren **Decoderlayouts**; daraus folgt keine pauschale Hardwarefreigabe.
+
+## Auswahl und Bedienung in v0.3
+
+- Beide Konfigurationen (`lwz303-sol-example.yaml` und `lwz303.yaml`) enthalten alle ausgewählten Werte. Nicht gewählte Werte sind dort nicht angelegt; bestehende Schemaoptionen bleiben zur Abwärtskompatibilität verfügbar.
+- **Ja:** normal aktive Entitäten. **Optional:** mit eingebaut, in Home Assistant zunächst `disabled_by_default: true`; unter Einstellungen → Geräte & Dienste → Entitäten aktivierbar, ohne neues Firmwareupdate.
+- Das lokale Webinterface gruppiert Basis und Expert. HA-Aktivierung und Webdarstellung sind getrennt; die Expert-Gruppe ist im Geräteweb sichtbar. Es gibt keinen zusätzlich implementierten Schalter zum Verbergen der Webgruppe.
+- Die Abfragen laufen seriell über eine Zustandsmaschine: FB, F3, F4, E8, 09, EE, FC und der Einstellungsblock 17, zusätzlich vorhandenes 05 für P13/P14. Die Excel-Auswahl ist in `components/lwz2/selection.json` mit Dateihash nachvollziehbar; Excel wird nicht zur Laufzeit benötigt.
+- **Ein Wert – eine Hauptquelle:** gemeinsame Temperaturen/Aktoren stammen aus FB. F4 schreibt diese Entitäten nicht mehr zusätzlich. FB-Innentemperatur und die zusätzliche F4-Innentemperatur sind getrennt; fehlende kurze F4-Felder ergeben `unavailable`/NaN, niemals erfundene Nullwerte.
+- Globales Decoderprofil bleibt standardmäßig **2.14j**. HK1 lässt sich unabhängig mit **2.06 / 2.14 / 2.14j** dekodieren; Standard **2.06**, weil im Nutzeroutput `roomSetTemp` damit 21,4 °C statt 0 liefert. Das bleibt ein zu prüfendes Feldmapping, keine vollständige Freigabe für 2.16.
+- Stufe 3 existiert nur im 2.06-FB-Layout. Bei anderen Globalprofilen bleibt die gewählte Entität unbekannt. `hcStage` ist nur im HK1-Layout 2.14j verfügbar; `hcBoosterStage` gehört zu 2.06/2.14. Beide werden angeboten, aber keine Werte aus einem anderen Layout erfunden.
+- Die vier ausgewählten sFan-Drehzahlwerte sind optional eingebaut. Ihre physikalische Plausibilität/Decoderzuordnung ist weiter offen; Werte sind kein Nachweis einer funktionierenden Luftmengenmessung. Einheiten bleiben 1/s bzw. % gemäß geprüftem Decoder, nicht U/min oder Watt.
+- Fehlende/abgelaufene Daten werden je Block ungültig. Ein erfolgreicher FB-Empfang hält ausgefallene F3/E8/EE/FC-Werte nicht künstlich aktuell.
+
+## Erste manuelle LWZ-Schreibfunktionen
+
+P01/P02 und P04/P05 sind echte, nicht optimistische Number-Entitäten. Daneben gibt es zwei Buttons für +1 bzw. −1 Stunde. Kein Wochenprogramm, Gradient, Fußpunkt, Lüfterparameter, Bereitschafts- oder Manuellsollwert wird damit geschrieben.
+
+`LWZ Schreibfreigabe` ist bei jedem Neustart **aus**. Zum manuellen Test einschalten; der Schreibstatus zeigt Ablehnung, laufendes Rücklesen, Erfolg oder Fehler. Die Software wird hier nicht auf ein Gerät geflasht und hat keine physische LWZ verändert.
+
+1. Vollständigen Block 17 bzw. FC frisch lesen und Transport/Checksumme/Befehl/Länge validieren.
+2. Ausschließlich das Zielfeld ändern und alle übrigen Bytes erhalten.
+3. Genau einen SET-Befehl senden (Header 01 80, FHEM-Checksumme und 10/2B-Escaping).
+4. Unabhängig GET lesen und Zielwert plus erhaltene Felder vergleichen. ACK allein ist kein Erfolg.
+5. Bei unklarer SET-Antwort kein SET-Retry: direkt rücklesen. Bei Abweichung Fehler melden, keine automatische Wiederherstellung oder erneute relative Zeitverschiebung.
+
+Konservative **Bediengrenzen als Vorschlag:** Raum Tag/Nacht 15–25 °C; WW Tag/Nacht 35–55 °C; Raster 0,1 °C. Belegte FHEM-Modulgrenzen sind weiter 10–30 bzw. 10–55 °C, keine bestätigten Herstellergrenzen der Geräte-FW 2.16. Die vier vorgeschlagenen UI-Grenzen sind in der Komponente/Number-Erzeugung festgelegt und nicht als Geräteparameter zu verstehen.
+
+Die Uhraktion verändert nur die absolute Stunde eines frisch gelesenen FC-Blocks. Datum/Wochentag und andere Bytes bleiben erhalten; Sekunden dürfen entsprechend der Übertragungsdauer weiterlaufen (Toleranz ±5 s). **Tageswechsel werden abgelehnt**, bis Kalender-/Wochentagsänderungen validiert sind; zusätzlich 30-s-Sperre gegen Mehrfachklicks. Der historische FHEM-Jahres-Schreibbereich 12–20 wird nicht als aktuelle Herstellergrenze übernommen; kein Jahr wird geschrieben. SNTP synchronisiert nur die ESP-Anzeige, nicht die LWZ.
+
+## Softwareprüfung und Quellen
+
+ESPHome-Schemaprüfung und C++-Codegenerierung sowie synthetische C++-Transporttests sind in `VALIDATION.md` dokumentiert. Kein bestätigter Flash-/Hardwaretest und kein neu gebautes ESP32-Firmware-Image. In der individuellen `lwz303.yaml` müssen die vorhandenen `!secret`-Verweise auf die eigenen Zugangsdaten aufgelöst werden; Netzwerk-/Board-Einstellungen wurden beibehalten.
+
+Protokollquelle: [FHEM 00_THZ.pm, gepinnter Stand](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm). Die ausgewählten Felder und Grenzen wurden zuvor gegen den offiziellen SVN-Export r28264 abgeglichen. Der bekannte FHEM-Verweis auf undefinierten `F2type` wird nicht übernommen; sControl gehört nicht zu den hier aktivierten sieben Statusblöcken.
+
+Die folgenden Installations- und Diagnosehinweise stammen aus dem v0.2-Bestand; der v0.3-Umfang und die Schreibfunktionen sind oben beschrieben.
 
 ## Anschluss und Installation
 
