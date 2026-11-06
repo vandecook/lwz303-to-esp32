@@ -5,44 +5,61 @@ substitutions:
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
+  project:
+    name: vandecook.lwz303-to-esp32
+    version: "0.2.0"
+  min_version: 2026.10.2
   on_boot:
-    priority: -10
+    priority: -100
     then:
       - lambda: |-
           id(lwz303).set_firmware(id(lwz_firmware).current_option());
+          id(lwz303).set_status_interval(uint32_t(id(normal_interval).state * 1000));
+          id(lwz303).set_dynamic_interval(uint32_t(id(dynamic_interval).state * 1000));
+          id(lwz303).set_config_interval(uint32_t(id(config_interval).state * 60000));
+          id(lwz303).set_dynamic_enabled(id(dynamic_enabled).state);
+          id(lwz303).set_trigger_compressor(id(trigger_compressor).state);
+          id(lwz303).set_trigger_heating(id(trigger_heating).state);
+          id(lwz303).set_trigger_dhw(id(trigger_dhw).state);
 
+# Tested setup: ESP32-C3, RX5/TX6. Adjust board for the precise C3 module.
 esp32:
-  board: esp32dev
+  board: esp32-c3-devkitm-1
   framework:
     type: esp-idf
 
 logger:
   level: DEBUG
   baud_rate: 0
-
 api:
-
+  reboot_timeout: 0s
 ota:
   - platform: esphome
-
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+preferences:
+  flash_write_interval: 1min
 
 web_server:
   port: 80
   version: 3
+  local: true
+  log: true
+  auth:
+    type: digest
+    username: !secret web_username
+    password: !secret web_password
 
 external_components:
   - source: components
     components: [lwz2]
 
-# Old LWZ/THZ serial interface: 9600 baud, 8N1 is the documented legacy setting.
-# IMPORTANT: Use a MAX3232 (or equivalent RS232 <-> 3.3 V TTL level shifter).
+# 9600 8N1 through an RS232 <-> 3.3 V TTL transceiver (e.g. MAX3232).
 uart:
   id: lwz_uart
-  tx_pin: GPIO17
-  rx_pin: GPIO16
+  rx_pin: GPIO5
+  tx_pin: GPIO6
   baud_rate: 9600
   data_bits: 8
   parity: NONE
@@ -53,142 +70,204 @@ lwz2:
   id: lwz303
   uart_id: lwz_uart
   firmware: "2.14j"
-
-  # FB contains the common 2.x compressor/pump state and is therefore the fast poll.
-  status_interval: 5s
-  heating_interval: 10s
-  fan_interval: 30s
-  fan_config_interval: 5min
-  history_interval: 5min
+  status_interval: 10s
   stale_after: 30s
-
   outside_temperature:
-    name: "Outside Temperature"
+    name: "Außentemperatur"
   flow_temperature:
-    name: "Flow Temperature"
+    name: "Vorlauf"
   return_temperature:
-    name: "Return Temperature"
-  hot_gas_temperature:
-    name: "Hot Gas Temperature"
+    name: "Rücklauf"
   dhw_temperature:
-    name: "DHW Temperature"
-  flow_temperature_hc2:
-    name: "HC2 Flow Temperature"
-  inside_temperature:
-    name: "Inside Temperature"
-  evaporator_temperature:
-    name: "Evaporator Temperature"
-  condenser_temperature:
-    name: "Condenser Temperature"
-
-  supply_fan_power:
-    name: "Supply Fan Power"
-  exhaust_fan_power:
-    name: "Exhaust Fan Power"
-  main_fan_power:
-    name: "Main Fan Power"
-  supply_fan_speed_percent:
-    name: "Supply Fan Speed"
-  exhaust_fan_speed_percent:
-    name: "Exhaust Fan Speed"
-  main_fan_speed_percent:
-    name: "Main Fan Speed"
-
-  supply_fan_speed:
-    name: "Supply Fan Speed Raw"
-  exhaust_fan_speed:
-    name: "Exhaust Fan Speed Raw"
-  supply_fan_airflow_set:
-    name: "Supply Fan Airflow Set"
-  exhaust_fan_airflow_set:
-    name: "Exhaust Fan Airflow Set"
-  supply_fan_speed_target:
-    name: "Supply Fan Speed Target"
-  exhaust_fan_speed_target:
-    name: "Exhaust Fan Speed Target"
-
-  supply_stage1_airflow:
-    name: "Supply Airflow Stage 1"
-  supply_stage2_airflow:
-    name: "Supply Airflow Stage 2"
-  supply_stage3_airflow:
-    name: "Supply Airflow Stage 3"
-  exhaust_stage1_airflow:
-    name: "Exhaust Airflow Stage 1"
-  exhaust_stage2_airflow:
-    name: "Exhaust Airflow Stage 2"
-  exhaust_stage3_airflow:
-    name: "Exhaust Airflow Stage 3"
-
-  operating_hours_1:
-    name: "Operating Hours 1"
-  operating_hours_2:
-    name: "Operating Hours 2"
-  heating_hours:
-    name: "Heating Hours"
-  dhw_hours:
-    name: "DHW Hours"
-  cooling_hours:
-    name: "Cooling Hours"
-
+    name: "Warmwasser"
   compressor:
-    name: "Compressor"
-  heating_circuit_pump:
-    name: "Heating Circuit Pump"
-  dhw_pump:
-    name: "DHW Pump"
-  solar_pump:
-    name: "Solar Pump"
-  booster_stage1:
-    name: "Booster Stage 1"
-  booster_stage2:
-    name: "Booster Stage 2"
-  diverter_valve:
-    name: "Diverter Valve"
-  heat_pipe_valve:
-    name: "Heat Pipe Valve"
-
-  # Semantic V0.1 states. They intentionally follow the physical circuit pumps.
+    name: "Kompressor"
   heating_active:
-    name: "Heating Active"
+    name: "Heizbetrieb (HK-Pumpe)"
   dhw_active:
-    name: "DHW Active"
-
+    name: "Warmwasserbereitung (WW-Pumpe)"
+  hc1_gradient:
+    name: "HK1 Gradient (P13)"
+  hc1_low_end:
+    name: "HK1 Fußpunkt (P14)"
   communication_ok:
-    name: "Communication OK"
+    name: "Kommunikation OK"
   communication_status:
-    name: "Communication Status"
+    name: "Kommunikationszustand"
   last_error:
-    name: "Last Communication Error"
+    name: "Letzter Kommunikationsfehler"
+  successful_queries:
+    name: "Erfolgreiche Abfragen"
+  failed_queries:
+    name: "Fehlgeschlagene Abfragen"
+  timeouts:
+    name: "Timeouts"
+  retries:
+    name: "Retries"
+  last_success:
+    name: "Letzter Erfolg seit Boot"
+  config_updated:
+    name: "HK1 aktualisiert seit Boot"
+  firmware_version:
+    name: "Abgefragte Firmware"
 
-  # Optional during commissioning. These can cause frequent HA state updates.
-  # raw_fb:
-  #   name: "Raw FB"
-  # raw_f4:
-  #   name: "Raw F4"
-  # raw_e8:
-  #   name: "Raw E8"
-  # raw_01:
-  #   name: "Raw 01"
-  # raw_09:
-  #   name: "Raw 09"
-
-# Firmware selection is intentionally a normal ESPHome select so it is available
-# in Web Server v3 and Home Assistant and can persist across reboots.
 select:
   - platform: template
-    name: "LWZ Firmware Profile"
+    name: "LWZ Firmwareprofil"
     id: lwz_firmware
-    icon: mdi:chip
     entity_category: config
     optimistic: true
     restore_value: true
     initial_option: "2.14j"
-    options:
-      - "2.06"
-      - "2.14"
-      - "2.14j"
+    options: ["2.06", "2.14", "2.14j"]
     on_value:
-      then:
-        - lambda: |-
-            id(lwz303).set_firmware(x);
+      - lambda: id(lwz303).set_firmware(x);
+
+number:
+  - platform: template
+    id: normal_interval
+    name: "sGlobal Normalintervall"
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 300
+    step: 1
+    initial_value: 10
+    optimistic: true
+    restore_value: true
+    mode: box
+    on_value:
+      - lambda: id(lwz303).set_status_interval(uint32_t(x * 1000));
+  - platform: template
+    id: dynamic_interval
+    name: "sGlobal Dynamikintervall"
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 300
+    step: 1
+    initial_value: 5
+    optimistic: true
+    restore_value: true
+    mode: box
+    on_value:
+      - lambda: id(lwz303).set_dynamic_interval(uint32_t(x * 1000));
+  - platform: template
+    id: config_interval
+    name: "HK1 Konfigurationsintervall"
+    entity_category: config
+    unit_of_measurement: min
+    min_value: 1
+    max_value: 1440
+    step: 1
+    initial_value: 60
+    optimistic: true
+    restore_value: true
+    mode: box
+    on_value:
+      - lambda: id(lwz303).set_config_interval(uint32_t(x * 60000));
+
+switch:
+  - platform: template
+    id: dynamic_enabled
+    name: "Dynamische Abfrage"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_dynamic_enabled(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_dynamic_enabled(false);
+  - platform: template
+    id: trigger_compressor
+    name: "Dynamik bei Kompressor"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_trigger_compressor(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_trigger_compressor(false);
+  - platform: template
+    id: trigger_heating
+    name: "Dynamik bei Heizbetrieb"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_trigger_heating(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_trigger_heating(false);
+  - platform: template
+    id: trigger_dhw
+    name: "Dynamik bei Warmwasser"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_trigger_dhw(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_trigger_dhw(false);
+
+  - platform: template
+    id: restart_confirm
+    name: "ESP32 Neustart bestätigen (30s)"
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - delay: 30s
+      - switch.turn_off: restart_confirm
+
+button:
+  - platform: template
+    name: "HK1 jetzt aktualisieren"
+    on_press:
+      - lambda: id(lwz303).refresh_config();
+  - platform: template
+    name: "Kommunikationszähler zurücksetzen"
+    entity_category: diagnostic
+    on_press:
+      - lambda: id(lwz303).reset_counters();
+  - platform: template
+    name: "RS232 neu initialisieren"
+    entity_category: diagnostic
+    on_press:
+      - lambda: id(lwz303).reinitialize();
+  - platform: template
+    name: "ESP32 neu starten"
+    entity_category: diagnostic
+    on_press:
+      - if:
+          condition:
+            switch.is_on: restart_confirm
+          then:
+            - switch.turn_off: restart_confirm
+            - lambda: App.safe_reboot();
+          else:
+            - logger.log: "Neustart zuerst mit dem Bestätigungsschalter freigeben"
+
+sensor:
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 10s
+  - platform: template
+    name: "Aktuelles sGlobal Intervall"
+    unit_of_measurement: s
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: return id(lwz303).effective_interval() / 1000.0f;
+
+time:
+  - platform: sntp
+    id: local_time
+    timezone: Europe/Vienna
+
+text_sensor:
+  - platform: template
+    name: "ESP32 Uhrzeit"
+    update_interval: 10s
+    lambda: |-
+      auto now = id(local_time).now();
+      if (!now.is_valid()) return {"nicht verfügbar"};
+      return now.strftime("%Y-%m-%d %H:%M:%S %Z");

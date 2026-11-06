@@ -30,13 +30,24 @@ enum class CommState : uint8_t {
 
 class LWZ2Component : public Component, public uart::UARTDevice {
  public:
+  // Local controls only; none writes LWZ parameters.
+  void set_dynamic_interval(uint32_t v) { dynamic_interval_ms_ = v; reschedule_poll_(); }
+  void set_config_interval(uint32_t v) { config_interval_ms_ = v; next_config_ms_ = millis() + v; }
+  void set_dynamic_enabled(bool v) { dynamic_enabled_ = v; reschedule_poll_(); }
+  void set_trigger_compressor(bool v) { trigger_compressor_ = v; reschedule_poll_(); }
+  void set_trigger_heating(bool v) { trigger_heating_ = v; reschedule_poll_(); }
+  void set_trigger_dhw(bool v) { trigger_dhw_ = v; reschedule_poll_(); }
+  uint32_t effective_interval() const;
+  void refresh_config() { config_pending_ = true; }
+  void reset_counters();
+  void reinitialize();
   void setup() override;
   void loop() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
 
   void set_firmware(const std::string &fw);
-  void set_status_interval(uint32_t v) { status_interval_ms_ = v; }
+  void set_status_interval(uint32_t v) { status_interval_ms_ = v; reschedule_poll_(); }
   void set_heating_interval(uint32_t v) { heating_interval_ms_ = v; }
   void set_fan_interval(uint32_t v) { fan_interval_ms_ = v; }
   void set_history_interval(uint32_t v) { history_interval_ms_ = v; }
@@ -46,6 +57,12 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 #define LWZ2_SENSOR_SETTER(name) \
   void set_##name##_sensor(sensor::Sensor *s) { name##_sensor_ = s; }
 
+  LWZ2_SENSOR_SETTER(hc1_gradient)
+  LWZ2_SENSOR_SETTER(hc1_low_end)
+  LWZ2_SENSOR_SETTER(successful_queries)
+  LWZ2_SENSOR_SETTER(failed_queries)
+  LWZ2_SENSOR_SETTER(timeouts)
+  LWZ2_SENSOR_SETTER(retries)
   LWZ2_SENSOR_SETTER(outside_temperature)
   LWZ2_SENSOR_SETTER(flow_temperature)
   LWZ2_SENSOR_SETTER(return_temperature)
@@ -101,6 +118,9 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 #define LWZ2_TEXT_SETTER(name) \
   void set_##name##_text_sensor(text_sensor::TextSensor *s) { name##_text_sensor_ = s; }
 
+  LWZ2_TEXT_SETTER(last_success)
+  LWZ2_TEXT_SETTER(config_updated)
+  LWZ2_TEXT_SETTER(firmware_version)
   LWZ2_TEXT_SETTER(communication_status)
   LWZ2_TEXT_SETTER(last_error)
   LWZ2_TEXT_SETTER(raw_fb)
@@ -121,13 +141,24 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   FirmwareProfile firmware_{FirmwareProfile::FW_214J};
   CommState state_{CommState::IDLE};
 
-  uint32_t status_interval_ms_{5000};
+  uint32_t status_interval_ms_{10000};
   uint32_t heating_interval_ms_{10000};
   uint32_t fan_interval_ms_{30000};
   uint32_t history_interval_ms_{300000};
   uint32_t fan_config_interval_ms_{300000};
   uint32_t stale_after_ms_{30000};
 
+  uint32_t dynamic_interval_ms_{5000};
+  uint32_t config_interval_ms_{3600000};
+  uint32_t next_config_ms_{0};
+  uint32_t last_diagnostics_ms_{0};
+  uint32_t successes_{0}, timeouts_{0}, retries_{0};
+  bool dynamic_enabled_{true};
+  bool trigger_compressor_{true}, trigger_heating_{true}, trigger_dhw_{true};
+  bool compressor_{false}, heating_{false}, dhw_{false};
+  bool config_pending_{true}, firmware_pending_{true};
+  void publish_diagnostics_();
+  void reschedule_poll_() { if (setup_complete_) next_fb_ms_ = millis() + effective_interval(); }
   uint32_t next_fb_ms_{0};
   uint32_t next_f4_ms_{0};
   uint32_t next_e8_ms_{0};
@@ -189,6 +220,12 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   static bool time_reached_(uint32_t now, uint32_t target) { return static_cast<int32_t>(now - target) >= 0; }
 
 #define LWZ2_SENSOR_MEMBER(name) sensor::Sensor *name##_sensor_{nullptr};
+  LWZ2_SENSOR_MEMBER(hc1_gradient)
+  LWZ2_SENSOR_MEMBER(hc1_low_end)
+  LWZ2_SENSOR_MEMBER(successful_queries)
+  LWZ2_SENSOR_MEMBER(failed_queries)
+  LWZ2_SENSOR_MEMBER(timeouts)
+  LWZ2_SENSOR_MEMBER(retries)
   LWZ2_SENSOR_MEMBER(outside_temperature)
   LWZ2_SENSOR_MEMBER(flow_temperature)
   LWZ2_SENSOR_MEMBER(return_temperature)
@@ -238,6 +275,9 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 #undef LWZ2_BINARY_MEMBER
 
 #define LWZ2_TEXT_MEMBER(name) text_sensor::TextSensor *name##_text_sensor_{nullptr};
+  LWZ2_TEXT_MEMBER(last_success)
+  LWZ2_TEXT_MEMBER(config_updated)
+  LWZ2_TEXT_MEMBER(firmware_version)
   LWZ2_TEXT_MEMBER(communication_status)
   LWZ2_TEXT_MEMBER(last_error)
   LWZ2_TEXT_MEMBER(raw_fb)

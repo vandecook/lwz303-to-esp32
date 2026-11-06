@@ -1,5 +1,6 @@
 #include "lwz2.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 
@@ -8,11 +9,17 @@ namespace esphome::lwz2 {
 static const char *const TAG = "lwz2";
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ 2.x read-only component");
+  ESP_LOGI(TAG, "Starting LWZ 2.x read-only component v0.2.0");
   this->frame_.reserve(128);
   this->startup_ms_ = millis();
   this->setup_complete_ = true;
+  if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
   this->reset_schedule_();
+  this->config_pending_ = true;
+  this->firmware_pending_ = true;
+  if (this->firmware_version_text_sensor_ != nullptr)
+    this->firmware_version_text_sensor_->publish_state(
+        this->firmware_ == FirmwareProfile::FW_206 ? "pending" : "unsupported (manual profile)");
   if (this->communication_status_text_sensor_ != nullptr)
     this->communication_status_text_sensor_->publish_state("starting");
   if (this->last_error_text_sensor_ != nullptr)
@@ -25,6 +32,9 @@ void LWZ2Component::dump_config() {
                    this->firmware_ == FirmwareProfile::FW_214 ? "2.14" : "2.14j";
   ESP_LOGCONFIG(TAG, "  Firmware profile: %s", fw);
   ESP_LOGCONFIG(TAG, "  Status (FB) interval: %u ms", this->status_interval_ms_);
+  ESP_LOGCONFIG(TAG, "  Dynamic FB interval: %u ms (enabled: %s)", this->dynamic_interval_ms_,
+                this->dynamic_enabled_ ? "yes" : "no");
+  ESP_LOGCONFIG(TAG, "  HC1 configuration (05) interval: %u ms", this->config_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Heating (F4) interval: %u ms", this->heating_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Fan (E8) interval: %u ms", this->fan_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Fan config (01) interval: %u ms", this->fan_config_interval_ms_);
@@ -56,8 +66,21 @@ void LWZ2Component::set_firmware(const std::string &fw) {
   this->flush_rx_();
   this->consecutive_errors_ = 0;
   this->last_success_any_ms_ = 0;
+  this->startup_ms_ = millis();
+  this->last_fb_success_ms_ = 0;
+  if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
+  this->compressor_ = this->heating_ = this->dhw_ = false;
+  this->publish_stale_numeric_states_();
+  if (this->hc1_gradient_sensor_) this->hc1_gradient_sensor_->publish_state(NAN);
+  if (this->hc1_low_end_sensor_) this->hc1_low_end_sensor_->publish_state(NAN);
+  if (this->config_updated_text_sensor_) this->config_updated_text_sensor_->publish_state("pending");
   this->stale_published_ = false;
   this->reset_schedule_();
+  this->config_pending_ = true;
+  this->firmware_pending_ = true;
+  if (this->firmware_version_text_sensor_ != nullptr)
+    this->firmware_version_text_sensor_->publish_state(
+        this->firmware_ == FirmwareProfile::FW_206 ? "pending" : "unsupported (manual profile)");
   if (this->communication_status_text_sensor_ != nullptr)
     this->communication_status_text_sensor_->publish_state("starting");
 }
@@ -77,6 +100,10 @@ void LWZ2Component::loop() {
 
   this->update_communication_state_();
   this->scheduler_();
+  if (now - this->last_diagnostics_ms_ >= 1000) {
+    this->last_diagnostics_ms_ = now;
+    this->publish_diagnostics_();
+  }
 }
 
 void LWZ2Component::reset_schedule_() {
@@ -97,24 +124,37 @@ void LWZ2Component::scheduler_() {
   if (!this->time_reached_(now, this->next_allowed_request_ms_))
     return;
 
+  // Configuration refresh is coalesced and runs only between transactions.
+  if (this->config_pending_ || this->time_reached_(now, this->next_config_ms_)) {
+    this->config_pending_ = false;
+    this->start_transaction_(0x05);
+    return;
+  }
+  if (this->firmware_pending_) {
+    this->firmware_pending_ = false;
+    if (this->firmware_ == FirmwareProfile::FW_206) {
+      this->start_transaction_(0xFD);
+      return;
+    }
+  }
   // FB is the common 2.x source for compressor/pump state, so it gets highest priority.
   if (this->time_reached_(now, this->next_fb_ms_)) {
     this->start_transaction_(0xFB);
     return;
   }
-  if (this->time_reached_(now, this->next_f4_ms_)) {
+  if ((this->raw_f4_text_sensor_ || this->inside_temperature_sensor_) && this->time_reached_(now, this->next_f4_ms_)) {
     this->start_transaction_(0xF4);
     return;
   }
-  if (this->time_reached_(now, this->next_e8_ms_)) {
+  if ((this->raw_e8_text_sensor_ || this->supply_fan_speed_sensor_ || this->exhaust_fan_speed_sensor_ || this->supply_fan_airflow_set_sensor_ || this->exhaust_fan_airflow_set_sensor_ || this->supply_fan_speed_target_sensor_ || this->exhaust_fan_speed_target_sensor_) && this->time_reached_(now, this->next_e8_ms_)) {
     this->start_transaction_(0xE8);
     return;
   }
-  if (this->time_reached_(now, this->next_01_ms_)) {
+  if ((this->raw_01_text_sensor_ || this->supply_stage1_airflow_sensor_ || this->supply_stage2_airflow_sensor_ || this->supply_stage3_airflow_sensor_ || this->exhaust_stage1_airflow_sensor_ || this->exhaust_stage2_airflow_sensor_ || this->exhaust_stage3_airflow_sensor_) && this->time_reached_(now, this->next_01_ms_)) {
     this->start_transaction_(0x01);
     return;
   }
-  if (this->time_reached_(now, this->next_09_ms_)) {
+  if ((this->raw_09_text_sensor_ || this->operating_hours_1_sensor_ || this->operating_hours_2_sensor_ || this->heating_hours_sensor_ || this->dhw_hours_sensor_ || this->cooling_hours_sensor_) && this->time_reached_(now, this->next_09_ms_)) {
     this->start_transaction_(0x09);
     return;
   }
@@ -162,7 +202,8 @@ void LWZ2Component::send_command_frame_() {
 
 void LWZ2Component::process_uart_() {
   uint8_t b;
-  while (this->available()) {
+  size_t budget = 512;
+  while (budget-- && this->available()) {
     if (!this->read_byte(&b))
       break;
     this->handle_byte_(b);
@@ -208,6 +249,10 @@ void LWZ2Component::handle_byte_(uint8_t b) {
       break;
 
     case CommState::READ_FRAME:
+      if (this->frame_.size() >= 512) {
+        this->fail_attempt_("response exceeds 512 bytes");
+        break;
+      }
       if (this->frame_dle_) {
         if (b == 0x03) {
           this->frame_dle_ = false;
@@ -232,6 +277,7 @@ void LWZ2Component::handle_byte_(uint8_t b) {
 }
 
 void LWZ2Component::handle_timeout_() {
+  this->timeouts_++;
   const char *where = "communication";
   if (this->state_ == CommState::WAIT_WAKE_ACK)
     where = "wakeup ACK";
@@ -247,6 +293,7 @@ void LWZ2Component::handle_timeout_() {
 void LWZ2Component::fail_attempt_(const std::string &reason) {
   ESP_LOGW(TAG, "Command 0x%02X attempt %u failed: %s", this->current_command_, this->attempt_, reason.c_str());
   if (this->attempt_ < MAX_ATTEMPTS) {
+    this->retries_++;
     this->attempt_++;
     this->state_ = CommState::RETRY_WAIT;
     this->retry_at_ms_ = millis() + RETRY_DELAY_MS;
@@ -260,6 +307,8 @@ void LWZ2Component::finalize_failure_(const std::string &reason) {
   this->total_errors_++;
   this->consecutive_errors_++;
   this->last_error_message_ = reason;
+  if (this->current_command_ == 0xFD && this->firmware_version_text_sensor_)
+    this->firmware_version_text_sensor_->publish_state("query failed (manual profile retained)");
   this->state_ = CommState::IDLE;
   this->flush_rx_();
 
@@ -272,6 +321,8 @@ void LWZ2Component::finalize_failure_(const std::string &reason) {
 
   // Re-schedule the failed block after the backoff rather than immediately hammering the controller.
   switch (this->current_command_) {
+    case 0x05: this->next_config_ms_ = now + this->config_interval_ms_; break;
+    case 0xFD: break;
     case 0xFB: this->next_fb_ms_ = now + backoff; break;
     case 0xF4: this->next_f4_ms_ = now + backoff; break;
     case 0xE8: this->next_e8_ms_ = now + backoff; break;
@@ -283,7 +334,8 @@ void LWZ2Component::finalize_failure_(const std::string &reason) {
   if (this->last_error_text_sensor_ != nullptr)
     this->last_error_text_sensor_->publish_state(reason);
   if (this->communication_status_text_sensor_ != nullptr)
-    this->communication_status_text_sensor_->publish_state(this->consecutive_errors_ >= 3 ? "degraded" : "warning");
+    this->communication_status_text_sensor_->publish_state(
+        this->stale_published_ ? "disconnected" : (this->consecutive_errors_ >= 3 ? "degraded" : "warning"));
 }
 
 void LWZ2Component::complete_frame_() {
@@ -305,17 +357,24 @@ void LWZ2Component::complete_frame_() {
 
 void LWZ2Component::mark_success_() {
   const uint32_t now = millis();
+  this->successes_++;
   this->last_success_any_ms_ = now;
+  if (this->last_success_text_sensor_ != nullptr)
+    this->last_success_text_sensor_->publish_state("boot+" + std::to_string(now / 1000) + "s");
+  if (this->current_command_ == 0x05 && this->config_updated_text_sensor_ != nullptr)
+    this->config_updated_text_sensor_->publish_state("boot+" + std::to_string(now / 1000) + "s");
   this->consecutive_errors_ = 0;
-  this->stale_published_ = false;
+  if (this->current_command_ == 0xFB) this->stale_published_ = false;
   this->last_error_message_ = "none";
   this->state_ = CommState::IDLE;
   this->next_allowed_request_ms_ = now + MIN_REQUEST_GAP_MS;
 
   switch (this->current_command_) {
+    case 0x05: this->next_config_ms_ = now + this->config_interval_ms_; break;
+    case 0xFD: break;
     case 0xFB:
       this->last_fb_success_ms_ = now;
-      this->next_fb_ms_ = now + this->status_interval_ms_;
+      this->next_fb_ms_ = now + this->effective_interval();
       break;
     case 0xF4:
       this->last_f4_success_ms_ = now;
@@ -337,12 +396,52 @@ void LWZ2Component::mark_success_() {
       break;
   }
 
-  if (this->communication_ok_binary_sensor_ != nullptr)
-    this->communication_ok_binary_sensor_->publish_state(true);
-  if (this->communication_status_text_sensor_ != nullptr)
-    this->communication_status_text_sensor_->publish_state("connected");
+  // A configuration response cannot make stale live data trustworthy.
+  if (this->current_command_ == 0xFB) {
+    if (this->communication_ok_binary_sensor_ != nullptr)
+      this->communication_ok_binary_sensor_->publish_state(true);
+    if (this->communication_status_text_sensor_ != nullptr)
+      this->communication_status_text_sensor_->publish_state("connected");
+  }
   if (this->last_error_text_sensor_ != nullptr)
     this->last_error_text_sensor_->publish_state("none");
+}
+
+uint32_t LWZ2Component::effective_interval() const {
+  const bool active = (this->trigger_compressor_ && this->compressor_) ||
+                      (this->trigger_heating_ && this->heating_) || (this->trigger_dhw_ && this->dhw_);
+  return this->dynamic_enabled_ && active ? this->dynamic_interval_ms_ : this->status_interval_ms_;
+}
+
+void LWZ2Component::publish_diagnostics_() {
+  if (this->successful_queries_sensor_) this->successful_queries_sensor_->publish_state(this->successes_);
+  if (this->failed_queries_sensor_) this->failed_queries_sensor_->publish_state(this->total_errors_);
+  if (this->timeouts_sensor_) this->timeouts_sensor_->publish_state(this->timeouts_);
+  if (this->retries_sensor_) this->retries_sensor_->publish_state(this->retries_);
+}
+
+void LWZ2Component::reset_counters() {
+  this->successes_ = this->total_errors_ = this->timeouts_ = this->retries_ = 0;
+  this->publish_diagnostics_();
+  ESP_LOGI(TAG, "Communication counters reset (recovery state retained)");
+}
+
+void LWZ2Component::reinitialize() {
+  // Reload existing UART settings; no LWZ parameters are changed.
+  this->state_ = CommState::IDLE;
+  this->frame_.clear();
+  this->frame_dle_ = false;
+  this->flush_rx_();
+  if (this->parent_ != nullptr) this->parent_->load_settings(false);
+  this->consecutive_errors_ = 0;
+  this->startup_ms_ = millis();
+  this->last_fb_success_ms_ = 0;
+  this->stale_published_ = false;
+  if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
+  if (this->communication_status_text_sensor_) this->communication_status_text_sensor_->publish_state("reinitializing");
+  this->reset_schedule_();
+  this->refresh_config();
+  ESP_LOGI(TAG, "RS232 protocol reinitialized");
 }
 
 void LWZ2Component::flush_rx_() {
@@ -398,6 +497,22 @@ bool LWZ2Component::validate_frame_(const std::vector<uint8_t> &frame, std::stri
     reason = tmp;
     return false;
   }
+  // Reject checksum-valid but truncated payloads before publishing or counting success.
+  size_t minimum = 0;
+  switch (this->current_command_) {
+    case 0xFB: minimum = 21; break;
+    case 0x05: minimum = 4; break;
+    case 0xFD: minimum = 2; break;
+    case 0xF4: minimum = this->firmware_ == FirmwareProfile::FW_214J ? 37 : 34; break;
+    case 0xE8: minimum = 22; break;
+    case 0x01: minimum = this->firmware_ == FirmwareProfile::FW_206 ? 12 : 6; break;
+    case 0x09: minimum = 10; break;
+    default: reason = "unsupported command"; return false;
+  }
+  if (frame.size() < 4 + minimum) {
+    reason = "truncated payload";
+    return false;
+  }
   return true;
 }
 
@@ -431,7 +546,15 @@ void LWZ2Component::parse_frame_(uint8_t command, const std::vector<uint8_t> &fr
   const uint8_t *data = frame.data() + 4;
   const size_t len = frame.size() - 4;
 
-  if (command == 0xFB) this->parse_fb_(data, len);
+  if (command == 0x05) {
+    if (this->hc1_gradient_sensor_) this->hc1_gradient_sensor_->publish_state(be16u_(data) / 10.0f);
+    if (this->hc1_low_end_sensor_) this->hc1_low_end_sensor_->publish_state(be16u_(data + 2) / 10.0f);
+  } else if (command == 0xFD) {
+    const unsigned version = be16u_(data);
+    char value[16];
+    std::snprintf(value, sizeof(value), "%02u.%02u", version / 100, version % 100);
+    if (this->firmware_version_text_sensor_) this->firmware_version_text_sensor_->publish_state(value);
+  } else if (command == 0xFB) this->parse_fb_(data, len);
   else if (command == 0xF4) this->parse_f4_(data, len);
   else if (command == 0xE8) this->parse_e8_(data, len);
   else if (command == 0x01) this->parse_01_(data, len);
@@ -543,6 +666,12 @@ void LWZ2Component::parse_09_(const uint8_t *d, size_t len) {
 
 void LWZ2Component::publish_status_bits_(bool compressor, bool heating_pump, bool dhw_pump, bool solar_pump,
                                          bool booster1, bool booster2, bool diverter, bool heat_pipe) {
+  const uint32_t previous_interval = this->effective_interval();
+  this->compressor_ = compressor;
+  this->heating_ = heating_pump;
+  this->dhw_ = dhw_pump;
+  if (this->effective_interval() != previous_interval)
+    this->next_fb_ms_ = millis() + this->effective_interval();
   if (this->compressor_binary_sensor_ != nullptr) this->compressor_binary_sensor_->publish_state(compressor);
   if (this->heating_circuit_pump_binary_sensor_ != nullptr) this->heating_circuit_pump_binary_sensor_->publish_state(heating_pump);
   if (this->dhw_pump_binary_sensor_ != nullptr) this->dhw_pump_binary_sensor_->publish_state(dhw_pump);
@@ -561,18 +690,9 @@ void LWZ2Component::publish_status_bits_(bool compressor, bool heating_pump, boo
 
 void LWZ2Component::update_communication_state_() {
   const uint32_t now = millis();
-  if (this->last_success_any_ms_ == 0) {
-    if ((now - this->startup_ms_) > this->stale_after_ms_ && !this->stale_published_) {
-      this->stale_published_ = true;
-      if (this->communication_ok_binary_sensor_ != nullptr)
-        this->communication_ok_binary_sensor_->publish_state(false);
-      if (this->communication_status_text_sensor_ != nullptr)
-        this->communication_status_text_sensor_->publish_state("disconnected");
-    }
-    return;
-  }
-
-  if ((now - this->last_success_any_ms_) > this->stale_after_ms_) {
+  const uint32_t threshold = std::max(this->stale_after_ms_, this->effective_interval() * 3);
+  const uint32_t reference = this->last_fb_success_ms_ == 0 ? this->startup_ms_ : this->last_fb_success_ms_;
+  if ((now - reference) > threshold) {
     if (!this->stale_published_) {
       this->stale_published_ = true;
       if (this->communication_ok_binary_sensor_ != nullptr)

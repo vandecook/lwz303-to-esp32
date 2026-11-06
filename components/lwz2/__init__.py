@@ -124,13 +124,19 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_FIRMWARE, default="2.14j"): cv.one_of(
                 "2.06", "2.14", "2.14j", lower=False
             ),
-            cv.Optional(CONF_STATUS_INTERVAL, default="5s"): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_STATUS_INTERVAL, default="10s"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_HEATING_INTERVAL, default="10s"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_FAN_INTERVAL, default="30s"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_HISTORY_INTERVAL, default="5min"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_FAN_CONFIG_INTERVAL, default="5min"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_STALE_AFTER, default="30s"): cv.positive_time_period_milliseconds,
 
+            **{cv.Optional(key): sensor.sensor_schema(accuracy_decimals=0, entity_category=ENTITY_CATEGORY_DIAGNOSTIC)
+               for key in ("successful_queries", "failed_queries", "timeouts", "retries")},
+            cv.Optional("hc1_gradient"): sensor.sensor_schema(accuracy_decimals=1),
+            cv.Optional("hc1_low_end"): sensor.sensor_schema(unit_of_measurement="K", accuracy_decimals=1),
+            **{cv.Optional(key): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC)
+               for key in ("last_success", "config_updated", "firmware_version")},
             cv.Optional(CONF_OUTSIDE_TEMPERATURE): temp_sensor_schema(),
             cv.Optional(CONF_FLOW_TEMPERATURE): temp_sensor_schema(),
             cv.Optional(CONF_RETURN_TEMPERATURE): temp_sensor_schema(),
@@ -228,6 +234,8 @@ async def to_code(config):
     cg.add(var.set_stale_after(config[CONF_STALE_AFTER].total_milliseconds))
 
     sensor_setters = {
+        **{key: "set_" + key + "_sensor" for key in
+           ("hc1_gradient", "hc1_low_end", "successful_queries", "failed_queries", "timeouts", "retries")},
         CONF_OUTSIDE_TEMPERATURE: "set_outside_temperature_sensor",
         CONF_FLOW_TEMPERATURE: "set_flow_temperature_sensor",
         CONF_RETURN_TEMPERATURE: "set_return_temperature_sensor",
@@ -285,6 +293,7 @@ async def to_code(config):
             cg.add(getattr(var, setter)(bs))
 
     text_setters = {
+        **{key: "set_" + key + "_text_sensor" for key in ("last_success", "config_updated", "firmware_version")},
         CONF_COMMUNICATION_STATUS: "set_communication_status_text_sensor",
         CONF_LAST_ERROR: "set_last_error_text_sensor",
         CONF_RAW_FB: "set_raw_fb_text_sensor",

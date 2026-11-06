@@ -1,120 +1,72 @@
-# ESPHome LWZ 2.x read-only component — V0.1
+# LWZ303 to ESP32 – v0.2.0
 
-Initial read-only ESPHome external component for the older Stiebel Eltron / Tecalor LWZ/THZ 2.x protocol family.
+Lesende ESPHome-Komponente für Firmwareprofile **2.06, 2.14 und 2.14j**. Basis: die vom Anwender als funktionierend bestätigte v0.1 (`f936515`). Neue v0.2-Funktionen sind noch nicht an der Hardware getestet. Kein 4.x/5.x-Support, keine LWZ-Parameterschreibfunktionen vor v0.5.
 
-## Supported firmware profiles
+## Anschluss und Installation
 
-- 2.06
-- 2.14
-- 2.14j
+- **9600 Baud, 8N1, ESP-RX GPIO5, ESP-TX GPIO6**, gemäß getestetem Aufbau.
+- RS232 über **3,3-V-kompatiblen Pegelwandler**, z.B. MAX3232. Niemals RS232 direkt an ESP-Pins anschließen. Gemeinsame Masse und Signalrichtungen beachten. Ein MAX232 erfordert zusätzlich passende TTL-Pegelanpassung.
+- Getesteter Aufbau laut Anwender: **ESP32-C3**. Beispielboard: `esp32-c3-devkitm-1`; bei abweichendem C3-Modul die genaue Boarddefinition anpassen. GPIO6 ist bei klassischen ESP32-Modulen ein Flash-Pin; dieser Aufbau ist für ESP32-C3 vorgesehen.
+- Serieller Logger bleibt aus (`baud_rate: 0`).
 
-No 4.x or 5.x support is included by design.
-
-## Scope of V0.1
-
-Read-only polling of these blocks:
-
-| Block | Purpose | Default interval |
-|---|---|---:|
-| `FB` | Common 2.x live values and compressor/pump state | 5 s |
-| `F4` | Heating-circuit data; firmware-specific layout | 10 s |
-| `E8` | Detailed fan state | 30 s |
-| `01` | Fan configuration / airflow stages | 5 min |
-| `09` | Operating-hour counters | 5 min |
-
-The component uses a non-blocking communication state machine so UART timeouts do not deliberately block ESPHome/Wi-Fi/OTA for seconds at a time.
-
-## Communication recovery
-
-- Wakeup/ACK, command ACK and response frame each have a timeout.
-- A failed transaction is retried up to three times.
-- After repeated failures, requests are backed off (10 s, then 30 s).
-- Numeric live values are published as `NaN` after `stale_after` (default 30 s).
-- Binary process states are **not forced to OFF** on a communication failure. Use `Communication OK` / `Communication Status` to determine whether their last state is trustworthy.
-- A successful frame automatically returns the component to normal polling.
-
-## Firmware selection
-
-The example YAML exposes `LWZ Firmware Profile` as a persistent ESPHome template select. It appears in Web Server v3 and Home Assistant.
-
-Changing the profile calls `set_firmware()` at runtime, clears the serial state and immediately starts a fresh poll sequence.
-
-The mappings are intentionally firmware-aware:
-
-- 2.06: `FBglob206`, `F4hc1`, `01pxx206`
-- 2.14: `FBglob214`, `F4hc1214`, `01pxx214`
-- 2.14j: `FBglob214`, `F4hc1214j`, `01pxx214`
-- all three: `E8fan206`, `09his206`
-
-## Heating / DHW status
-
-For V0.1:
-
-- `Heating Active` follows the **heating circuit pump** bit.
-- `DHW Active` follows the **DHW pump** bit.
-
-This is deliberately conservative. It avoids incorrectly treating `compressor = ON` as space heating while the compressor is actually producing DHW.
-
-`FB` is polled every 5 seconds because it contains these state bits across the supported 2.x profiles. Firmware 2.14j additionally exposes comparable actuator bits in its special F4 layout.
-
-## Fan values
-
-Three different kinds of fan information are kept separate:
-
-1. `FB`: live fan power / speed percentages.
-2. `E8`: detailed technical fan values such as actual speed, airflow setpoint and speed target.
-3. `01`: configured supply/exhaust airflow for fan stages 1..3.
-
-The `01` layout differs materially between 2.06 and 2.14/2.14j, which is why the selected firmware profile matters.
-
-## Serial connection
-
-The legacy interface documentation describes 9600 baud, 8 data bits, no parity, 1 stop bit. The example uses that setting.
-
-**Do not connect RS232 voltage levels directly to an ESP32.** Use a MAX3232 or equivalent RS232-to-3.3-V-TTL transceiver.
-
-Typical ESP32 example:
-
-- TX: GPIO17
-- RX: GPIO16
-- Logger serial output disabled (`logger.baud_rate: 0`)
-
-Adjust pins to your board.
-
-## Installation
-
-Place the directory next to the ESPHome YAML:
-
-```text
-<config>/
-├── lwz303-sol-example.yaml
-└── components/
-    └── lwz2/
-        ├── __init__.py
-        ├── lwz2.h
-        └── lwz2.cpp
-```
-
-The example loads it with:
+Repository herunterladen und `components/lwz2/` neben `lwz303-sol-example.yaml` belassen. Für die Softwareprüfung wurde ESPHome 2026.10.2 verwendet. Lokal `secrets.yaml` anlegen:
 
 ```yaml
-external_components:
-  - source: components
-    components: [lwz2]
+wifi_ssid: "Mein WLAN"
+wifi_password: "WLAN-Passwort"
+web_username: "admin"
+web_password: "Eigenes Web-Passwort"
 ```
 
-## Commissioning recommendation
-
-For the first connection set:
-
-```yaml
-logger:
-  level: VERBOSE
-  baud_rate: 0
+```console
+esphome config lwz303-sol-example.yaml
+esphome compile lwz303-sol-example.yaml
+esphome run lwz303-sol-example.yaml
 ```
 
-Every successfully decoded frame is logged as hex at VERBOSE level. Optional `raw_*` text sensors are also included in the component schema but commented out in the example because a 5-second raw FB entity creates unnecessary Home Assistant history churn.
+Das Beispiel lädt die lokale Komponente. Firmwareprofil passend zur LWZ im Webinterface oder Home Assistant wählen; es wird persistent gespeichert. Eine abgefragte Versionsnummer überschreibt die manuelle Auswahl nie.
 
-## Status of this version
+## Daten und Abfrageplanung
 
-V0.1 is based on the supplied FHEM `00_THZ.pm` protocol/parser definitions and the LWZ DLE handshake reference. It has been structured for real-device commissioning but has **not yet been verified against the user's physical LWZ 303 SOL / FW 2.14j**. Raw-frame comparison during the first test is therefore intentional.
+| Daten | Quelle | Standard |
+|---|---|---|
+| Außen-, Vorlauf-, Rücklauf-, Warmwassertemperatur | FB / sGlobal | 10 s |
+| Kompressor, Heizbetrieb = HK-Pumpe, WW-Bereitung = WW-Pumpe | FB | gleicher Block |
+| HK1 Gradient P13 und Fußpunkt P14 | 05 / pHeat1 | Boot, dann 60 min; manueller Refresh |
+| Firmwareversion | FD | einmal beim Boot/Profilwechsel, nur Profil 2.06 |
+
+Dynamik ist standardmäßig aktiv: 5 s bei Kompressor **ODER** Heizbetrieb **ODER** Warmwasser. Alle drei Trigger sind anfangs ausgewählt. Ohne ausgewählten aktiven Trigger gilt das Normalintervall. Im Webinterface konfigurierbar: Normal- und Dynamikintervall (5–300 s), HK1-Intervall (1–1440 min), Dynamik ein/aus und drei Trigger. Speicherung erfolgt durch ESPHome nach etwa einer Minute; Stromausfall davor kann letzte Änderungen verlieren. Diagnosezähler bleiben flüchtig.
+
+Intervalle laufen ab Transaktionsabschluss; Kommunikation, Retries und Backoff verlängern reale Abstände. Es läuft nur eine Transaktion gleichzeitig. Manueller HK1-Refresh wird zwischen Transaktionen eingereiht; ausstehende Klicks werden zusammengefasst. Nach endgültigem HK1-Fehler wartet die Automatik das Konfigurationsintervall, ein manueller Refresh bleibt möglich.
+
+Bestehende optionale F4-, E8-, 01- und 09-Entitäten und ihre Intervalloptionen bleiben verfügbar. Ihre Datenblöcke werden nur bei konfigurierten Verbrauchern gelesen. Das Minimalbeispiel fragt keinen dieser zusätzlichen Blöcke ab.
+
+Die bisherigen Optionen unter `lwz2` bleiben erhalten: `heating_interval` (F4, 10 s), `fan_interval` (E8, 30 s), `fan_config_interval` (01, 5 min) und `history_interval` (09, 5 min). F4 wird für `inside_temperature` oder `raw_f4` gelesen; die anderen Blöcke bei ihren jeweiligen Sensoren oder Raw-Entitäten.
+
+## Lokales Webinterface
+
+`http://lwz303-sol.local/` oder Geräte-IP öffnen und mit Web-Zugangsdaten anmelden. ESPHome Web Server v3 ist lokal eingebettet. Angezeigt werden ausschließlich gecachte Entitäten: **Seitenaufrufe erzeugen keine seriellen Abfragen.** Basiswerte, HK1, Diagnose, Uptime und effektives Intervall sind sichtbar. ESP-Uhrzeit erscheint nach SNTP-Synchronisierung (Europe/Vienna), sonst „nicht verfügbar“. SNTP stellt ausschließlich die ESP-Uhr, niemals die LWZ-Uhr.
+
+Letzter Erfolg und HK1-Zeitpunkt sind ausdrücklich `boot+…s`, unabhängig von Netzzeit. Der Millisekundenzähler läuft nach etwa 49,7 Tagen um; Zeitstempel beginnen dann erneut. Die Intervallplanung berücksichtigt den Überlauf. Logs sind ein Live-Stream während der geöffneten Verbindung, kein dauerhaftes Archiv.
+
+- **HK1 jetzt aktualisieren:** lesende 05-Abfrage einreihen.
+- **Kommunikationszähler zurücksetzen:** vier Zähler löschen; Backoff, Zustand und letzter Erfolg bleiben erhalten.
+- **RS232 neu initialisieren:** laufende Transaktion abbrechen, Empfangspuffer und Protokollzustand zurücksetzen, UART-Einstellungen erneut anwenden und frisch abfragen. Kein Reset der LWZ.
+- **ESP32 neu starten:** zuerst Bestätigungsschalter aktivieren, dann innerhalb von 30 s Neustarttaste drücken. Ohne Freigabe wirkungslos; Freigabe wird nicht gespeichert.
+
+## Diagnose und Recovery
+
+Erfolgreiche Abfragen zählen gültige Antworten mit passendem Befehl, Prüfsumme und Mindestlänge. Fehlgeschlagene Abfragen zählen endgültige Fehler nach maximal drei Versuchen. Timeouts zählen einzelne abgelaufene Wartezeiten; Retries zählen eingeplante Wiederholungen (maximal zwei je Transaktion). Letzter Fehler, letzter Erfolg und Kommunikationszustand ergänzen die Zähler.
+
+Nicht blockierender DLE-Handshake, 1800-ms-ACK-/Frame-Timeouts, 250-ms-Retryabstand und Fehler-Backoff aus v0.1 bleiben erhalten. Empfangsframe und UART-Arbeit pro Schleife sind begrenzt. Veraltete numerische Livewerte werden NaN: Schwelle ist Maximum aus `stale_after` (30 s) und dreifachem effektivem FB-Intervall. Eine Konfigurationsantwort macht veraltete FB-Werte nicht aktuell. Binäre Betriebszustände behalten ihren letzten Wert: immer mit „Kommunikation OK“ bewerten.
+
+## Protokollbelege und Grenzen
+
+Geprüfte Primärquelle: [FHEM 00_THZ.pm, Commit 2321c570](https://github.com/fhem/fhem-mirror/blob/2321c5704120012cfdc10d2cbee381c8d9676905/fhem/FHEM/00_THZ.pm).
+
+- FBglob206/FBglob214: Temperaturen bei Payloadoffset 2/4/6/10, Aktorbits bei 20.
+- 05pxx206: P13 bei Payloadoffset 0, P14 bei 2, jeweils unsigned Big Endian / 10. pHeat1 gehört zum gemeinsamen 2.x-Lesesatz, einschließlich 2.14/2.14j. Keine Übernahme der 4.x-Befehle 0B010E/0B059E.
+- FDfirm: uint16 als Version, z.B. 206 → 02.06. In FHEM nur für Profil 2.06 im Lesesatz belegt. Bei 2.14/2.14j deshalb „unsupported (manual profile)“ und keine Probe. Ein j-Suffix ist so nicht erkennbar.
+- FHEM-Hexpositionen beginnen bei Prüfsumme/Befehlsbyte: Umrechnung zum Payload = Hexposition / 2 - 2.
+
+Quellenseitige Verifikation ersetzt keinen Hardwaretest auf allen Profilen. Ausgeführte Tests und offene Punkte: [VALIDATION.md](VALIDATION.md). Planung: [ROADMAP.md](ROADMAP.md). Detaillierte Deltas: [CHANGELOG.md](CHANGELOG.md).
