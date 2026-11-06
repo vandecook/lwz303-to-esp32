@@ -1,6 +1,6 @@
 # Validierung v0.3.0
 
-Aktueller Bericht: [Softwarevalidierung v0.3](docs/VALIDATION-v0.3.md). Die gespeicherte Auswahl mit 31 Ja und 47 Optional ist integriert. Beispiel-Schema, C++-Codegenerierung und synthetische Transport-/Schreibtests sind geprüft; physische Hardwaretests und ein ESP32-Binärbuild stehen aus.
+Aktueller Bericht: [Softwarevalidierung v0.3](docs/VALIDATION-v0.3.md). Die gespeicherte Auswahl mit 33 Ja und 47 Optional ist integriert. Beispiel-Schema, C++-Codegenerierung und synthetische Transport-/Schreibtests sind geprüft; physische Hardwaretests und ein ESP32-Binärbuild stehen aus.
 
 Der folgende Bericht beschreibt den historischen v0.2-Stand; Aussagen zu dort noch fehlenden Schreibfunktionen gelten nicht für die neue v0.3-Implementierung.
 

@@ -566,6 +566,40 @@
       "field": "exhaustFanSpeedTarget"
     },
     {
+      "choice": "Ja",
+      "id": "OUT063",
+      "name": "Zuluft-Kalibrierkennwert Speed200, Bedeutung/Einheit nicht belegt [nicht belegt]",
+      "source": "sFan.supplyFanSpeed200",
+      "function": "Lesen",
+      "category": "Analyse Wohnraumlüftung – standardmäßig aktiv",
+      "note": "Ausdrücklich als Ja gewählt. FHEM uint16 BE /10, eine Nachkommastelle. Physikalische Einheit und Bedeutung des Kalibrierpunkts sind nicht bestätigt; keine Umdeutung in U/min oder 1/s.",
+      "optional": false,
+      "key": "s_fan_supply_fan_speed200",
+      "kind": "sensor",
+      "legacy": false,
+      "unit": "",
+      "block": "sFan",
+      "field": "supplyFanSpeed200",
+      "accuracy_decimals": 1
+    },
+    {
+      "choice": "Ja",
+      "id": "OUT064",
+      "name": "Abluft-Kalibrierkennwert Speed200, Bedeutung/Einheit nicht belegt [nicht belegt]",
+      "source": "sFan.exhaustFanSpeed200",
+      "function": "Lesen",
+      "category": "Analyse Wohnraumlüftung – standardmäßig aktiv",
+      "note": "Ausdrücklich als Ja gewählt. FHEM uint16 BE /10, eine Nachkommastelle. Physikalische Einheit und Bedeutung des Kalibrierpunkts sind nicht bestätigt; keine Umdeutung in U/min oder 1/s.",
+      "optional": false,
+      "key": "s_fan_exhaust_fan_speed200",
+      "kind": "sensor",
+      "legacy": false,
+      "unit": "",
+      "block": "sFan",
+      "field": "exhaustFanSpeed200",
+      "accuracy_decimals": 1
+    },
+    {
       "choice": "Optional",
       "id": "OUT069",
       "name": "Heizungs-Integral [nicht belegt]",
@@ -1402,24 +1436,6 @@
     },
     {
       "choice": "Später",
-      "id": "OUT063",
-      "name": "Zuluft-Kalibrierkennwert Speed200, Bedeutung/Einheit nicht belegt [nicht belegt]",
-      "source": "sFan.supplyFanSpeed200",
-      "function": "Lesen",
-      "category": "Zurückstellen – Decoderprüfung",
-      "note": "Alle drei FHEM-Profile liefern auffällige E8-Werte. In v0.3 intern lesen/Rohdaten prüfen, aber noch keine reguläre sFan-Entität veröffentlichen. Lüfter-Prozentwerte aus sGlobal bleiben getrennt verfügbar."
-    },
-    {
-      "choice": "Später",
-      "id": "OUT064",
-      "name": "Abluft-Kalibrierkennwert Speed200, Bedeutung/Einheit nicht belegt [nicht belegt]",
-      "source": "sFan.exhaustFanSpeed200",
-      "function": "Lesen",
-      "category": "Zurückstellen – Decoderprüfung",
-      "note": "Alle drei FHEM-Profile liefern auffällige E8-Werte. In v0.3 intern lesen/Rohdaten prüfen, aber noch keine reguläre sFan-Entität veröffentlichen. Lüfter-Prozentwerte aus sGlobal bleiben getrennt verfügbar."
-    },
-    {
-      "choice": "Später",
       "id": "OUT065",
       "name": "Luftmengen-Toleranz [nicht belegt]",
       "source": "sFan.airflowTolerance",
@@ -1471,6 +1487,18 @@
       "function": "Lesen",
       "category": "Zurückstellen – Verifikation offen",
       "note": "Kühlungsstunden bisher 0; tatsächliche Kühlfunktion/Zählerverwendung nicht bestätigt."
+    }
+  ],
+  "selection_overrides": [
+    {
+      "id": "OUT063",
+      "choice": "Ja",
+      "source": "Explicit latest user message; supersedes Optional and any unsaved workbook state"
+    },
+    {
+      "id": "OUT064",
+      "choice": "Ja",
+      "source": "Explicit latest user message; supersedes Optional and any unsaved workbook state"
     }
   ]
 }

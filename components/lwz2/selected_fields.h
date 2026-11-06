@@ -129,5 +129,11 @@ static constexpr SelectedField SELECTED_FIELDS[] = {
   {"p01-p12_p12_fan_stage_manual", 0x17, 1, 42, 2, FieldMode::UNSIGNED, 0, 1.000000000f},
   {"p01-p12_p12_fan_stage_manual", 0x17, 2, 42, 2, FieldMode::UNSIGNED, 0, 1.000000000f},
   {"p01-p12_p12_fan_stage_manual", 0x17, 4, 42, 2, FieldMode::UNSIGNED, 0, 1.000000000f},
+  {"s_fan_supply_fan_speed200", 0xE8, 1, 56, 4, FieldMode::UNSIGNED, 0, 10.000000000f},
+  {"s_fan_supply_fan_speed200", 0xE8, 2, 56, 4, FieldMode::UNSIGNED, 0, 10.000000000f},
+  {"s_fan_supply_fan_speed200", 0xE8, 4, 56, 4, FieldMode::UNSIGNED, 0, 10.000000000f},
+  {"s_fan_exhaust_fan_speed200", 0xE8, 1, 60, 4, FieldMode::UNSIGNED, 0, 10.000000000f},
+  {"s_fan_exhaust_fan_speed200", 0xE8, 2, 60, 4, FieldMode::UNSIGNED, 0, 10.000000000f},
+  {"s_fan_exhaust_fan_speed200", 0xE8, 4, 60, 4, FieldMode::UNSIGNED, 0, 10.000000000f},
 };
 }  // namespace esphome::lwz2

@@ -2,7 +2,9 @@
 
 ## 0.3.0 – 2026-11-06
 
-- Benutzergeänderte Auswahl übernommen: 31 Ja und 47 Optional; Dateihash und 78 Einträge in `components/lwz2/selection.json`.
+- Nach Nutzerkorrektur OUT063/OUT064 (Zuluft/Abluft Speed200) als Ja standardmäßig aktiv ergänzt: FHEM uint16 BE /10, eine Nachkommastelle, keine unbestätigte physikalische Einheit.
+
+- Benutzergeänderte Auswahl übernommen: 33 Ja und 47 Optional; Dateihash und 80 Einträge in `components/lwz2/selection.json`.
 - F3, EE, FC und 17 in die serielle Abfrageplanung aufgenommen; ausgewählte F4-/FB-Felder mit profilierten FHEM-Offsets ergänzt. Vorhandene E8-/09-/05-Parser weiterverwendet.
 - Optionale Entitäten vollständig mit erzeugt, in Home Assistant zunächst deaktiviert; Basis-/Expert-Gruppen im Geräteweb. Nicht gewählte Entitäten aus den beiden Beispiel-/Nutzerkonfigurationen entfernt.
 - Unabhängige Global- und HK1-Decoderlayouts; Raum-/Stufenwerte ohne belegtes Layout bleiben ungültig. FB bleibt alleinige Quelle gemeinsamer Mess-/Aktorzustände; kein F4-Überschreiben.

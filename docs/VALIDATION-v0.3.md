@@ -4,8 +4,8 @@ Stand 2026-11-06. Geräte-Firmware laut Nutzer 2.16; 2.06/2.14/2.14j sind Decode
 
 ## Auswahl und Konfiguration
 
-- Die vom Nutzer gespeicherte Auswahl enthält 31 Einträge `Ja` und 47 `Optional`, insgesamt 78. `components/lwz2/selection.json` hält IDs, Herkunft, gewählte Einstellungen und SHA-256 der Excel-Datei fest.
-- `tests/test_selection.py` prüft die vollständige Konfiguration aller 76 Werte plus 2 Uhraktionen, eindeutige Schlüssel, 47 deaktivierte optionale HA-Entitäten, die Ausschlüsse und die vier gezielten Number-Schreibfelder. Die gespeicherte Excel-Datei wird, sofern lokal vorhanden, gegen den Hash geprüft; Firmware und CI brauchen keine Excel-Datei.
+- Die freigegebene Auswahl (Excel und letzte Chatkorrektur für OUT063/OUT064) enthält 33 Einträge `Ja` und 47 `Optional`, insgesamt 80. `components/lwz2/selection.json` hält IDs, Herkunft, gewählte Einstellungen und SHA-256 der Excel-Datei fest. Die Chatkorrektur ist getrennt unter `selection_overrides` protokolliert und hat Vorrang vor einem noch nicht gespeicherten Tabellenstand.
+- `tests/test_selection.py` prüft die vollständige Konfiguration aller 78 Werte plus 2 Uhraktionen, eindeutige Schlüssel, 47 deaktivierte optionale HA-Entitäten, die Ausschlüsse und die vier gezielten Number-Schreibfelder. Die gespeicherte Excel-Datei wird, sofern lokal vorhanden, gegen den Hash geprüft; Firmware und CI brauchen keine Excel-Datei.
 - ESPHome **2026.10.2**: Beispielkonfiguration gültig und C++-Codegenerierung erfolgreich. Kein neues ESP32-Firmware-Image erstellt; Flash/RAM und ESP-IDF-Build sind nicht nachgewiesen.
 - Die individuelle `lwz303.yaml` hat einen bereits vorhandenen, lokal nicht auflösbaren Verweis `!secret api_encryption_key`. Die übrige Konfiguration wurde deshalb in einer isolierten Kopie mit Prüfplatzhaltern validiert. Zugangsdaten, Netzwerk- und Board-Einstellungen der Originaldatei wurden nicht ersetzt. Vor Einsatz auf dem eigenen ESPHome-Host müssen dessen Secret-Verweise vorhanden sein.
 
@@ -23,6 +23,7 @@ Geprüft sind:
 6. Vollständiger frischer GET-17, Erhalt aller anderen Bytes einschließlich 10-/2B-Escaping, genau ein SET, unabhängiger GET zur Verifikation, kein Erfolg allein aufgrund SET-ACK.
 7. Verlorene SET-Antwort: kein SET-Retry, direkte Rücklesekontrolle. Veränderter anderer Parameter führt zu Fehler, keine automatische Reparatur oder Wiederholung. Zu kurzer Parameterblock wird abgelehnt.
 8. Uhr ±1h, Datum/Reservebytes erhalten, laufende Sekunden berücksichtigt, Wiederholungssperre, Ablehnung beider Tagesgrenzen. Rücknahme der Schreibfreigabe vor SET verhindert das Schreiben.
+9. OUT063/OUT064 in allen drei Decoderprofilen: E8 Hexposition 56/60, uint16 BE /10, Werte 3,1 /460,8 /435,2 ohne Rundung auf ganze Zahlen. Bei zu kurzer Antwort wird nur das fehlende Feld ungültig. Die Auswahlprüfung bestätigt beide als Ja, standardmäßig aktiv, mit einer Nachkommastelle und ohne erfundene physikalische Einheit.
 
 ## Wiederholen
 

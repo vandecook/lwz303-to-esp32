@@ -6,7 +6,7 @@ Stand 2026-11-06. Geräte-Firmware laut Nutzer 2.16; separate Decoderlayouts 2.0
 |---|---|---|
 | 0.1 | Basiskommunikation, 9600 8N1, Pegelwandler, RX5/TX6 im getesteten Aufbau, Profile, Retry-/Nonblocking-Logik | Vom Anwender als funktionierend bestätigt |
 | 0.2 | Basiswerte, Diagnose, HK1 P13/P14 lesend, 10/5-s-Dynamik, 60-min-Konfiguration, persistentes lokales Webinterface und Serviceaktionen | Implementiert; neue Hardwarefunktionen noch zu testen |
-| 0.3 | Benutzerauswahl: 31 Ja + 47 Optional, sieben Statusblöcke, Parameter 17, P01/P02/P04/P05 und Uhr ±1h schreiben, Rücklesen, unabhängige Decoderlayouts | Software implementiert; Hardware-/ESP32-Build offen |
+| 0.3 | Benutzerauswahl: 33 Ja + 47 Optional, sieben Statusblöcke, Parameter 17, P01/P02/P04/P05 und Uhr ±1h schreiben, Rücklesen, unabhängige Decoderlayouts | Software implementiert; Hardware-/ESP32-Build offen |
 | 0.4 | Heizungs-/WW-Zeitprogramme mit Wochentagen und Zeitfenstern lesen; Statusblöcke bereits v0.3 | Geplant |
 | 0.5 | Nach Vorziehen der Uhr-Schreibfunktion auf v0.3 neu zu bestimmen | Offen |
 | 0.6 | Gradient/Fußpunkt schreiben; Tag-/Nacht-Sollwerte bereits v0.3 | Geplant |

@@ -12,12 +12,12 @@ class SelectionTest(unittest.TestCase):
     def test_saved_selection_is_fully_configured(self):
         manifest=json.loads((ROOT/'components/lwz2/selection.json').read_text(encoding='utf-8'))
         entities=manifest['entities']
-        self.assertEqual(len(entities),78)
-        self.assertEqual(sum(not r['optional'] for r in entities),31)
+        self.assertEqual(len(entities),80)
+        self.assertEqual(sum(not r['optional'] for r in entities),33)
         self.assertEqual(sum(r['optional'] for r in entities),47)
-        self.assertEqual(len({r['id'] for r in entities}),78)
+        self.assertEqual(len({r['id'] for r in entities}),80)
         keys=[r['key'] for r in entities if r['kind']!='action']
-        self.assertEqual(len(set(keys)),76)
+        self.assertEqual(len(set(keys)),78)
         raw=(ROOT/'lwz303-sol-example.yaml').read_text(encoding='utf-8')
         raw=re.sub(r'!secret\s+\S+', '"validation-only"',raw)
         config=yaml.safe_load(raw)
@@ -34,6 +34,14 @@ class SelectionTest(unittest.TestCase):
         self.assertEqual(len([r for r in entities if r['kind']=='number']),4)
         self.assertEqual(len([r for r in entities if r['kind']=='action']),2)
         self.assertEqual(config['switch'][0]['restore_mode'],'ALWAYS_OFF')
+        for id,key in [('OUT063','s_fan_supply_fan_speed200'),('OUT064','s_fan_exhaust_fan_speed200')]:
+            entry=next(r for r in entities if r['id']==id)
+            self.assertEqual(entry['choice'],'Ja')
+            self.assertFalse(entry['optional'])
+            self.assertEqual(configured[key]['accuracy_decimals'],1)
+            self.assertNotIn('unit_of_measurement',configured[key])
+            self.assertEqual(entry['unit'],'')
+        self.assertEqual({r['id'] for r in manifest['selection_overrides']},{'OUT063','OUT064'})
         # The approved workbook is an audit source, not needed by firmware or CI.
         workbook=ROOT/'outputs/parameterkatalog-v03'/manifest['source_workbook']
         if workbook.exists():self.assertEqual(hashlib.sha256(workbook.read_bytes()).hexdigest(),manifest['source_sha256'])

@@ -31,6 +31,23 @@ void v03_tests() {
     for (size_t i = 1; i < tx.size(); i++) if (tx[i - 1] == 1 && tx[i] == 0x80) n++;
     return n;
   };
+  // Ventilation Speed200 calibration values: distinct from current speed/target,
+  // FHEM uint16 BE /10, no inferred physical unit, identical E8 decoder in all profiles.
+  for (const auto *profile : {"2.06", "2.14", "2.14j"}) {
+    V03 t;sensor::Sensor supply200,exhaust200;
+    t.set_firmware(profile);
+    t.set_selected_sensor("s_fan_supply_fan_speed200",&supply200);
+    t.set_selected_sensor("s_fan_exhaust_fan_speed200",&exhaust200);
+    std::vector<uint8_t> e8(30);e8[26]=0;e8[27]=31;e8[28]=0x12;e8[29]=0;
+    t.parse_frame_(0xE8,frame(0xE8,e8));
+    assert(std::fabs(supply200.state-3.1f)<0.001f && std::fabs(exhaust200.state-460.8f)<0.001f);
+    e8[28]=0x11;e8[29]=0;t.parse_frame_(0xE8,frame(0xE8,e8));
+    assert(std::fabs(exhaust200.state-435.2f)<0.001f);
+    e8.resize(28);t.parse_frame_(0xE8,frame(0xE8,e8));
+    assert(std::fabs(supply200.state-3.1f)<0.001f && std::isnan(exhaust200.state));
+    e8.resize(22);t.parse_frame_(0xE8,frame(0xE8,e8));
+    assert(std::isnan(supply200.state) && std::isnan(exhaust200.state));
+  }
   // Selected fields use exact offsets, signed decoding, explicit enums and distinct sources.
   V03 decoder; sensor::Sensor dhw_target, integral, room, inside_fb, inside_f4, fan_speed, fan_percent;
   text_sensor::TextSensor mode, season, weekday;

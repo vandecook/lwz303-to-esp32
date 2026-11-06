@@ -1,6 +1,6 @@
 # LWZ303 to ESP32 – v0.3.0
 
-Die gespeicherte Excel-Auswahl ist umgesetzt: **31 Ja + 47 Optional = 78 Einträge**. Die konkrete Anlage läuft laut Nutzer mit **Geräte-Firmware 2.16**. `2.06`, `2.14` und `2.14j` sind die auswählbaren **Decoderlayouts**; daraus folgt keine pauschale Hardwarefreigabe.
+Die Excel-Auswahl einschließlich der letzten Chatkorrektur ist umgesetzt: **33 Ja + 47 Optional = 80 Einträge**. Die konkrete Anlage läuft laut Nutzer mit **Geräte-Firmware 2.16**. `2.06`, `2.14` und `2.14j` sind die auswählbaren **Decoderlayouts**; daraus folgt keine pauschale Hardwarefreigabe.
 
 ## Auswahl und Bedienung in v0.3
 
@@ -13,6 +13,12 @@ Die gespeicherte Excel-Auswahl ist umgesetzt: **31 Ja + 47 Optional = 78 Einträ
 - Stufe 3 existiert nur im 2.06-FB-Layout. Bei anderen Globalprofilen bleibt die gewählte Entität unbekannt. `hcStage` ist nur im HK1-Layout 2.14j verfügbar; `hcBoosterStage` gehört zu 2.06/2.14. Beide werden angeboten, aber keine Werte aus einem anderen Layout erfunden.
 - Die vier ausgewählten sFan-Drehzahlwerte sind optional eingebaut. Ihre physikalische Plausibilität/Decoderzuordnung ist weiter offen; Werte sind kein Nachweis einer funktionierenden Luftmengenmessung. Einheiten bleiben 1/s bzw. % gemäß geprüftem Decoder, nicht U/min oder Watt.
 - Fehlende/abgelaufene Daten werden je Block ungültig. Ein erfolgreicher FB-Empfang hält ausgefallene F3/E8/EE/FC-Werte nicht künstlich aktuell.
+
+### Speed200 für die Wohnraumlüftungsanalyse
+
+OUT063 (`sFan.supplyFanSpeed200`) und OUT064 (`sFan.exhaustFanSpeed200`) sind nach der letzten Nutzerkorrektur **Ja**, standardmäßig aktiv und nicht `disabled_by_default`. Beide sind getrennte Zuluft-/Abluft-Kalibrierkennwerte, keine Dubletten der aktuellen Lüfterdrehzahl.
+
+Der geprüfte FHEM-Decoder verwendet Hexposition 56 bzw. 60, unsigned 16 Bit Big Endian und Division durch 10. Eine Nachkommastelle bleibt erhalten (z. B. 3,1 / 460,8). Die physikalische Einheit/Bedeutung ist nicht bestätigt; es wird keine Einheit U/min oder 1/s erfunden. Bei zu kurzer E8-Antwort sind die fehlenden Felder NaN. Die explizite Chatkorrektur ist unter `selection_overrides` festgehalten, falls die geöffnete Excel-Datei noch den früheren Stand enthält.
 
 ## Erste manuelle LWZ-Schreibfunktionen
 

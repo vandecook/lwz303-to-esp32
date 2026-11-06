@@ -132,7 +132,7 @@ def selected_schema():
         elif entry["kind"] == "text_sensor":
             schema = text_sensor.text_sensor_schema()
         else:
-            options = {"accuracy_decimals": 1 if entry.get("unit") == "°C" else 0}
+            options = {"accuracy_decimals": entry.get("accuracy_decimals", 1 if entry.get("unit") == "°C" else 0)}
             if entry.get("unit"):
                 options["unit_of_measurement"] = entry["unit"]
             schema = sensor.sensor_schema(**options)
