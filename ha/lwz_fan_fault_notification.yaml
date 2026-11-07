@@ -1,0 +1,40 @@
+blueprint:
+  name: LWZ v0.4 – lokale Luefterfehler melden
+  description: >-
+    Meldet neue gespeicherte F5/F6-Fehler aus ESPHome als dauerhafte HA-Mitteilung.
+    Fuehrt keinen Neustart aus. Entitaeten der eigenen LWZ auswaehlen.
+    Nach Verbindungswiederkehr vorhandene Fehler am Geraet und in der Historie pruefen.
+  domain: automation
+  input:
+    exhaust_fault:
+      name: F5 Abluft lokal erkannt
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: problem
+    supply_fault:
+      name: F6 Zuluft lokal erkannt
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: problem
+triggers:
+  - trigger: state
+    entity_id: !input exhaust_fault
+    from: "off"
+    to: "on"
+  - trigger: state
+    entity_id: !input supply_fault
+    from: "off"
+    to: "on"
+actions:
+  - action: persistent_notification.create
+    data:
+      title: "LWZ Luefterstoerung"
+      message: >-
+        {{ trigger.to_state.name }}: Istdrehzahl bei aktiver Luefterstufe
+        fuer mindestens 120 Sekunden null. Fehler bleibt bis zur Ruecksetzung gespeichert.
+mode: queued
+max: 10

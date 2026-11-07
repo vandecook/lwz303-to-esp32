@@ -94,6 +94,12 @@ bool LWZ2Component::v03_schedule_() {
     return true;
   }
   if (!v03_enabled_) return false;
+  if (v04_enabled_) for (unsigned i = 0; i < 2; i++) {
+    if (time_reached_(now, v04_due_[i])) {
+      start_transaction_(i ? 0xF6 : 0xF2);
+      return true;
+    }
+  }
   for (unsigned i = 0; i < 4; i++) {
     if (time_reached_(now, v03_due_[i])) {
       start_transaction_(EXTRA_COMMANDS[i]);
@@ -105,7 +111,9 @@ bool LWZ2Component::v03_schedule_() {
 
 void LWZ2Component::v03_schedule_result_(uint8_t command) {
   for (unsigned i = 0; i < 4; i++) if (command == EXTRA_COMMANDS[i])
-    v03_due_[i] = millis() + (command == 0x17 ? 60000 : command == 0xF3 ? status_interval_ms_ : 30000);
+    v03_due_[i] = millis() + (v04_enabled_ ? 10000 : command == 0x17 ? 60000 : command == 0xF3 ? status_interval_ms_ : 30000);
+  if (v04_enabled_) for (unsigned i = 0; i < 2; i++) if (command == (i ? 0xF6 : 0xF2))
+    v04_due_[i] = millis() + 10000;
 }
 
 void LWZ2Component::v03_stale_() {
@@ -144,7 +152,10 @@ void LWZ2Component::invalidate_block_(uint8_t command) {
     INVALIDATE_SENSOR(heating_hours); INVALIDATE_SENSOR(dhw_hours); INVALIDATE_SENSOR(cooling_hours);
   } else if (command == 5) {
     INVALIDATE_SENSOR(hc1_gradient); INVALIDATE_SENSOR(hc1_low_end);
-  } else if (command == 0x17) for (auto *n : setpoints_) if (n) n->publish_state(NAN);
+  } else if (command == 0x17) {
+    for (auto *n : setpoints_) if (n) n->publish_state(NAN);
+    for (auto *n : fan_stages_) if (n) n->publish_state(NAN);
+  }
 #undef INVALIDATE_SENSOR
 #undef INVALIDATE_BINARY
 }
@@ -154,6 +165,14 @@ void LWZ2Component::publish_write_status_(const std::string &status) {
 }
 
 void LWZ2Component::finish_write_(const std::string &status) {
+  if (v04_enabled_ && write_command_ == 0xFC) {
+    if (status.rfind("verified:", 0) == 0 && pending_clock_mode_ >= 0) {
+      saved_.clock_mode = pending_clock_mode_;
+      v04_save_();
+    }
+    pending_clock_mode_ = -2;
+    clock_mode_publish_();
+  }
   publish_write_status_(status);
   write_stage_ = WriteStage::NONE;
   sending_set_ = false;
@@ -178,6 +197,7 @@ bool LWZ2Component::request_clock_shift(int hours) {
     publish_write_status_("rejected: disabled, busy or clock action cooldown"); return false;
   }
   clock_request_seen_ = true; last_clock_request_ms_ = millis(); clock_shift_ = hours;
+  pending_clock_mode_ = -2;
   write_command_ = 0xFC; write_stage_ = WriteStage::READ;
   publish_write_status_("pending: fresh device clock read"); return true;
 }
@@ -194,10 +214,14 @@ void LWZ2Component::write_response_(const std::vector<uint8_t> &frame) {
     write_read_ms_ = millis();
     if (write_command_ == 0x17) {
       if (data.size() < 20 || data.size() > 128) { finish_write_("rejected: incomplete parameter block"); return; }
-      static const uint8_t offsets[]{0, 2, 6, 8};
-      const uint16_t raw = static_cast<uint16_t>(std::lround(write_value_ * 10));
-      write_expected_[offsets[write_index_]] = raw >> 8;
-      write_expected_[offsets[write_index_] + 1] = raw & 255;
+      if (write_index_ < 4) {
+        static const uint8_t offsets[]{0, 2, 6, 8};
+        const uint16_t raw = static_cast<uint16_t>(std::lround(write_value_ * 10));
+        write_expected_[offsets[write_index_]] = raw >> 8;
+        write_expected_[offsets[write_index_] + 1] = raw & 255;
+      } else {
+        write_expected_[12 + write_index_ - 4] = static_cast<uint8_t>(write_value_);
+      }
     } else {
       if (data.size() < 9 || data.size() > 128 || data[2] > 23 || data[3] > 59 || data[4] > 59 ||
           data[7] < 1 || data[7] > 12 || data[8] < 1 || data[8] > 31 || (data[1] & 15) > 6) {
@@ -207,6 +231,12 @@ void LWZ2Component::write_response_(const std::vector<uint8_t> &frame) {
       // Calendar and weekday rollover are deliberately not guessed. Leave 30 s for the transaction.
       if (target < 30 || target >= 86370) { finish_write_("rejected: date rollover requires verified calendar support"); return; }
       write_expected_[2] = target / 3600;
+      // Save uncertainty BEFORE SET. A power loss must never replay a seasonal shift.
+      if (v04_enabled_) {
+        saved_.clock_mode = -1;
+        if (!v04_save_()) { finish_write_("FAILED: cannot persist clock transaction; no SET sent"); return; }
+        clock_mode_publish_();
+      }
     }
     write_stage_ = WriteStage::SET; publish_write_status_("pending: single targeted write"); return;
   }

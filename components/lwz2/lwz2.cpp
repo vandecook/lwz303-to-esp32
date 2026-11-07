@@ -10,7 +10,7 @@ namespace esphome::lwz2 {
 static const char *const TAG = "lwz2";
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.3.0 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.4.0 (device FW independent of decoder profile)");
   this->frame_.reserve(128);
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17}) {
     invalidate_block_(command);
@@ -18,6 +18,7 @@ void LWZ2Component::setup() {
   }
   for (auto *n : setpoints_) if (n) n->publish_state(NAN);
   publish_write_status_("disabled by default; hardware write test pending");
+  v04_setup_();
   this->startup_ms_ = millis();
   this->setup_complete_ = true;
   if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
@@ -70,6 +71,7 @@ void LWZ2Component::set_firmware(const std::string &fw) {
     return;
 
   this->firmware_ = next;
+  v04_invalidate_();
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17})
     invalidate_block_(command);
   if (!this->setup_complete_)
@@ -117,6 +119,7 @@ void LWZ2Component::loop() {
   if (now - this->last_diagnostics_ms_ >= 1000) {
     this->last_diagnostics_ms_ = now;
     this->publish_diagnostics_();
+    this->v04_tick_();
   }
 }
 
@@ -409,7 +412,7 @@ void LWZ2Component::mark_success_() {
       break;
     case 0xE8:
       this->last_e8_success_ms_ = now;
-      this->next_e8_ms_ = now + this->fan_interval_ms_;
+      this->next_e8_ms_ = now + (v04_enabled_ ? std::min(fan_interval_ms_, uint32_t(10000)) : fan_interval_ms_);
       break;
     case 0x01:
       this->last_01_success_ms_ = now;
@@ -437,7 +440,8 @@ void LWZ2Component::mark_success_() {
 uint32_t LWZ2Component::effective_interval() const {
   const bool active = (this->trigger_compressor_ && this->compressor_) ||
                       (this->trigger_heating_ && this->heating_) || (this->trigger_dhw_ && this->dhw_);
-  return this->dynamic_enabled_ && active ? this->dynamic_interval_ms_ : this->status_interval_ms_;
+  const uint32_t interval = this->dynamic_enabled_ && active ? this->dynamic_interval_ms_ : this->status_interval_ms_;
+  return v04_enabled_ && speed_source_ == "sGlobal" ? std::min(interval, uint32_t(10000)) : interval;
 }
 
 void LWZ2Component::publish_diagnostics_() {
@@ -541,6 +545,8 @@ bool LWZ2Component::validate_frame_(const std::vector<uint8_t> &frame, std::stri
     case 0x05: minimum = 4; break;
     case 0xFD: minimum = 2; break;
     case 0xF3: minimum = 18; break;
+    case 0xF2: minimum = 6; break;
+    case 0xF6: minimum = 18; break;
     case 0xEE: minimum = 19; break;
     case 0xFC: minimum = 9; break;
     case 0x17: minimum = 20; break;
@@ -589,6 +595,7 @@ void LWZ2Component::parse_frame_(uint8_t command, const std::vector<uint8_t> &fr
   block_success_[command] = millis();
   block_stale_[command] = false;
   parse_selected_(command, data, len);
+  v04_parse_(command, data, len);
   if (command == 0x17) {
     static const uint8_t offsets[]{0, 2, 6, 8};
     for (unsigned i = 0; i < 4; i++) if (setpoints_[i])

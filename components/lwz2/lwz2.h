@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <map>
@@ -13,6 +14,8 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
+#include "esphome/core/preferences.h"
+#include "esphome/components/select/select.h"
 
 namespace esphome::lwz2 {
 
@@ -33,6 +36,20 @@ enum class CommState : uint8_t {
 
 class LWZ2Component : public Component, public uart::UARTDevice {
  public:
+  void set_v04_enabled(bool v) { v04_enabled_ = v; }
+  void set_preferences_key(uint32_t v) { preferences_key_ = v; }
+  void set_device_model(const std::string &v);
+  void set_fan_speed_source(const std::string &v);
+  void set_diagnostic_max_age(uint32_t v) { diagnostic_max_age_ms_ = v; }
+  bool request_fan_stage(uint8_t index, float value);
+  bool request_clock_mode(const std::string &mode);
+  void confirm_clock_mode(bool summer);
+  void reset_fan_faults();  // HA acknowledgement; no command is sent to the LWZ.
+  void set_fan_stage_number(uint8_t i, number::Number *n) { if (i < 2) fan_stages_[i] = n; }
+  void set_clock_mode_select(select::Select *s) { clock_mode_select_ = s; }
+  void set_v04_sensor(const std::string &key, sensor::Sensor *s) { v04_sensors_[key] = s; }
+  void set_v04_text(const std::string &key, text_sensor::TextSensor *s) { v04_text_[key] = s; }
+  void set_v04_binary(const std::string &key, binary_sensor::BinarySensor *s) { v04_binary_[key] = s; }
   void set_v03_enabled(bool enabled) { v03_enabled_ = enabled; }
   void set_hc1_layout(const std::string &profile);
   void set_selected_sensor(const std::string &key, sensor::Sensor *s) { selected_sensors_[key] = s; }
@@ -145,6 +162,46 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 #undef LWZ2_TEXT_SETTER
 
  protected:
+  struct FanFaultRecord {
+    uint32_t count{0};
+    bool active{false};
+    char begin[24]{}, end[24]{};
+  };
+  struct V04Saved {
+    uint32_t magic{0x4C575A04};
+    int8_t clock_mode{0};  // 0 winter (user-confirmed initial state), 1 summer, -1 uncertain
+    FanFaultRecord fans[2]{};  // 0 exhaust/F5, 1 supply/F6
+    char reset_reason[64]{};
+  } saved_;
+  bool v04_enabled_{false};
+  uint32_t preferences_key_{0x4C575A04}, diagnostic_max_age_ms_{30000};
+  ESPPreferenceObject v04_preference_;
+  bool persistence_ok_{true};
+  std::string device_model_{"unknown"}, speed_source_{"sGlobal"};
+  int pending_clock_mode_{-2};
+  select::Select *clock_mode_select_{nullptr};
+  number::Number *fan_stages_[2]{nullptr, nullptr};
+  std::map<std::string, sensor::Sensor *> v04_sensors_;
+  std::map<std::string, text_sensor::TextSensor *> v04_text_;
+  std::map<std::string, binary_sensor::BinarySensor *> v04_binary_;
+  uint32_t v04_due_[2]{0, 0}, zero_since_[2]{0, 0};
+  bool zero_pending_[2]{false, false};
+  float v04_speed_[2]{NAN, NAN};
+  uint32_t speed_ms_{0}, program_ms_{0}, settings_ms_{0}, override_ms_{0}, clock_ms_{0};
+  bool speed_seen_{false}, program_seen_{false}, settings_seen_{false}, override_seen_{false}, clock_seen_{false};
+  int fan_day_{-1}, fan_night_{-1}, fan_standby_{-1}, fan_manual_{-1};
+  int fan_program_{-1}, program_mode_{-1}, override_stage_{-1}, override_remaining_{-1};
+  std::string clock_stamp_{"unbekannt"};
+  void v04_setup_();
+  void v04_parse_(uint8_t command, const uint8_t *data, size_t len);
+  void v04_tick_(bool speed_observation = false);
+  void v04_invalidate_();
+  bool v04_save_();
+  int current_fan_stage_() const;
+  void v04_history_();
+  void clock_mode_publish_();
+  void v04_number_(const std::string &key, float value);
+  void v04_publish_text_(const std::string &key, const std::string &value);
   enum class WriteStage : uint8_t { NONE, READ, SET, VERIFY };
   bool v03_enabled_{false}, writes_enabled_{false}, sending_set_{false}, write_transaction_{false};
   FirmwareProfile hc1_layout_{FirmwareProfile::FW_206};
@@ -344,5 +401,20 @@ class LWZSetpointNumber : public number::Number {
   void control(float value) override { if (parent_) parent_->request_setpoint(index_, value); }
   LWZ2Component *parent_{nullptr};
   uint8_t index_{0};
+};
+class LWZFanStageNumber : public number::Number {
+ public:
+  void set_parent(LWZ2Component *p, uint8_t i) { parent_ = p; index_ = i; }
+ protected:
+  void control(float v) override { if (parent_) parent_->request_fan_stage(index_, v); }
+  LWZ2Component *parent_{nullptr};
+  uint8_t index_{0};
+};
+class LWZClockModeSelect : public select::Select {
+ public:
+  void set_parent(LWZ2Component *p) { parent_ = p; }
+ protected:
+  void control(const std::string &v) override { if (parent_) parent_->request_clock_mode(v); }
+  LWZ2Component *parent_{nullptr};
 };
 }

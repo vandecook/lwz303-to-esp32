@@ -1,0 +1,46 @@
+{
+  "references": [
+    {
+      "file": "fhem/00_THZ.pm",
+      "source_url": "https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm",
+      "description": "FHEM THZ decoder, version 0.210; unchanged reference source",
+      "rights": "GPL-2.0-or-later",
+      "revision": "0178ba5567d8b203db51215d29406454f1c7d001",
+      "included_on": "2026-11-07",
+      "bytes": 146711,
+      "sha256": "7ab582c705f941c6cc8c09fb4c26e607f8346bfd781aa5d6031d89b0ba8ae1ee"
+    },
+    {
+      "file": "fhem/GPL-2.0.txt",
+      "source_url": "https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt",
+      "description": "GNU GPL version 2, full original license text",
+      "rights": "GPL license text",
+      "revision": null,
+      "included_on": "2026-11-07",
+      "bytes": 17984,
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    },
+    {
+      "file": "stiebel-eltron/LWZ303-403-Bedienung-DM0000017729-nsm.pdf",
+      "source_url": "https://www.stiebel-eltron.com/static/ste/docportal/manual/DM0000017729-nsm.pdf",
+      "description": "Bedienung und Installation LWZ 303 Integral / 303 SOL / 403 SOL; A 166459-37161-8835",
+      "rights": "STIEBEL ELTRON; original manufacturer document",
+      "revision": null,
+      "included_on": "2026-11-07",
+      "bytes": 10335556,
+      "sha256": "85be34d1b18483c8c1b5519d5ba01737ff8b336e4a55cfc170f02a55031c53f9",
+      "pages": 76
+    },
+    {
+      "file": "stiebel-eltron/LWZ303-403-Montage-166459.pdf",
+      "source_url": "https://www.stiebel-eltron.com/static/ste/docportal/manual/DM0000017729-iau.pdf",
+      "description": "Gebrauchs- und Montageanweisung LWZ 303 i / 303 SOL / 403 SOL; 166459-34227-8160",
+      "rights": "STIEBEL ELTRON; original manufacturer document",
+      "revision": null,
+      "included_on": "2026-11-07",
+      "bytes": 2573626,
+      "sha256": "70b0f43cfcf26da64deadccb5b10fbccf8ed3411aabc54fc373794aa75898d99",
+      "pages": 28
+    }
+  ]
+}

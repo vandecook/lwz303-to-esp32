@@ -38,6 +38,7 @@ std::vector<uint8_t> frame(uint8_t command, std::vector<uint8_t> data) {
 }
 
 #include "test_v03.h"
+#include "test_v04.h"
 
 int main() {
   // Decoder fixtures are derived from the documented FHEM offsets, not hardware captures.
@@ -120,5 +121,6 @@ int main() {
   oversized.rx.insert(oversized.rx.end(),520,0);oversized.loop();oversized.loop();
   assert(oversized.retries_==1 && oversized.state_==CommState::RETRY_WAIT);
   v03_tests();
+  v04_tests();
   std::cout << "PASS: 3 profiles, offsets, OR polling, validation, transport, retries, reset, wraparound, firmware gate\n";
 }

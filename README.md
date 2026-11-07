@@ -1,48 +1,40 @@
-# LWZ303 to ESP32 – v0.3.0
+# LWZ303 to ESP32 – v0.4.0
 
-Die Excel-Auswahl einschließlich der letzten Chatkorrektur ist umgesetzt: **33 Ja + 47 Optional = 80 Einträge**. Die konkrete Anlage läuft laut Nutzer mit **Geräte-Firmware 2.16**. `2.06`, `2.14` und `2.14j` sind die auswählbaren **Decoderlayouts**; daraus folgt keine pauschale Hardwarefreigabe.
+v0.4 ergänzt die freigegebene v0.3-Auswahl um dauerhafte Tag-/Nacht-Lüfterstufen, lokale F5-/F6-Diagnose mit gespeicherten Fehlern, Geräteauswahl, sControl und eine manuelle Sommer-/Winterzeit-Auswahl. Zielgerät laut Nutzer: **Geräte-Firmware 2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bleiben Decoderlayouts und sind kein Geräte-Firmware-Schalter.
 
-## Auswahl und Bedienung in v0.3
+## Bedienung und Diagnose
 
-- Beide Konfigurationen (`lwz303-sol-example.yaml` und `lwz303.yaml`) enthalten alle ausgewählten Werte. Nicht gewählte Werte sind dort nicht angelegt; bestehende Schemaoptionen bleiben zur Abwärtskompatibilität verfügbar.
-- **Ja:** normal aktive Entitäten. **Optional:** mit eingebaut, in Home Assistant zunächst `disabled_by_default: true`; unter Einstellungen → Geräte & Dienste → Entitäten aktivierbar, ohne neues Firmwareupdate.
-- Das lokale Webinterface gruppiert Basis und Expert. HA-Aktivierung und Webdarstellung sind getrennt; die Expert-Gruppe ist im Geräteweb sichtbar. Es gibt keinen zusätzlich implementierten Schalter zum Verbergen der Webgruppe.
-- Die Abfragen laufen seriell über eine Zustandsmaschine: FB, F3, F4, E8, 09, EE, FC und der Einstellungsblock 17, zusätzlich vorhandenes 05 für P13/P14. Die Excel-Auswahl ist in `components/lwz2/selection.json` mit Dateihash nachvollziehbar; Excel wird nicht zur Laufzeit benötigt.
-- **Ein Wert – eine Hauptquelle:** gemeinsame Temperaturen/Aktoren stammen aus FB. F4 schreibt diese Entitäten nicht mehr zusätzlich. FB-Innentemperatur und die zusätzliche F4-Innentemperatur sind getrennt; fehlende kurze F4-Felder ergeben `unavailable`/NaN, niemals erfundene Nullwerte.
-- Globales Decoderprofil bleibt standardmäßig **2.14j**. HK1 lässt sich unabhängig mit **2.06 / 2.14 / 2.14j** dekodieren; Standard **2.06**, weil im Nutzeroutput `roomSetTemp` damit 21,4 °C statt 0 liefert. Das bleibt ein zu prüfendes Feldmapping, keine vollständige Freigabe für 2.16.
-- Stufe 3 existiert nur im 2.06-FB-Layout. Bei anderen Globalprofilen bleibt die gewählte Entität unbekannt. `hcStage` ist nur im HK1-Layout 2.14j verfügbar; `hcBoosterStage` gehört zu 2.06/2.14. Beide werden angeboten, aber keine Werte aus einem anderen Layout erfunden.
-- Die vier ausgewählten sFan-Drehzahlwerte sind optional eingebaut. Ihre physikalische Plausibilität/Decoderzuordnung ist weiter offen; Werte sind kein Nachweis einer funktionierenden Luftmengenmessung. Einheiten bleiben 1/s bzw. % gemäß geprüftem Decoder, nicht U/min oder Watt.
-- Fehlende/abgelaufene Daten werden je Block ungültig. Ein erfolgreicher FB-Empfang hält ausgefallene F3/E8/EE/FC-Werte nicht künstlich aktuell.
+- **P07/P08 dauerhaft schreiben:** Lüfterstufe Tag und Nacht als Number 0–3. Frisch lesen, nur ein Byte des vollständigen Blocks 17 ändern, genau einen SET senden und unabhängig zurücklesen. Keine zeitweise Übersteuerung; Lüftungszeitprogramme werden nicht geschrieben.
+- **F5 Abluft / F6 Zuluft:** Wirksame Stufe > 0 und jeweilige gültige Istdrehzahl ununterbrochen 120 Sekunden null. Diagnose lokal im ESP; beide Lüfter unabhängig. Eine neue Störung wird erst an einem frischen bestätigenden Messpunkt gemeldet. Fehlende Daten unterbrechen die Prüfung.
+- **Gespeicherte Fehler:** Positive Drehzahl, Stufe 0, Kommunikationsunterbrechung und ESP-Neustart löschen bestätigte Fehler nicht. Fehleranzahl, letzter Beginn, letztes Ende und Rücksetzgrund werden bei Ereignissen unmittelbar gespeichert. Der Speicherstatus zeigt Fehler beim Speichern an.
+- **HA-Rücksetzung:** Nach erfolgtem Wärmepumpenneustart die Taste „Lüfterfehler nach LWZ-Neustart zurücksetzen“ aus der eigenen HA-Automation aufrufen. Sie setzt nur den lokalen Fehlerstatus zurück. Kein automatischer LWZ-Neustart und keine vermeintliche Neustarterkennung aus einem Timeout. [HA-Anbindung und Benachrichtigungsvorlage](docs/HA-LUEFTERDIAGNOSE-v0.4.md).
+- **Aktuelle Lüfterstufe:** Aus LWZ-Programmzustand EE, P07/P08/P09/P12 und zeitweiser Stufe/Restzeit aus F6 ableiten. Unklare oder veraltete Daten ergeben „Unbekannt“. Die bestehende LWZ-Zeitsteuerung bleibt maßgeblich; keine zweite HA-Zeitschaltlogik. Die F6-Übersteuerungspriorität muss für FW 2.16 am Gerät bestätigt werden.
+- **Drehzahlquelle:** Standard `sGlobal` (relative Ist-Drehzahlen), alternativ `sFan` (FHEM-Istwerte in 1/s). E8-Werte waren in den gelieferten Beobachtungen auffällig; vor Verwendung prüfen. Speed200 wird für Analyse erhalten, niemals als Istdrehzahl für F5/F6 verwendet. Diagnoseabfrage 10 s; maximale Datenalterung zunächst 30 s, einstellbar über `diagnostic_max_age` und am Gerät zu prüfen.
+- **Gerätemodell:** „Unbekannt“, „LWZ 303 i / Integral“, „LWZ 303 / 403 SOL“. Keine automatische Änderung des Decoderlayouts. F2 liefert getrennte Rohcodes `hcStage` und `dhwStage`. Nur für SOL wird die vorhandene FHEM-Kommentartabelle als Anforderungstext verwendet; für i und unbekannte Codes bleibt die Rohcodeanzeige. Keine ungeprüfte Umrechnung in kW. [Quellen und Zuordnungsgrenzen](docs/BOOSTER-ZUORDNUNG.md).
+- **Uhrzeit:** Bestätigter Ausgangszustand Winterzeit. Wechsel Winter → Sommer korrigiert +1 h, zurück −1 h; gleiche Auswahl oder Neustart führt keinen weiteren Schreibauftrag aus. Zustand wird erst nach Rücklesen bestätigt. Vor dem SET wird „Unbekannt“ dauerhaft gespeichert, damit Stromausfall keine relative Umstellung wiederholt. Nach unklarem Schreibausgang den tatsächlichen Zustand prüfen und mit den Bestätigungstasten ohne Uhrschreiben zuordnen. Separate Stundenkorrektur ±1 bleibt möglich. Tageswechsel werden weiterhin abgewiesen; keine automatische jährliche Umstellung.
+- **Namen:** Alle konfigurierten Entitäten enthalten `device_name` genau einmal. Bestehende HA-Entitätskennungen und Automationen beim Umstieg prüfen. P07/P08 sind jetzt bedienbare Numbers statt zusätzlicher Lesesensoren; die übrigen optionalen Werte der ursprünglichen Auswahl bleiben erhalten.
 
-### Speed200 für die Wohnraumlüftungsanalyse
+Die v0.3-Schreibwege für P01/P02/P04/P05 bleiben erhalten. Raum 15–25 °C und Warmwasser 35–55 °C sind konservative UI-Vorschläge, keine bestätigten Herstellergrenzen für Geräte-FW 2.16. Schreibfreigabe startet nach jedem ESP-Neustart aus. Es wird nichts optimistisch als geschrieben bestätigt; bei unklarer SET-Antwort erfolgt Rücklesen statt SET-Wiederholung.
 
-OUT063 (`sFan.supplyFanSpeed200`) und OUT064 (`sFan.exhaustFanSpeed200`) sind nach der letzten Nutzerkorrektur **Ja**, standardmäßig aktiv und nicht `disabled_by_default`. Beide sind getrennte Zuluft-/Abluft-Kalibrierkennwerte, keine Dubletten der aktuellen Lüfterdrehzahl.
+## Konfiguration und Paket
 
-Der geprüfte FHEM-Decoder verwendet Hexposition 56 bzw. 60, unsigned 16 Bit Big Endian und Division durch 10. Eine Nachkommastelle bleibt erhalten (z. B. 3,1 / 460,8). Die physikalische Einheit/Bedeutung ist nicht bestätigt; es wird keine Einheit U/min oder 1/s erfunden. Bei zu kurzer E8-Antwort sind die fehlenden Felder NaN. Die explizite Chatkorrektur ist unter `selection_overrides` festgehalten, falls die geöffnete Excel-Datei noch den früheren Stand enthält.
+Die regulären YAML-Dateien verwenden:
 
-## Erste manuelle LWZ-Schreibfunktionen
+```yaml
+external_components:
+  - source: github://vandecook/lwz303-to-esp32
+    components: [lwz2]
+```
 
-P01/P02 und P04/P05 sind echte, nicht optimistische Number-Entitäten. Daneben gibt es zwei Buttons für +1 bzw. −1 Stunde. Kein Wochenprogramm, Gradient, Fußpunkt, Lüfterparameter, Bereitschafts- oder Manuellsollwert wird damit geschrieben.
+Solange v0.4 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den lokalen Paketstand liegt zusätzlich `lwz303-sol-local.yaml` mit `source: components` bei. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
 
-`LWZ Schreibfreigabe` ist bei jedem Neustart **aus**. Zum manuellen Test einschalten; der Schreibstatus zeigt Ablehnung, laufendes Rücklesen, Erfolg oder Fehler. Die Software wird hier nicht auf ein Gerät geflasht und hat keine physische LWZ verändert.
+Neue Komponenteneinstellungen: `enable_v04: true` (benötigt `enable_v03`), `device_model: unknown`, `fan_speed_source: sGlobal`, `diagnostic_max_age: 30s`, `fan_interval: 10s`. Beide mitgelieferten Hauptkonfigurationen aktivieren v0.4. Das gespeicherte Modell ist vor der Interpretation der F2-Texte auszuwählen; bei unbekanntem Modell werden Rohcodes angezeigt.
 
-1. Vollständigen Block 17 bzw. FC frisch lesen und Transport/Checksumme/Befehl/Länge validieren.
-2. Ausschließlich das Zielfeld ändern und alle übrigen Bytes erhalten.
-3. Genau einen SET-Befehl senden (Header 01 80, FHEM-Checksumme und 10/2B-Escaping).
-4. Unabhängig GET lesen und Zielwert plus erhaltene Felder vergleichen. ACK allein ist kein Erfolg.
-5. Bei unklarer SET-Antwort kein SET-Retry: direkt rücklesen. Bei Abweichung Fehler melden, keine automatische Wiederherstellung oder erneute relative Zeitverschiebung.
+Für die aktive Diagnose wird das sGlobal-Abfrageintervall auf höchstens 10 Sekunden begrenzt, auch wenn ein größeres Standardintervall eingestellt ist; eine schnellere Dynamik bleibt möglich. Die Anzeige „Aktives Status-Abfrageintervall“ zeigt das tatsächlich geplante Intervall. Die serielle Übertragung kann zusätzliche Verzögerungen verursachen.
 
-Konservative **Bediengrenzen als Vorschlag:** Raum Tag/Nacht 15–25 °C; WW Tag/Nacht 35–55 °C; Raster 0,1 °C. Belegte FHEM-Modulgrenzen sind weiter 10–30 bzw. 10–55 °C, keine bestätigten Herstellergrenzen der Geräte-FW 2.16. Die vier vorgeschlagenen UI-Grenzen sind in der Komponente/Number-Erzeugung festgelegt und nicht als Geräteparameter zu verstehen.
+Quellen und unveränderte FHEM-/Herstellerreferenzen: [Referenzverzeichnis](docs/references/README.md). Die Stiebel-Eltron-Unterlagen sind lokal unter `docs/references/stiebel-eltron/` abgelegt und von Git ausgeschlossen; das lokale Paket enthält die Original-PDFs.
 
-Die Uhraktion verändert nur die absolute Stunde eines frisch gelesenen FC-Blocks. Datum/Wochentag und andere Bytes bleiben erhalten; Sekunden dürfen entsprechend der Übertragungsdauer weiterlaufen (Toleranz ±5 s). **Tageswechsel werden abgelehnt**, bis Kalender-/Wochentagsänderungen validiert sind; zusätzlich 30-s-Sperre gegen Mehrfachklicks. Der historische FHEM-Jahres-Schreibbereich 12–20 wird nicht als aktuelle Herstellergrenze übernommen; kein Jahr wird geschrieben. SNTP synchronisiert nur die ESP-Anzeige, nicht die LWZ.
-
-## Softwareprüfung und Quellen
-
-ESPHome-Schemaprüfung und C++-Codegenerierung sowie synthetische C++-Transporttests sind in `VALIDATION.md` dokumentiert. Kein bestätigter Flash-/Hardwaretest und kein neu gebautes ESP32-Firmware-Image. In der individuellen `lwz303.yaml` müssen die vorhandenen `!secret`-Verweise auf die eigenen Zugangsdaten aufgelöst werden; Netzwerk-/Board-Einstellungen wurden beibehalten.
-
-Protokollquelle: [FHEM 00_THZ.pm, gepinnter Stand](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm). Die ausgewählten Felder und Grenzen wurden zuvor gegen den offiziellen SVN-Export r28264 abgeglichen. Der bekannte FHEM-Verweis auf undefinierten `F2type` wird nicht übernommen; sControl gehört nicht zu den hier aktivierten sieben Statusblöcken.
-
-Die folgenden Installations- und Diagnosehinweise stammen aus dem v0.2-Bestand; der v0.3-Umfang und die Schreibfunktionen sind oben beschrieben.
+Prüfstand: [Softwarevalidierung v0.4](docs/VALIDATION-v0.4.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
 
 ## Anschluss und Installation
 
@@ -101,6 +93,14 @@ Letzter Erfolg und HK1-Zeitpunkt sind ausdrücklich `boot+…s`, unabhängig von
 Erfolgreiche Abfragen zählen gültige Antworten mit passendem Befehl, Prüfsumme und Mindestlänge. Fehlgeschlagene Abfragen zählen endgültige Fehler nach maximal drei Versuchen. Timeouts zählen einzelne abgelaufene Wartezeiten; Retries zählen eingeplante Wiederholungen (maximal zwei je Transaktion). Letzter Fehler, letzter Erfolg und Kommunikationszustand ergänzen die Zähler.
 
 Nicht blockierender DLE-Handshake, 1800-ms-ACK-/Frame-Timeouts, 250-ms-Retryabstand und Fehler-Backoff aus v0.1 bleiben erhalten. Empfangsframe und UART-Arbeit pro Schleife sind begrenzt. Veraltete numerische Livewerte werden NaN: Schwelle ist Maximum aus `stale_after` (30 s) und dreifachem effektivem FB-Intervall. Eine Konfigurationsantwort macht veraltete FB-Werte nicht aktuell. Binäre Betriebszustände behalten ihren letzten Wert: immer mit „Kommunikation OK“ bewerten.
+
+## Urheberrecht und Lizenzen
+
+Quelltexte und Dokumentation unterliegen dem Urheberrecht ihrer jeweiligen Ersteller bzw. Rechteinhaber. Für die eigenen Projektdateien gilt **Copyright © 2026 vandecook** und die [MIT-Lizenz](LICENSE).
+
+Beigefügte fremde Quelltexte und Unterlagen bleiben Eigentum ihrer jeweiligen Rechteinhaber und unterliegen ihren eigenen Lizenz- und Nutzungsbedingungen. Dies betrifft insbesondere den FHEM-Perl-Decoder mit seinen ursprünglichen Autoren- und GPL-Hinweisen sowie die Handbücher von STIEBEL ELTRON. Durch die Aufnahme als Dokumentationsreferenz werden keine Urheberrechte am Fremdmaterial beansprucht. Die MIT-Projektlizenz wird dadurch nicht auf diese Unterlagen übertragen.
+
+Originale Urheberrechts- und Lizenzhinweise sind beizubehalten. Quellen, Lizenzhinweise und unveränderte Referenzdateien sind im [Referenzverzeichnis](docs/references/README.md) aufgeführt.
 
 ## Protokollbelege und Grenzen
 

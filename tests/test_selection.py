@@ -22,10 +22,13 @@ class SelectionTest(unittest.TestCase):
         raw=re.sub(r'!secret\s+\S+', '"validation-only"',raw)
         config=yaml.safe_load(raw)
         configured=config['lwz2']
+        migrated={'p01-p12_p07_fan_stage_day':'fan_stage_day',
+                  'p01-p12_p08_fan_stage_night':'fan_stage_night'} if configured.get('enable_v04') else {}
         for r in entities:
             if r['kind']=='action':continue
-            self.assertIn(r['key'],configured,r['id'])
-            self.assertEqual(configured[r['key']].get('disabled_by_default',False),r['optional'],r['id'])
+            key=migrated.get(r['key'],r['key'])
+            self.assertIn(key,configured,r['id'])
+            self.assertEqual(configured[key].get('disabled_by_default',False),False if r['key'] in migrated else r['optional'],r['id'])
         self.assertEqual(configured['hc1_layout'],'2.06')
         self.assertEqual(configured['firmware'],'2.14j')
         self.assertNotIn('solar_pump',configured)
@@ -45,5 +48,27 @@ class SelectionTest(unittest.TestCase):
         # The approved workbook is an audit source, not needed by firmware or CI.
         workbook=ROOT/'outputs/parameterkatalog-v03'/manifest['source_workbook']
         if workbook.exists():self.assertEqual(hashlib.sha256(workbook.read_bytes()).hexdigest(),manifest['source_sha256'])
+
+    def test_v04_configuration_contract(self):
+        for filename in ('lwz303.yaml','lwz303-sol-example.yaml'):
+            raw=(ROOT/filename).read_text(encoding='utf-8')
+            config=yaml.safe_load(re.sub(r'!secret\s+\S+', '"validation-only"',raw))
+            lwz=config['lwz2']
+            self.assertTrue(lwz['enable_v04'])
+            self.assertEqual(lwz['fan_interval'],'10s')
+            self.assertEqual(config['esphome']['project']['version'],'0.4.0')
+            self.assertEqual(config['external_components'][0]['source'],'github://vandecook/lwz303-to-esp32')
+            for key in ('exhaust_fault','supply_fault','hc_stage','dhw_stage','clock_mode','fan_stage_day','fan_stage_night'):
+                self.assertIn(key,lwz)
+            for domain in ('lwz2','sensor','text_sensor','button','switch','select','number'):
+                entries=config.get(domain,[])
+                if isinstance(entries,dict): entries=entries.values()
+                for entry in entries:
+                    if isinstance(entry,dict) and 'name' in entry:
+                        self.assertTrue(entry['name'].startswith('${device_name} '),entry['name'])
+                        self.assertEqual(entry['name'].count('${device_name}'),1)
+            buttons=config['button']
+            reset=next(b for b in buttons if b.get('id')=='lwz_reset_fan_faults')
+            self.assertIn('reset_fan_faults()',reset['on_press'][0]['lambda'])
 
 if __name__=='__main__':unittest.main()

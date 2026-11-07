@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 – 2026-11-07
+
+- F2 sControl und F6 lesen, auch für das Zielgerät mit tatsächlicher FW 2.16; unabhängig von den Decoderlayouts 2.06/2.14/2.14j.
+- Geräteauswahl unbekannt / i / SOL. SOL-Anforderungstexte gemäß FHEM-Kommentar; bei i und unbekannten Codes Rohwerte, keine erfundenen kW-Zuordnungen.
+- P07/P08 als dauerhaft schreibbare Number, Bereich 0–3, gezieltes Lesen–Ändern–Schreiben–Rücklesen; bisherige Lesesensoren ersetzt.
+- Getrennte F5-/F6-Nullprüfung für 120 Sekunden bei wirksamer Stufe > 0; gültige frische Werte und unabhängige Timer. Datenquelle wählbar, Standard sGlobal.
+- Gespeicherte Fehler und Historie über ESP-Neustarts; ausdrückliche lokale Rücksetzung für die bestehende HA-Neustartautomation. Keine eigenständige Neustartaktion.
+- Nichtoptimistische Uhrzeit-Auswahl Winter/Sommer, initial Winter. Persistierte Unsicherheit vor SET, Bestätigung nach Rücklesen, keine Wiederholung nach Neustart. Stundenkorrekturtasten getrennt erhalten.
+- Entitätsnamen mit Gerätenamen, plausiblere Abfragebezeichnungen, reguläre GitHub-Quelle und lokale Paketkonfiguration.
+- HA-Benachrichtigungsvorlage, v0.4-Tests, Referenzdateien und Herstellerunterlagen im lokalen Paket. Hardwareprüfung und Veröffentlichung bleiben offen.
+
+
 ## 0.3.0 – 2026-11-06
 
 - Nach Nutzerkorrektur OUT063/OUT064 (Zuluft/Abluft Speed200) als Ja standardmäßig aktiv ergänzt: FHEM uint16 BE /10, eine Nachkommastelle, keine unbestätigte physikalische Einheit.

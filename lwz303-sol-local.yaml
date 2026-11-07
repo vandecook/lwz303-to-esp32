@@ -1,0 +1,774 @@
+substitutions:
+  device_name: lwz303-sol
+  friendly_name: "LWZ 303 SOL"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${device_name}
+  project:
+    name: vandecook.lwz303-to-esp32
+    version: "0.4.0"
+  min_version: 2026.10.2
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(lwz303).set_device_model(id(lwz_device_model).current_option() == "LWZ 303 i / Integral" ? "i" : id(lwz_device_model).current_option() == "LWZ 303 / 403 SOL" ? "SOL" : "unknown");
+          id(lwz303).set_fan_speed_source(id(lwz_speed_source).current_option());
+          id(lwz303).set_firmware(id(lwz_firmware).current_option());
+          id(lwz303).set_hc1_layout(id(hc1_decoder_layout).current_option());
+          id(lwz303).set_status_interval(uint32_t(id(normal_interval).state * 1000));
+          id(lwz303).set_dynamic_interval(uint32_t(id(dynamic_interval).state * 1000));
+          id(lwz303).set_config_interval(uint32_t(id(config_interval).state * 60000));
+          id(lwz303).set_dynamic_enabled(id(dynamic_enabled).state);
+          id(lwz303).set_trigger_compressor(id(trigger_compressor).state);
+          id(lwz303).set_trigger_heating(id(trigger_heating).state);
+          id(lwz303).set_trigger_dhw(id(trigger_dhw).state);
+
+# Tested setup: ESP32-C3, RX5/TX6. Adjust board for the precise C3 module.
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+  baud_rate: 0
+api:
+  reboot_timeout: 0s
+ota:
+  - platform: esphome
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+preferences:
+  flash_write_interval: 1min
+
+web_server:
+  sorting_groups:
+    - id: lwz_basic
+      name: "Basis"
+      sorting_weight: 10
+    - id: lwz_expert
+      name: "Expert (in HA aktivierbar)"
+      sorting_weight: 20
+  port: 80
+  version: 3
+  local: true
+  log: true
+  auth:
+    type: digest
+    username: !secret web_username
+    password: !secret web_password
+
+external_components:
+  - source: components
+    components: [lwz2]
+
+# 9600 8N1 through an RS232 <-> 3.3 V TTL transceiver (e.g. MAX3232).
+uart:
+  id: lwz_uart
+  rx_pin: GPIO5
+  tx_pin: GPIO6
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  rx_buffer_size: 512
+
+lwz2:
+  id: lwz303
+  uart_id: lwz_uart
+  # These are decoder profiles, not the physical device firmware (2.16).
+  firmware: "2.14j"
+  hc1_layout: "2.06"
+  enable_v03: true
+  enable_v04: true
+  device_model: unknown
+  fan_speed_source: sGlobal
+  diagnostic_max_age: 30s
+  fan_interval: 10s
+  status_interval: 10s
+  stale_after: 30s
+  outside_temperature:
+    name: "${device_name} Außentemperatur"
+    web_server:
+      sorting_group_id: lwz_basic
+  flow_temperature:
+    name: "${device_name} Vorlauftemperatur"
+    web_server:
+      sorting_group_id: lwz_basic
+  return_temperature:
+    name: "${device_name} Rücklauftemperatur"
+    web_server:
+      sorting_group_id: lwz_basic
+  hot_gas_temperature:
+    name: "${device_name} Heißgastemperatur"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  dhw_temperature:
+    name: "${device_name} Warmwasser-Isttemperatur"
+    web_server:
+      sorting_group_id: lwz_basic
+  evaporator_temperature:
+    name: "${device_name} Verdampfertemperatur"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  condenser_temperature:
+    name: "${device_name} Verflüssigertemperatur"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_global_mixer_open:
+    name: "${device_name} Mischer fährt auf (Statusbit)"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_global_mixer_closed:
+    name: "${device_name} Mischer fährt zu (Statusbit)"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  heat_pipe_valve:
+    name: "${device_name} Heat-Pipe-Ventil"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  diverter_valve:
+    name: "${device_name} Umschaltventil"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  dhw_pump:
+    name: "${device_name} Warmwasserpumpe"
+    web_server:
+      sorting_group_id: lwz_basic
+  heating_circuit_pump:
+    name: "${device_name} Heizkreispumpe"
+    web_server:
+      sorting_group_id: lwz_basic
+  compressor:
+    name: "${device_name} Verdichter"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_global_booster_stage3:
+    name: "${device_name} Zusatzheizung Stufe 3 (nur 2.06-Layout)"
+    web_server:
+      sorting_group_id: lwz_basic
+  booster_stage2:
+    name: "${device_name} Zusatzheizung Stufe 2"
+    web_server:
+      sorting_group_id: lwz_basic
+  booster_stage1:
+    name: "${device_name} Zusatzheizung Stufe 1"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_global_high_pressure_sensor:
+    name: "${device_name} Signal Hochdruck"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_global_low_pressure_sensor:
+    name: "${device_name} Signal Niederdruck"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_global_evaporator_ice_monitor:
+    name: "${device_name} Signal Vereisungsüberwachung"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_global_signal_anode:
+    name: "${device_name} Signal Anode"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_global_oven_fireplace:
+    name: "${device_name} Ofen- und Kamin-Signal"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  exhaust_fan_speed_percent:
+    name: "${device_name} Relative Drehzahl Abluft"
+    web_server:
+      sorting_group_id: lwz_basic
+  supply_fan_speed_percent:
+    name: "${device_name} Relative Drehzahl Zuluft"
+    web_server:
+      sorting_group_id: lwz_basic
+  main_fan_speed_percent:
+    name: "${device_name} Relative Drehzahl Hauptlüfter"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_global_outside_temp_filtered:
+    name: "${device_name} Außentemperatur gefiltert"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  inside_temperature:
+    name: "${device_name} Innentemperatur sGlobal"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_d_h_w_dhw_set_temp:
+    name: "${device_name} Warmwasser-Sollwert aktuell"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_d_h_w_dhw_booster_stage:
+    name: "${device_name} Stufenwert Zusatzheizung Warmwasser"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_d_h_w_pasteurisation_mode:
+    name: "${device_name} Pasteurisierungsmodus"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_d_h_w_dhw_op_mode:
+    name: "${device_name} Warmwasser-Betriebszustand aus sDHW"
+    web_server:
+      sorting_group_id: lwz_basic
+  supply_fan_speed:
+    name: "${device_name} Ist-Drehzahl Zuluftventilator"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  exhaust_fan_speed:
+    name: "${device_name} Ist-Drehzahl Abluftventilator"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  supply_fan_speed_target:
+    name: "${device_name} Zuluft-Drehzahl-Sollwert, % laut Decoderkommentar"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  exhaust_fan_speed_target:
+    name: "${device_name} Abluft-Drehzahl-Sollwert"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_fan_supply_fan_speed200:
+    name: "${device_name} Zuluft Speed200-Kalibrierkennwert"
+    entity_category: diagnostic
+    accuracy_decimals: 1
+    web_server:
+      sorting_group_id: lwz_basic
+  s_fan_exhaust_fan_speed200:
+    name: "${device_name} Abluft Speed200-Kalibrierkennwert"
+    entity_category: diagnostic
+    accuracy_decimals: 1
+    web_server:
+      sorting_group_id: lwz_basic
+  s_h_c1_integral_heat:
+    name: "${device_name} Heizungs-Integral"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_h_c1_heat_set_temp:
+    name: "${device_name} Heizungs-Regeltemperatur Soll"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_h_c1_heat_temp:
+    name: "${device_name} Heizungs-Regeltemperatur Ist"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_h_c1_season_mode:
+    name: "${device_name} Heizbetrieb Sommer oder Winter"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_h_c1_integral_switch:
+    name: "${device_name} HK1 Integralschalter"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_h_c1_hc_op_mode:
+    name: "${device_name} Heizkreis-Betriebszustand aus sHC1"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_h_c1_room_set_temp:
+    name: "${device_name} Raum-Sollwert aktuell"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_h_c1_on_hysteresis_no:
+    name: "${device_name} Nummer der Einschalthysterese"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_h_c1_off_hysteresis_no:
+    name: "${device_name} Nummer der Ausschalthysterese"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_h_c1_hc_booster_stage:
+    name: "${device_name} HK1 Zusatzheizungsstufe"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_h_c1_hc_stage:
+    name: "${device_name} HK1 Heizstufe (2.14j-Layout)"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_h_c1_inside_temp:
+    name: "${device_name} Innentemperatur sHC1 (2.14j-Layout)"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  operating_hours_1:
+    name: "${device_name} Betriebsstunden-Zähler 1"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  operating_hours_2:
+    name: "${device_name} Betriebsstunden-Zähler 2"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  heating_hours:
+    name: "${device_name} Heizungsstunden laut Feldname"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  dhw_hours:
+    name: "${device_name} Warmwasserstunden laut Feldname"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_program_op_mode:
+    name: "${device_name} Programmbetriebsart"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_program_prog_state_h_c:
+    name: "${device_name} Programmzustand Heizung"
+    web_server:
+      sorting_group_id: lwz_basic
+  s_program_prog_state_d_h_w:
+    name: "${device_name} Programmzustand Warmwasser"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_program_prog_state_f_a_n:
+    name: "${device_name} Programmzustand Lüftung"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  s_timedate_weekday:
+    name: "${device_name} Geräteuhr Wochentag"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_timedate_p_clock_hour:
+    name: "${device_name} Geräteuhr Stunde"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_timedate_p_clock_minutes:
+    name: "${device_name} Geräteuhr Minute"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_timedate_sec:
+    name: "${device_name} Geräteuhr Sekunde"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_timedate_p_clock_year:
+    name: "${device_name} Geräteuhr Jahr (Rohwert)"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_timedate_p_clock_month:
+    name: "${device_name} Geräteuhr Monat"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  s_timedate_p_clock_day:
+    name: "${device_name} Geräteuhr Tag"
+    disabled_by_default: true
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: lwz_expert
+  heating_day_setpoint:
+    name: "${device_name} Heizung Raum-Sollwert Tag"
+    web_server:
+      sorting_group_id: lwz_basic
+  heating_night_setpoint:
+    name: "${device_name} Heizung Raum-Sollwert Nacht"
+    web_server:
+      sorting_group_id: lwz_basic
+  p01-p12_p03_room_temp_standby:
+    name: "${device_name} Heizung Raum-Sollwert Bereitschaft"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  dhw_day_setpoint:
+    name: "${device_name} Warmwasser-Sollwert Tag"
+    web_server:
+      sorting_group_id: lwz_basic
+  dhw_night_setpoint:
+    name: "${device_name} Warmwasser-Sollwert Nacht"
+    web_server:
+      sorting_group_id: lwz_basic
+  p01-p12_p06_d_h_wset_temp_standby:
+    name: "${device_name} Warmwasser-Sollwert Bereitschaft"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  fan_stage_day:
+    name: "${device_name} Lüfterstufe Tag"
+    web_server:
+      sorting_group_id: lwz_expert
+  fan_stage_night:
+    name: "${device_name} Lüfterstufe Nacht"
+    web_server:
+      sorting_group_id: lwz_expert
+  p01-p12_p09_fan_stage_standby:
+    name: "${device_name} Lüfterstufe Bereitschaft"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  p01-p12_p10_h_c_temp_manual:
+    name: "${device_name} Heizung Sollwert manuell"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  p01-p12_p11_d_h_wset_temp_manual:
+    name: "${device_name} Warmwasser-Sollwert manuell"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  p01-p12_p12_fan_stage_manual:
+    name: "${device_name} Lüfterstufe manuell"
+    disabled_by_default: true
+    web_server:
+      sorting_group_id: lwz_expert
+  hc1_gradient:
+    name: "${device_name} HK1 Heizkurve Gradient"
+    web_server:
+      sorting_group_id: lwz_basic
+  hc1_low_end:
+    name: "${device_name} HK1 Heizkurve Fußpunkt"
+    web_server:
+      sorting_group_id: lwz_basic
+  communication_ok:
+    name: "${device_name} Kommunikation OK"
+  communication_status:
+    name: "${device_name} Kommunikationszustand"
+  last_error:
+    name: "${device_name} Letzter Kommunikationsfehler"
+  successful_queries:
+    name: "${device_name} Erfolgreiche Abfragen"
+  failed_queries:
+    name: "${device_name} Fehlgeschlagene Abfragen"
+  timeouts:
+    name: "${device_name} Timeouts"
+  retries:
+    name: "${device_name} Retries"
+  last_success:
+    name: "${device_name} Letzter Erfolg seit Boot"
+  config_updated:
+    name: "${device_name} HK1 aktualisiert seit Boot"
+  firmware_version:
+    name: "${device_name} Abgefragte Firmware"
+  write_status:
+    name: "${device_name} Schreibstatus"
+    entity_category: diagnostic
+
+  hc_stage:
+    name: "${device_name} Heizungsanforderung Rohcode"
+  dhw_stage:
+    name: "${device_name} Warmwasseranforderung Rohcode"
+  hc_stage_text:
+    name: "${device_name} Heizungsanforderung"
+  dhw_stage_text:
+    name: "${device_name} Warmwasseranforderung"
+  current_fan_stage:
+    name: "${device_name} Aktuelle Luefterstufe"
+  exhaust_fault:
+    name: "${device_name} F5 Abluft lokal erkannt"
+  supply_fault:
+    name: "${device_name} F6 Zuluft lokal erkannt"
+  exhaust_status:
+    name: "${device_name} Abluft Zustand"
+  supply_status:
+    name: "${device_name} Zuluft Zustand"
+  exhaust_data_status:
+    name: "${device_name} Abluft aktuelle Datenbewertung"
+  supply_data_status:
+    name: "${device_name} Zuluft aktuelle Datenbewertung"
+  exhaust_fault_count:
+    name: "${device_name} Abluft Fehleranzahl"
+  supply_fault_count:
+    name: "${device_name} Zuluft Fehleranzahl"
+  exhaust_fault_begin:
+    name: "${device_name} Abluft letzter Fehlerbeginn"
+  exhaust_fault_end:
+    name: "${device_name} Abluft letztes Fehlerende"
+  supply_fault_begin:
+    name: "${device_name} Zuluft letzter Fehlerbeginn"
+  supply_fault_end:
+    name: "${device_name} Zuluft letztes Fehlerende"
+  fault_reset_reason:
+    name: "${device_name} Letzte Luefterfehler-Ruecksetzung"
+  persistence_status:
+    name: "${device_name} Diagnose Speicherstatus"
+  lwz_error_memory:
+    name: "${device_name} Fehlerhistorie Rohwerte"
+  clock_mode:
+    name: "${device_name} Uhr Winterzeit Sommerzeit"
+
+select:
+  - platform: template
+    id: lwz_device_model
+    name: "${device_name} Geraetemodell"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "Unbekannt"
+    options: ["Unbekannt", "LWZ 303 i / Integral", "LWZ 303 / 403 SOL"]
+    on_value:
+      - lambda: |-
+          id(lwz303).set_device_model(x == "LWZ 303 i / Integral" ? "i" : x == "LWZ 303 / 403 SOL" ? "SOL" : "unknown");
+  - platform: template
+    id: lwz_speed_source
+    name: "${device_name} Luefterdiagnose Drehzahlquelle"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "sGlobal"
+    options: ["sGlobal", "sFan"]
+    on_value:
+      - lambda: id(lwz303).set_fan_speed_source(x);
+  - platform: template
+    id: hc1_decoder_layout
+    name: "${device_name} HK1 Decoderlayout"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "2.06"
+    options: ["2.06", "2.14", "2.14j"]
+    on_value:
+      - lambda: id(lwz303).set_hc1_layout(x);
+
+  - platform: template
+    name: "${device_name} Firmwareprofil"
+    id: lwz_firmware
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "2.14j"
+    options: ["2.06", "2.14", "2.14j"]
+    on_value:
+      - lambda: id(lwz303).set_firmware(x);
+
+number:
+  - platform: template
+    id: normal_interval
+    name: "${device_name} Statusabfrage Standardintervall"
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 300
+    step: 1
+    initial_value: 10
+    optimistic: true
+    restore_value: true
+    mode: box
+    on_value:
+      - lambda: id(lwz303).set_status_interval(uint32_t(x * 1000));
+  - platform: template
+    id: dynamic_interval
+    name: "${device_name} Statusabfrage Schnellintervall"
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 300
+    step: 1
+    initial_value: 5
+    optimistic: true
+    restore_value: true
+    mode: box
+    on_value:
+      - lambda: id(lwz303).set_dynamic_interval(uint32_t(x * 1000));
+  - platform: template
+    id: config_interval
+    name: "${device_name} Heizkurven-Abfrageintervall HK1"
+    entity_category: config
+    unit_of_measurement: min
+    min_value: 1
+    max_value: 1440
+    step: 1
+    initial_value: 60
+    optimistic: true
+    restore_value: true
+    mode: box
+    on_value:
+      - lambda: id(lwz303).set_config_interval(uint32_t(x * 60000));
+
+switch:
+  - platform: template
+    id: lwz_write_permission
+    name: "${device_name} Schreibfreigabe"
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - lambda: id(lwz303).set_writes_enabled(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_writes_enabled(false);
+
+  - platform: template
+    id: dynamic_enabled
+    name: "${device_name} Beschleunigte Statusabfrage"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_dynamic_enabled(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_dynamic_enabled(false);
+  - platform: template
+    id: trigger_compressor
+    name: "${device_name} Schnellabfrage bei Verdichterbetrieb"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_trigger_compressor(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_trigger_compressor(false);
+  - platform: template
+    id: trigger_heating
+    name: "${device_name} Schnellabfrage bei Heizbetrieb"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_trigger_heating(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_trigger_heating(false);
+  - platform: template
+    id: trigger_dhw
+    name: "${device_name} Schnellabfrage bei Warmwasserbereitung"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(lwz303).set_trigger_dhw(true);
+    turn_off_action:
+      - lambda: id(lwz303).set_trigger_dhw(false);
+
+  - platform: template
+    id: restart_confirm
+    name: "${device_name} ESP32 Neustart bestätigen (30s)"
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - script.execute: restart_window
+    turn_off_action:
+      - script.stop: restart_window
+
+script:
+  - id: restart_window
+    mode: restart
+    then:
+      - delay: 30s
+      - switch.turn_off: restart_confirm
+
+button:
+  - platform: template
+    id: lwz_reset_fan_faults
+    name: "${device_name} Luefterfehler nach LWZ-Neustart zuruecksetzen"
+    entity_category: diagnostic
+    on_press:
+      - lambda: id(lwz303).reset_fan_faults();
+  - platform: template
+    name: "${device_name} Unklare Uhrzeit als Winterzeit bestaetigen"
+    entity_category: config
+    on_press:
+      - lambda: id(lwz303).confirm_clock_mode(false);
+  - platform: template
+    name: "${device_name} Unklare Uhrzeit als Sommerzeit bestaetigen"
+    entity_category: config
+    on_press:
+      - lambda: id(lwz303).confirm_clock_mode(true);
+  - platform: template
+    name: "${device_name} Uhr Stunde +1 korrigieren"
+    entity_category: config
+    on_press:
+      - lambda: id(lwz303).request_clock_shift(1);
+  - platform: template
+    name: "${device_name} Uhr Stunde -1 korrigieren"
+    entity_category: config
+    on_press:
+      - lambda: id(lwz303).request_clock_shift(-1);
+
+  - platform: template
+    name: "${device_name} HK1 jetzt aktualisieren"
+    on_press:
+      - lambda: id(lwz303).refresh_config();
+  - platform: template
+    name: "${device_name} Kommunikationszähler zurücksetzen"
+    entity_category: diagnostic
+    on_press:
+      - lambda: id(lwz303).reset_counters();
+  - platform: template
+    name: "${device_name} RS232 neu initialisieren"
+    entity_category: diagnostic
+    on_press:
+      - lambda: id(lwz303).reinitialize();
+  - platform: template
+    name: "${device_name} ESP32 neu starten"
+    entity_category: diagnostic
+    on_press:
+      - if:
+          condition:
+            switch.is_on: restart_confirm
+          then:
+            - switch.turn_off: restart_confirm
+            - lambda: App.safe_reboot();
+          else:
+            - logger.log: "Neustart zuerst mit dem BestÃ¤tigungsschalter freigeben"
+
+sensor:
+  - platform: uptime
+    name: "${device_name} Uptime"
+    update_interval: 10s
+  - platform: template
+    name: "${device_name} Aktives Status-Abfrageintervall"
+    unit_of_measurement: s
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: return id(lwz303).effective_interval() / 1000.0f;
+
+time:
+  - platform: sntp
+    id: local_time
+    timezone: Europe/Vienna
+
+text_sensor:
+  - platform: template
+    name: "${device_name} ESP32 Uhrzeit"
+    update_interval: 10s
+    lambda: |-
+      auto now = id(local_time).now();
+      if (!now.is_valid()) return {"nicht verfÃ¼gbar"};
+      return now.strftime("%Y-%m-%d %H:%M:%S %Z");

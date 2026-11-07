@@ -1,6 +1,8 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import binary_sensor, sensor, text_sensor, uart, number
+from esphome.components import binary_sensor, sensor, text_sensor, uart, number, select
+from esphome.core import CORE
+import zlib
 from .metadata import SELECTED_ENTITIES
 from esphome.const import (
     CONF_ID,
@@ -14,7 +16,7 @@ from esphome.const import (
 
 CODEOWNERS = []
 DEPENDENCIES = ["uart"]
-AUTO_LOAD = ["sensor", "binary_sensor", "text_sensor", "number"]
+AUTO_LOAD = ["sensor", "binary_sensor", "text_sensor", "number", "select"]
 
 CONF_FIRMWARE = "firmware"
 CONF_STATUS_INTERVAL = "status_interval"
@@ -119,6 +121,13 @@ def hours_sensor_schema():
 
 
 LWZSetpointNumber = lwz2_ns.class_("LWZSetpointNumber", number.Number)
+LWZFanStageNumber = lwz2_ns.class_("LWZFanStageNumber", number.Number)
+LWZClockModeSelect = lwz2_ns.class_("LWZClockModeSelect", select.Select)
+V04_SENSORS = ("hc_stage", "dhw_stage", "current_fan_stage", "exhaust_fault_count", "supply_fault_count")
+V04_TEXT = ("hc_stage_text", "dhw_stage_text", "exhaust_status", "supply_status",
+            "exhaust_data_status", "supply_data_status", "exhaust_fault_begin", "exhaust_fault_end",
+            "supply_fault_begin", "supply_fault_end", "fault_reset_reason", "persistence_status", "lwz_error_memory")
+V04_BINARY = ("exhaust_fault", "supply_fault")
 
 def selected_schema():
     result = {}
@@ -144,6 +153,16 @@ CONFIG_SCHEMA = (
         {
             cv.GenerateID(): cv.declare_id(LWZ2Component),
             cv.Optional("enable_v03", default=True): cv.boolean,
+            cv.Optional("enable_v04", default=False): cv.boolean,
+            cv.Optional("device_model", default="unknown"): cv.one_of("i", "SOL", "unknown"),
+            cv.Optional("fan_speed_source", default="sGlobal"): cv.one_of("sGlobal", "sFan"),
+            cv.Optional("diagnostic_max_age", default="30s"): cv.positive_time_period_milliseconds,
+            **{cv.Optional(k): sensor.sensor_schema(accuracy_decimals=0, entity_category=ENTITY_CATEGORY_DIAGNOSTIC) for k in V04_SENSORS},
+            **{cv.Optional(k): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC) for k in V04_TEXT},
+            **{cv.Optional(k): binary_sensor.binary_sensor_schema(device_class="problem") for k in V04_BINARY},
+            cv.Optional("fan_stage_day"): number.number_schema(LWZFanStageNumber, entity_category="config"),
+            cv.Optional("fan_stage_night"): number.number_schema(LWZFanStageNumber, entity_category="config"),
+            cv.Optional("clock_mode"): select.select_schema(LWZClockModeSelect, entity_category="config"),
             cv.Optional("hc1_layout", default="2.06"): cv.one_of("2.06", "2.14", "2.14j"),
             cv.Optional("write_status"): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC),
             **selected_schema(),
@@ -251,6 +270,31 @@ async def to_code(config):
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
     cg.add(var.set_v03_enabled(config["enable_v03"]))
+    if config["enable_v04"] and not config["enable_v03"]:
+        raise cv.Invalid("enable_v04 requires enable_v03")
+    cg.add(var.set_v04_enabled(config["enable_v04"]))
+    cg.add(var.set_preferences_key(zlib.crc32((CORE.name + ":lwz2-v04").encode())))
+    cg.add(var.set_device_model(config["device_model"]))
+    cg.add(var.set_fan_speed_source(config["fan_speed_source"]))
+    cg.add(var.set_diagnostic_max_age(config["diagnostic_max_age"].total_milliseconds))
+    for k in V04_SENSORS:
+        if k in config:
+            cg.add(var.set_v04_sensor(k, await sensor.new_sensor(config[k])))
+    for k in V04_TEXT:
+        if k in config:
+            cg.add(var.set_v04_text(k, await text_sensor.new_text_sensor(config[k])))
+    for k in V04_BINARY:
+        if k in config:
+            cg.add(var.set_v04_binary(k, await binary_sensor.new_binary_sensor(config[k])))
+    for i, k in enumerate(("fan_stage_day", "fan_stage_night")):
+        if k in config:
+            obj = await number.new_number(config[k], min_value=0, max_value=3, step=1)
+            cg.add(obj.set_parent(var, i))
+            cg.add(var.set_fan_stage_number(i, obj))
+    if "clock_mode" in config:
+        obj = await select.new_select(config["clock_mode"], options=["Winterzeit", "Sommerzeit", "Unbekannt"])
+        cg.add(obj.set_parent(var))
+        cg.add(var.set_clock_mode_select(obj))
     cg.add(var.set_hc1_layout(config["hc1_layout"]))
     if "write_status" in config:
         status = await text_sensor.new_text_sensor(config["write_status"])
