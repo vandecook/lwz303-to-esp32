@@ -25,7 +25,7 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 
 ## Aktueller Funktionsstand
 
-**v0.5:** Heizkurvenprofile P13/P14/P15 dauerhaft in ESPHome speichern, benennen, bearbeiten und ausschließlich manuell anwenden. Fünf Speicherplätze (Übergangszeit, Winter, drei eigene), Entwurf/Speichern/Anwenden getrennt. Tatsächliche Anlagenwerte bestimmen die Anzeige des erkannten Profils oder „Benutzerdefiniert“; fehlende/veraltete Werte sind gesondert markiert. Keine automatische Umschaltung und kein erneutes Anwenden nach Neustart. [Bedienung und Migration](docs/HEIZKURVENPROFILE-v0.5.md).
+**v0.5:** Heizkurvenprofile P13/P14/P15 dauerhaft in ESPHome speichern, benennen, bearbeiten und ausschließlich manuell anwenden. Fester Standard „bewährt“ (0,3/1,0 K/0) plus fünf bearbeitbare Speicherplätze (Übergangszeit, Winter, drei eigene), Entwurf/Speichern/Anwenden getrennt. Tatsächliche Anlagenwerte bestimmen die Anzeige des erkannten Profils oder „Benutzerdefiniert“; fehlende/veraltete Werte sind gesondert markiert. Keine automatische Umschaltung und kein erneutes Anwenden nach Neustart. [Bedienung und Migration](docs/HEIZKURVENPROFILE-v0.5.md).
 
 Die Optionen `enable_v03` und `enable_v04` sind vollständig entfernt. Beide Zeilen aus bestehenden YAML-Dateien löschen; es gibt keinen Ersatz-Aktivierungsschalter. Die separate Schreibfreigabe bleibt erhalten. Vorhandene Uhr-/Fehlerhistorie bleibt unter ihrem bisherigen Speicherschlüssel, Profile verwenden einen eigenen Schlüssel.
 

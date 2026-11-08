@@ -1,5 +1,7 @@
 # Softwarevalidierung v0.5.0
 
+Ergänzung fester Standard: P13=0,3, P14=1,0 K, P15=0 vom Nutzer bestätigt. Der zusätzliche unveränderbare Eintrag wurde auf Erkennung, Bearbeitungssperre, Speichersperre, Übernahmesperre, Anwendung nur mit Schreibfreigabe und erhaltene Auswahl nach Neustart geprüft. Das gespeicherte Fünf-Profil-Datenformat wurde mit dem bisherigen v0.5-Paket verglichen und ist unverändert. Der aktualisierte vollständige ESP32-C3-Build und die Beispiel-Codegenerierung sind erfolgreich; physische Anwendung weiterhin offen.
+
 Stand 08.11.2026. Zielhardware ESP32-C3, LWZ-Geräte-Firmware 2.x. Bisherige reale Nutzerbeobachtungen ausschließlich an LWZ 303 SOL mit FW 2.16 und deaktivierter Solarfunktion. Die neuen v0.5-Prüfungen erfolgen ohne angeschlossene Wärmepumpe, ohne Flashen, GitHub-Veröffentlichung oder Änderungen an Home Assistant.
 
 ## Ausgeführte Softwareprüfungen
@@ -19,10 +21,10 @@ Stand 08.11.2026. Zielhardware ESP32-C3, LWZ-Geräte-Firmware 2.x. Bisherige rea
 
 ## Vollständiger ESP32-C3-Build
 
-Vollständiger ESP32-C3-Build mit ESPHome 2026.10.2, ESP-IDF 5.5.6 und synthetischen Zugangsdaten erfolgreich. Abschließender Build: 08.11.2026, 06:44:58 +0100; Konfigurationshash `0xf90de931`. Die sechs kompilierten Komponentenquellen einschließlich `profiles.cpp` wurden per SHA-256 mit dem aktuellen Quellstand verglichen. Der abschließende Build enthält keine Compilerwarnungen oder Fehler.
+Vollständiger ESP32-C3-Build mit ESPHome 2026.10.2, ESP-IDF 5.5.6 und synthetischen Zugangsdaten erfolgreich. Abschließender Build: 08.11.2026, 13:49:47 +0100; Konfigurationshash `0xf90de931`. Die sechs kompilierten Komponentenquellen einschließlich `profiles.cpp` wurden per SHA-256 mit dem aktuellen Quellstand verglichen. Der abschließende Build enthält keine Compilerwarnungen oder Fehler.
 
-- RAM: **111.197 / 321.296 Byte (34,6 %)**.
-- Programm-Flash: **1.075.659 / 1.835.008 Byte (58,6 %)**.
+- RAM: **111.237 / 321.296 Byte (34,6 %)**.
+- Programm-Flash: **1.076.769 / 1.835.008 Byte (58,7 %)**.
 - Native Number-, Select- und Text-Entitäten sowie die lesbare Uptime wurden mitkompiliert.
 
 Factory-/OTA-Prüfbinaries und ELF wurden nur lokal mit synthetischen Zugangsdaten erzeugt. Sie werden nicht ausgeliefert, veröffentlicht oder geflasht. Das Quellpaket enthält die beiden regulären YAMLs und eine lokale Beispielkonfiguration. Archivintegrität, SHA-256-Prüfsummen und unveränderte FHEM-/Herstellerreferenzen werden beim Packen geprüft.

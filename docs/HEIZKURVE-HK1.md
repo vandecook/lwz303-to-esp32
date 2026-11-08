@@ -8,7 +8,7 @@ Stand 08.11.2026. Drei nichtoptimistische Slider sind in der lokalen v0.4 ergän
 |---|---:|---:|---:|---:|---|
 | P13 Gradient HK1 | 0,6 | 0,3 | 0–1 | 0,1 | Basis |
 | P14 Fußpunktverschiebung HK1 | 0 K | 1,0 K | 0–5 K | 0,1 K | Basis |
-| P15 Raumeinfluss Heizen HK1 | 0 | Nicht separat gemeldet | 0–10 | 0,1 | Expert |
+| P15 Raumeinfluss Heizen HK1 | 0 | 0 (vom Nutzer bestätigt) | 0–10 | 0,1 | Expert |
 
 Die Herstelleranleitung bestätigt die Standards und die größeren Einstellbereiche P13 0–5, P14 0–20, P15 0–10 auf Seite 70. Die Slider für P13/P14 sind auf Wunsch enger begrenzt. Eine tatsächlich ausgelesene Einstellung außerhalb der Slidergrenzen wird unverändert angezeigt, nicht stillschweigend gekürzt oder zurückgeschrieben. Die Fußpunktverschiebung wird als Temperaturdifferenz in K geführt; die Parametertabelle des Herstellers verwendet hierfür °C.
 
@@ -19,7 +19,7 @@ Die 0,1-Auflösung ist durch die FHEM-Decoder-/Schreibregeln des 2.x-Profils bel
 | Einstellung | Gradient P13 | Fußpunkt P14 | Raumeinfluss P15 | Einordnung |
 |---|---:|---:|---:|---|
 | Herstellerstandard | 0,6 | 0 K | 0 | Referenz, kein Optimierungsvorschlag |
-| Aktuell laut Nutzer | 0,3 | 1,0 K | Unbekannt | Ausgangswert; nicht automatisch überschreiben |
+| Aktuell laut Nutzer | 0,3 | 1,0 K | 0 | Ausgangswert; nicht automatisch überschreiben |
 | **Vorschlag Übergangszeit** | **0,2** | **2,0 K** | **0** | Flachere Kurve mit höherem Fußpunkt; Versuch für milde Heiztage, wenn die bisherige Kurve nicht gleichmäßig passt |
 | **Vorschlag sehr kalte Tage** | **0,4** | **1,0 K** | **0** | Erster Versuch bei etwa −10 °C und darunter, falls es mit 0,3/1,0 im Raum zu kalt wird |
 
@@ -50,5 +50,5 @@ Seit v0.5 sind benannte Heizkurvenprofile P13/P14/P15 mit dauerhafter Speicherun
 
 - [STIEBEL-ELTRON-Anleitung LWZ 303/403, Seiten 10–11 und 70](https://www.stiebel-eltron.com/static/ste/docportal/manual/DM0000017729-nsm.pdf): Standardwerte, Herstellerbereiche, Heizkurvenwirkung, Raumfühler-Voraussetzung. Original im lokalen Dokumentationspaket enthalten.
 - [FHEM 00_THZ.pm, gepinnte Revision](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm): `05pxx206`, `p13GradientHC1`, `p14LowEndHC1`, `p15RoomInfluenceHC1`, `pHeat1` und Lesen-Ändern-Schreiben in `THZ_Set`. [Lokale Referenz](references/fhem/00_THZ.pm).
-- Aktuelle Werte 0,3/1,0 K: Nutzerangabe vom 08.11.2026, keine Live-Abfrage.
+- Aktuelle Werte P13/P14/P15 = 0,3/1,0 K/0: Nutzerangabe vom 08.11.2026, keine Live-Abfrage.
 - Software: Hosttests für alle vier Profile, Grenzen/Raster einschließlich P15 10→100, Erhalt der übrigen Bytes, unsichere SET-Antwort, Rückleseabweichung, unvollständige Antwort und Zurücksetzen der Anzeige. ESPHome-Konfiguration und Codegenerierung werden mit synthetischen Zugangsdaten geprüft. Physische Schreibprüfung und Wirksamkeitsprüfung der Vorschläge offen; es wurde nichts an der Wärmepumpe geändert.

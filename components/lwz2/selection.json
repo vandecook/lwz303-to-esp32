@@ -1573,6 +1573,14 @@
       "P15"
     ],
     "manual_only": true,
-    "documentation": "docs/HEIZKURVENPROFILE-v0.5.md"
+    "documentation": "docs/HEIZKURVENPROFILE-v0.5.md",
+    "fixed_profile": {
+      "name": "Standard (bewaehrt)",
+      "P13": 0.3,
+      "P14": 1.0,
+      "P15": 0,
+      "editable": false,
+      "source": "User confirmed all three current values, 2026-11-08"
+    }
   }
 }

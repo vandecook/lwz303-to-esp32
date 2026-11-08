@@ -193,6 +193,8 @@ class LWZ2Component : public Component, public uart::UARTDevice {
     uint8_t selected_slot{0};
   } profiles_;
   HeatingProfile profile_draft_, profile_pending_;
+  const HeatingProfile standard_profile_{"Standard (bewaehrt)", {3, 10, 0}, true};
+  const HeatingProfile &selected_profile_() const { return profile_slot_ == 5 ? standard_profile_ : profiles_.slots[profile_slot_]; }
   uint8_t profile_slot_{0};
   bool profile_dirty_{false}, profile_write_{false}, profile_read_seen_{false};
   bool profile_store_ok_{true};

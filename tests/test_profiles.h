@@ -24,7 +24,7 @@ void profile_tests() {
   assert(recognized.state.find("Unbekannt")==0 && t.profiles_.slots[0].raw[0]==2 && t.profiles_.slots[1].raw[0]==4);
   assert(!t.apply_profile()); // Only explicit write permission allows application.
   std::vector<uint8_t> actual(24,0xAA);actual[0]=0;actual[1]=3;actual[2]=0;actual[3]=10;actual[4]=0;
-  t.parse_frame_(5,frame(5,actual));assert(recognized.state=="Benutzerdefiniert");
+  t.parse_frame_(5,frame(5,actual));assert(recognized.state=="Standard (bewaehrt)");
   actual[1]=2;actual[3]=20;t.parse_frame_(5,frame(5,actual));assert(recognized.state=="Uebergangszeit");
   actual[4]=1;t.parse_frame_(5,frame(5,actual));assert(recognized.state=="Benutzerdefiniert"); // P15 participates.
   actual[4]=0;t.parse_frame_(5,frame(5,actual));
@@ -117,6 +117,20 @@ void profile_tests() {
   ProfileTest cancel;cancel.set_preferences_key(507);cancel.setup();cancel.set_writes_enabled(true);assert(cancel.apply_profile());
   cancel.write_response_(frame(5,actual));cancel.set_writes_enabled(false);cancel.loop();
   assert(!cancel.profile_write_ && cancel.write_stage_==ProfileTest::WriteStage::NONE && !cancel.profiles_.last_applied.used);
+  // Fixed standard is separate from the five persisted/editable slots, preserving their storage layout.
+  ProfileTest fixed; text_sensor::TextSensor fixed_match;fixed.set_preferences_key(508);
+  fixed.set_v04_text("profile_recognized",&fixed_match);fixed.setup();
+  assert(fixed.select_profile_slot("Standard (bewaehrt)"));
+  assert(!fixed.edit_profile_name("Changed") && !fixed.edit_profile_value(0,0.5f) && !fixed.save_profile() && !fixed.copy_actual_to_profile());
+  assert(!fixed.apply_profile() && fixed.tx.empty());
+  fixed.set_writes_enabled(true);assert(fixed.apply_profile());fixed.write_response_(frame(5,actual));
+  auto standard=actual;standard[0]=0;standard[1]=3;standard[2]=0;standard[3]=10;standard[4]=0;
+  assert(fixed.write_expected_==standard);
+  fixed.write_response_(frame(5,{}));fixed.parse_frame_(5,frame(5,standard));fixed.write_response_(frame(5,standard));
+  assert(fixed_match.state=="Standard (bewaehrt)" && std::string(fixed.profiles_.last_applied.name)=="Standard (bewaehrt)");
+  ProfileTest fixed_reboot;fixed_reboot.set_preferences_key(508);fixed_reboot.setup();
+  assert(fixed_reboot.profile_slot_==5 && fixed_reboot.profile_draft_.raw[0]==3 && fixed_reboot.tx.empty());
+  assert(fixed.select_profile_slot("Profil 5") && fixed.edit_profile_name("Standard (bewaehrt)") && !fixed.save_profile());
   fake_storage_ok=true;
   std::cout << "PASS v0.5: profile drafts, names, persistence/reboot, recognition incl P15/stale, full-block RMW, failures, legacy preferences\n";
 }

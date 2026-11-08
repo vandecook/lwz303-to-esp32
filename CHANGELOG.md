@@ -2,6 +2,8 @@
 
 ## 0.5.0 - 2026-11-08
 
+- Fester zusätzlicher Eintrag Standard (bewaehrt): P13 0,3, P14 1,0 K, P15 0 nach Nutzerbestätigung. Nicht bearbeitbar; Auswahl und manuelle Anwendung mit Schreibfreigabe, Erkennung und Neustart geprüft. Speicherformat der fünf bearbeitbaren Profile unverändert.
+
 - Heizkurvenprofile P13/P14/P15 dauerhaft in ESPHome: fünf bearbeitbare Speicherplätze, Namen und Entwürfe; getrennte Aktionen Speichern, Verwerfen, Anlagenwerte übernehmen und Anwenden.
 - Manuelle Anwendung ändert alle drei Parameter in einem frisch gelesenen Block 05 und erhält alle übrigen Bytes; ein SET und unabhängige vollständige Rückleseprüfung. Keine automatische Anwendung/Umschaltung, kein SET-Retry.
 - Profilerkennung anhand tatsächlicher Rohwerte einschließlich P15; Benutzerdefiniert, unbekannt oder veraltet getrennt. Letzte bestätigte Anwendung gesondert gespeichert.

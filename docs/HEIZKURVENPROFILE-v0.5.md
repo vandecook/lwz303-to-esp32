@@ -6,13 +6,16 @@ Stand 08.11.2026. Profile werden im ESP32 gespeichert und ausschließlich manuel
 
 | Speicherplatz | Anfangsname | P13 | P14 | P15 | Zustand |
 |---|---|---:|---:|---:|---|
+| Standard (bewaehrt), fest | Standard (bewaehrt) | 0,3 | 1,0 K | 0 | Bewaehrte Einstellung laut Nutzer; unveraenderbar |
 | Profil 1 | Uebergangszeit | 0,2 | 2,0 K | 0 | Hinterlegter Versuchsvorschlag |
 | Profil 2 | Winter | 0,4 | 1,0 K | 0 | Hinterlegter Versuchsvorschlag für zu kühle Räume bei Kälte |
 | Profil 3–5 | Eigenes Profil 1–3 | 0 | 0 K | 0 | Leer, erst nach Speichern anwendbar |
 
 Die Vorschläge sind **keine Herstellerprogramme oder bestätigte optimale Einstellungen**. Herstellerstandard 0,6/0/0 und zuletzt vom Nutzer gemeldete Einstellung 0,3/1,0 K sind in der [HK1-Dokumentation](HEIZKURVE-HK1.md) beschrieben. Keiner dieser Werte wird beim Start automatisch auf die Anlage übertragen.
 
-Alle fünf Plätze können bearbeitet und benannt werden. „Profil 1“ bis „Profil 5“ bleiben feste Platzbezeichnungen im Auswahlfeld; der gespeicherte Name erscheint daneben unter „Profil gespeichert / Editorstatus“ und im Namen-Editor. Namen müssen eindeutig sein, 1–31 UTF-8-Bytes lang sein und dürfen keine Steuerzeichen enthalten. Umlaute benötigen mehr als ein Byte.
+Zusätzlich zu den fünf bearbeitbaren Speicherplätzen gibt es den festen Eintrag **„Standard (bewaehrt)“** mit P13=0,3, P14=1,0 K und P15=0. Alle drei Werte wurden vom Nutzer am 08.11.2026 als aktuelle bewährte Einstellung bestätigt. Das ist kein Herstellerstandard (der bleibt 0,6/0/0). Der feste Eintrag kann weder umbenannt noch überschrieben werden. Die Namen-/Wertfelder zeigen beim Auswählen seine Werte; Bearbeiten, Speichern oder Übernehmen von Anlagenwerten wird für diesen Eintrag abgewiesen. Die getrennten Anlagen-Slider bleiben dennoch manuell bedienbar.
+
+Die fünf übrigen Plätze können bearbeitet und benannt werden. „Profil 1“ bis „Profil 5“ bleiben feste Platzbezeichnungen im Auswahlfeld; der gespeicherte Name erscheint daneben unter „Profil gespeichert / Editorstatus“ und im Namen-Editor. Namen müssen eindeutig sein, 1–31 UTF-8-Bytes lang sein und dürfen keine Steuerzeichen enthalten. Umlaute benötigen mehr als ein Byte.
 
 ## Bedienung
 
@@ -20,7 +23,8 @@ Alle fünf Plätze können bearbeitet und benannt werden. „Profil 1“ bis „
 2. Name, Gradient und Fußpunkt im **Entwurf** einstellen. Der Raumeinfluss-Entwurf steht unter **Expert**. Grenzen: P13 0–1, P14 0–5 K, P15 0–10, jeweils Schritt 0,1.
 3. Optional „Profil Anlagenwerte jetzt lesen“ und anschließend „Profil Anlagenwerte in Entwurf“ verwenden. Das übernimmt nur vollständige, frische Werte innerhalb der Profilbereiche. Es schreibt nichts in die LWZ.
 4. „Profil Entwurf speichern“ speichert den Entwurf dauerhaft im ESP32. „Profil Entwurf verwerfen“ stellt die im gewählten Platz gespeicherten Werte wieder her. Ein ungespeicherter Entwurf blockiert Platzwechsel und Anwendung, damit Änderungen nicht stillschweigend verloren gehen.
-5. Erst mit eingeschalteter **LWZ Schreibfreigabe** und der Taste **Profil jetzt anwenden** wird das gespeicherte Profil auf die Anlage übertragen. Eine laufende Schreibtransaktion blockiert parallele Änderungen. Aktionsstatus und Schreibstatus zeigen das Ergebnis.
+5. Für den festen Standard genügt seine Auswahl; vorheriges Speichern ist nicht erforderlich. Auch er wird erst über „Profil jetzt anwenden“ mit Schreibfreigabe übertragen.
+6. Erst mit eingeschalteter **LWZ Schreibfreigabe** und der Taste **Profil jetzt anwenden** wird das gespeicherte Profil auf die Anlage übertragen. Eine laufende Schreibtransaktion blockiert parallele Änderungen. Aktionsstatus und Schreibstatus zeigen das Ergebnis.
 
 Die Auswahl, die gespeicherten Profile und die letzte bestätigte Anwendung bleiben über ESP-Neustarts erhalten. Ungespeicherte Entwürfe werden nach Neustart verworfen. Die Schreibfreigabe startet weiterhin ausgeschaltet. Es gibt **keine automatische Anwendung** bei Neustart, Wiederverbindung, Temperaturänderung, Jahreszeitenwechsel oder manueller Abweichung. Es wird auch nicht automatisch zu einem früheren Profil zurückgeschrieben.
 
@@ -46,6 +50,8 @@ Der Standard für „Heizkurven-Abfrageintervall HK1“ ist ab v0.5 **1 Minute**
 Die Anwendung liest Block **05** frisch, verlangt den vollständigen 2.x-Block mit mindestens 22 Nutzdatenbytes und ersetzt ausschließlich P13/P14/P15 an Offset 0–4. Alle übrigen Bytes einschließlich HK2 und Min-/Max-Grenzen bleiben erhalten. Es folgt genau ein SET und ein unabhängiger GET. Erst wenn der gesamte zurückgelesene Nutzdatenblock übereinstimmt, wird die Anwendung bestätigt und ihre Momentaufnahme im ESP32 gespeichert.
 
 Bei fehlender Schreibfreigabe, leerem Profil, ungespeichertem Entwurf, Speicherfehler oder laufendem Schreibvorgang wird die Anwendung abgewiesen. Eine unsichere SET-Antwort führt zum Rücklesen, niemals zur Wiederholung des SET. Rückleseabweichungen bestätigen das Profil nicht als angewendet. Die Erkennungsanzeige kann dennoch zu einem Profil passen, wenn P13/P14/P15 stimmen, aber ein anderes erhaltenes Byte abweicht; der getrennte Aktionsstatus bleibt dann fehlerhaft.
+
+Der feste Standard ist im Programm hinterlegt und wird bei der Erkennung gleichwertig berücksichtigt. Das Format der fünf gespeicherten Profile wird für diese Ergänzung nicht erweitert; vorhandene Profile bleiben erhalten. Die Auswahl des festen Standards sowie eine erfolgreiche Anwendung werden wie die übrigen Auswahlen/Anwendungen gespeichert.
 
 Die Profilspeicherung verwendet einen eigenen Preferences-Schlüssel. Uhrzeitmodus und F5-/F6-Fehlerhistorie behalten ihren bisherigen Schlüssel und ihr Format. Ein Speicherfehler wird nicht als erfolgreich gespeichert ausgegeben. Bei erfolgreichem LWZ-Rücklesen, aber anschließend fehlgeschlagener Speicherung des Anwendungsvermerks, wird dieser Unterschied ausdrücklich angezeigt. Neustart löst keinen erneuten Schreibauftrag aus.
 

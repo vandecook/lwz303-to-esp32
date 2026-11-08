@@ -300,7 +300,7 @@ async def to_code(config):
         cg.add(obj.set_parent(var))
         cg.add(var.set_clock_mode_select(obj))
     if "profile_slot" in config:
-        obj = await select.new_select(config["profile_slot"], options=[f"Profil {i}" for i in range(1,6)])
+        obj = await select.new_select(config["profile_slot"], options=[f"Profil {i}" for i in range(1,6)] + ["Standard (bewaehrt)"])
         cg.add(obj.set_parent(var))
         cg.add(var.set_profile_select(obj))
     if "profile_name" in config:
