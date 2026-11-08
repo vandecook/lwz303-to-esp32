@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import binary_sensor, sensor, text_sensor, uart, number, select
+from esphome.components import binary_sensor, sensor, text_sensor, uart, number, select, text
 from esphome.core import CORE
 import zlib
 from .metadata import SELECTED_ENTITIES
@@ -16,7 +16,7 @@ from esphome.const import (
 
 CODEOWNERS = []
 DEPENDENCIES = ["uart"]
-AUTO_LOAD = ["sensor", "binary_sensor", "text_sensor", "number", "select"]
+AUTO_LOAD = ["sensor", "binary_sensor", "text_sensor", "number", "select", "text"]
 
 CONF_FIRMWARE = "firmware"
 CONF_STATUS_INTERVAL = "status_interval"
@@ -122,11 +122,16 @@ def hours_sensor_schema():
 
 LWZSetpointNumber = lwz2_ns.class_("LWZSetpointNumber", number.Number)
 LWZFanStageNumber = lwz2_ns.class_("LWZFanStageNumber", number.Number)
+LWZHeatingCurveNumber = lwz2_ns.class_("LWZHeatingCurveNumber", number.Number)
+LWZProfileSelect = lwz2_ns.class_("LWZProfileSelect", select.Select)
+LWZProfileName = lwz2_ns.class_("LWZProfileName", text.Text)
+LWZProfileValueNumber = lwz2_ns.class_("LWZProfileValueNumber", number.Number)
 LWZClockModeSelect = lwz2_ns.class_("LWZClockModeSelect", select.Select)
 V04_SENSORS = ("hc_stage", "dhw_stage", "current_fan_stage", "exhaust_fault_count", "supply_fault_count")
-V04_TEXT = ("hc_stage_text", "dhw_stage_text", "exhaust_status", "supply_status",
+V04_TEXT = ("hc_stage_text", "dhw_stage_text", "fan_stage_diagnostics", "exhaust_status", "supply_status",
             "exhaust_data_status", "supply_data_status", "exhaust_fault_begin", "exhaust_fault_end",
-            "supply_fault_begin", "supply_fault_end", "fault_reset_reason", "persistence_status", "lwz_error_memory")
+            "supply_fault_begin", "supply_fault_end", "fault_reset_reason", "persistence_status", "lwz_error_memory",
+            "profile_selected", "profile_recognized", "profile_last_applied", "profile_action_status", "profile_data_status")
 V04_BINARY = ("exhaust_fault", "supply_fault")
 
 def selected_schema():
@@ -152,22 +157,24 @@ CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(LWZ2Component),
-            cv.Optional("enable_v03", default=True): cv.boolean,
-            cv.Optional("enable_v04", default=False): cv.boolean,
             cv.Optional("device_model", default="unknown"): cv.one_of("i", "SOL", "unknown"),
             cv.Optional("fan_speed_source", default="sGlobal"): cv.one_of("sGlobal", "sFan"),
             cv.Optional("diagnostic_max_age", default="30s"): cv.positive_time_period_milliseconds,
-            **{cv.Optional(k): sensor.sensor_schema(accuracy_decimals=0, entity_category=ENTITY_CATEGORY_DIAGNOSTIC) for k in V04_SENSORS},
-            **{cv.Optional(k): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC) for k in V04_TEXT},
+            **{cv.Optional(k): sensor.sensor_schema(accuracy_decimals=0, **({} if k in ("hc_stage", "dhw_stage") else {"entity_category": ENTITY_CATEGORY_DIAGNOSTIC})) for k in V04_SENSORS},
+            **{cv.Optional(k): text_sensor.text_sensor_schema(**({} if k in ("hc_stage_text", "dhw_stage_text", "profile_recognized") else {"entity_category": ENTITY_CATEGORY_DIAGNOSTIC})) for k in V04_TEXT},
             **{cv.Optional(k): binary_sensor.binary_sensor_schema(device_class="problem") for k in V04_BINARY},
             cv.Optional("fan_stage_day"): number.number_schema(LWZFanStageNumber, entity_category="config"),
             cv.Optional("fan_stage_night"): number.number_schema(LWZFanStageNumber, entity_category="config"),
+            cv.Optional("profile_slot"): select.select_schema(LWZProfileSelect, entity_category="config"),
+            cv.Optional("profile_name"): text.text_schema(LWZProfileName, mode="text", entity_category="config"),
+            **{cv.Optional(k): number.number_schema(LWZProfileValueNumber, entity_category="config", **({"unit_of_measurement": "K"} if i == 1 else {}))
+               for i,k in enumerate(("profile_gradient", "profile_low_end", "profile_room_influence"))},
             cv.Optional("clock_mode"): select.select_schema(LWZClockModeSelect, entity_category="config"),
             cv.Optional("hc1_layout", default="2.06"): cv.one_of("2.06", "2.14", "2.14j"),
             cv.Optional("write_status"): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC),
             **selected_schema(),
             cv.Optional(CONF_FIRMWARE, default="2.14j"): cv.one_of(
-                "2.06", "2.14", "2.14j", lower=False
+                "2.06", "2.14", "2.14j", "2.16", lower=False
             ),
             cv.Optional(CONF_STATUS_INTERVAL, default="10s"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_HEATING_INTERVAL, default="10s"): cv.positive_time_period_milliseconds,
@@ -178,8 +185,9 @@ CONFIG_SCHEMA = (
 
             **{cv.Optional(key): sensor.sensor_schema(accuracy_decimals=0, entity_category=ENTITY_CATEGORY_DIAGNOSTIC)
                for key in ("successful_queries", "failed_queries", "timeouts", "retries")},
-            cv.Optional("hc1_gradient"): sensor.sensor_schema(accuracy_decimals=1),
-            cv.Optional("hc1_low_end"): sensor.sensor_schema(unit_of_measurement="K", accuracy_decimals=1),
+            cv.Optional("hc1_gradient"): number.number_schema(LWZHeatingCurveNumber),
+            cv.Optional("hc1_low_end"): number.number_schema(LWZHeatingCurveNumber, unit_of_measurement="K"),
+            cv.Optional("hc1_room_influence"): number.number_schema(LWZHeatingCurveNumber, entity_category="config"),
             **{cv.Optional(key): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC)
                for key in ("last_success", "config_updated", "firmware_version")},
             cv.Optional(CONF_OUTSIDE_TEMPERATURE): temp_sensor_schema(),
@@ -269,10 +277,6 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
-    cg.add(var.set_v03_enabled(config["enable_v03"]))
-    if config["enable_v04"] and not config["enable_v03"]:
-        raise cv.Invalid("enable_v04 requires enable_v03")
-    cg.add(var.set_v04_enabled(config["enable_v04"]))
     cg.add(var.set_preferences_key(zlib.crc32((CORE.name + ":lwz2-v04").encode())))
     cg.add(var.set_device_model(config["device_model"]))
     cg.add(var.set_fan_speed_source(config["fan_speed_source"]))
@@ -295,7 +299,25 @@ async def to_code(config):
         obj = await select.new_select(config["clock_mode"], options=["Winterzeit", "Sommerzeit", "Unbekannt"])
         cg.add(obj.set_parent(var))
         cg.add(var.set_clock_mode_select(obj))
+    if "profile_slot" in config:
+        obj = await select.new_select(config["profile_slot"], options=[f"Profil {i}" for i in range(1,6)])
+        cg.add(obj.set_parent(var))
+        cg.add(var.set_profile_select(obj))
+    if "profile_name" in config:
+        obj = await text.new_text(config["profile_name"], min_length=1, max_length=31)
+        cg.add(obj.set_parent(var))
+        cg.add(var.set_profile_name(obj))
+    for i,key in enumerate(("profile_gradient", "profile_low_end", "profile_room_influence")):
+        if key in config:
+            obj = await number.new_number(config[key], min_value=0, max_value=(1,5,10)[i], step=0.1)
+            cg.add(obj.set_parent(var,i))
+            cg.add(var.set_profile_value(i,obj))
     cg.add(var.set_hc1_layout(config["hc1_layout"]))
+    for i, key in enumerate(("hc1_gradient", "hc1_low_end", "hc1_room_influence")):
+        if key in config:
+            obj = await number.new_number(config[key], min_value=0, max_value=(1, 5, 10)[i], step=0.1)
+            cg.add(obj.set_parent(var, i))
+            cg.add(var.set_heating_curve_number(i, obj))
     if "write_status" in config:
         status = await text_sensor.new_text_sensor(config["write_status"])
         cg.add(var.set_write_status_text_sensor(status))
@@ -329,7 +351,7 @@ async def to_code(config):
 
     sensor_setters = {
         **{key: "set_" + key + "_sensor" for key in
-           ("hc1_gradient", "hc1_low_end", "successful_queries", "failed_queries", "timeouts", "retries")},
+           ("successful_queries", "failed_queries", "timeouts", "retries")},
         CONF_OUTSIDE_TEMPERATURE: "set_outside_temperature_sensor",
         CONF_FLOW_TEMPERATURE: "set_flow_temperature_sensor",
         CONF_RETURN_TEMPERATURE: "set_return_temperature_sensor",

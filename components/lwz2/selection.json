@@ -235,8 +235,8 @@
       "name": "Elektrische Zusatzheizung Stufe 3 (nur 2.06)",
       "source": "sGlobal.boosterStage3",
       "function": "Lesen",
-      "category": "Zurückstellen – Verifikation offen",
-      "note": "Dritte Zusatzheizungsstufe ist nur im 2.06-Decoder enthalten; Geräte-FW 2.16 und tatsächliche Stufe nicht bestätigt.",
+      "category": "Expert - alternative Stufenzuordnung",
+      "note": "Dritte Zusatzheizungsstufe ist nur im 2.06-Decoder enthalten; Geräte-FW 2.16 und tatsächliche Stufe nicht bestätigt. Nutzerfestlegung 08.11.2026: Expert; bevorzugte Basisquelle sControl.hcStage/dhwStage aus F2ctrl. Keine Gleichsetzung der Quellen.",
       "optional": false,
       "key": "s_global_booster_stage3",
       "kind": "binary_sensor",
@@ -251,8 +251,8 @@
       "name": "Elektrische Zusatzheizung Stufe 2",
       "source": "sGlobal.boosterStage2",
       "function": "Lesen",
-      "category": "Zurückstellen – Verifikation offen",
-      "note": "Bitposition unterscheidet sich zwischen 2.06 und 2.14/j; reale Stufenwechsel fehlen als Nachweis.",
+      "category": "Expert - alternative Stufenzuordnung",
+      "note": "Bitposition unterscheidet sich zwischen 2.06 und 2.14/j; reale Stufenwechsel fehlen als Nachweis. Nutzerfestlegung 08.11.2026: Expert; bevorzugte Basisquelle sControl.hcStage/dhwStage aus F2ctrl. Keine Gleichsetzung der Quellen.",
       "optional": false,
       "key": "booster_stage2",
       "kind": "binary_sensor",
@@ -267,8 +267,8 @@
       "name": "Elektrische Zusatzheizung Stufe 1",
       "source": "sGlobal.boosterStage1",
       "function": "Lesen",
-      "category": "Expert – Statusprüfung",
-      "note": "Als optionale Statusanzeige vorsehen; Bitbelegung ist im geprüften 2.x-Code gleich. Vor einer Stufeninterpretation auf Geräte-FW 2.16 realen Schaltzustand mit Geräteanzeige abgleichen.",
+      "category": "Expert - alternative Stufenzuordnung",
+      "note": "Als optionale Statusanzeige vorsehen; Bitbelegung ist im geprüften 2.x-Code gleich. Vor einer Stufeninterpretation auf Geräte-FW 2.16 realen Schaltzustand mit Geräteanzeige abgleichen. Nutzerfestlegung 08.11.2026: Expert; bevorzugte Basisquelle sControl.hcStage/dhwStage aus F2ctrl. Keine Gleichsetzung der Quellen.",
       "optional": false,
       "key": "booster_stage1",
       "kind": "binary_sensor",
@@ -390,14 +390,14 @@
       "field": "inputVentilatorSpeed"
     },
     {
-      "choice": "ja",
+      "choice": "Optional",
       "id": "OUT032",
       "name": "Relative Hauptlüfterdrehzahl, keine Drehzahl in U/min [% (FHEM)]",
       "source": "sGlobal.mainVentilatorSpeed",
       "function": "Lesen",
-      "category": "Expert – standardmäßig ausgeblendet",
+      "category": "Expert – optional",
       "note": "Lüfterwerte aus sGlobal optional bereitstellen. Prozent-Ansteuerung bzw. relative Drehzahl korrekt benennen; weder Watt noch U/min daraus ableiten. Kein Ersatz für ungeklärte E8-Werte.",
-      "optional": false,
+      "optional": true,
       "key": "main_fan_speed_percent",
       "kind": "sensor",
       "legacy": true,
@@ -459,8 +459,8 @@
       "name": "Stufenwert Zusatzheizung Warmwasser [nicht belegt]",
       "source": "sDHW.dhwBoosterStage",
       "function": "Lesen",
-      "category": "Expert – standardmäßig ausgeblendet",
-      "note": "Sinnvoller Detailwert; einmalig als optionale Entität anbieten, außerhalb der Basisansicht.",
+      "category": "Expert - alternative Stufenzuordnung",
+      "note": "Sinnvoller Detailwert; einmalig als optionale Entität anbieten, außerhalb der Basisansicht. Nutzerfestlegung 08.11.2026: Expert; bevorzugte Basisquelle sControl.hcStage/dhwStage aus F2ctrl. Keine Gleichsetzung der Quellen.",
       "optional": true,
       "key": "s_d_h_w_dhw_booster_stage",
       "kind": "sensor",
@@ -566,14 +566,14 @@
       "field": "exhaustFanSpeedTarget"
     },
     {
-      "choice": "Ja",
+      "choice": "Optional",
       "id": "OUT063",
       "name": "Zuluft-Kalibrierkennwert Speed200, Bedeutung/Einheit nicht belegt [nicht belegt]",
       "source": "sFan.supplyFanSpeed200",
       "function": "Lesen",
-      "category": "Analyse Wohnraumlüftung – standardmäßig aktiv",
-      "note": "Ausdrücklich als Ja gewählt. FHEM uint16 BE /10, eine Nachkommastelle. Physikalische Einheit und Bedeutung des Kalibrierpunkts sind nicht bestätigt; keine Umdeutung in U/min oder 1/s.",
-      "optional": false,
+      "category": "Analyse Wohnraumlüftung – optional",
+      "note": "Latest user instruction: Optional, disabled by default in HA. FHEM uint16 BE /10, one decimal; physical unit unverified. Not used for F5/F6.",
+      "optional": true,
       "key": "s_fan_supply_fan_speed200",
       "kind": "sensor",
       "legacy": false,
@@ -583,14 +583,14 @@
       "accuracy_decimals": 1
     },
     {
-      "choice": "Ja",
+      "choice": "Optional",
       "id": "OUT064",
       "name": "Abluft-Kalibrierkennwert Speed200, Bedeutung/Einheit nicht belegt [nicht belegt]",
       "source": "sFan.exhaustFanSpeed200",
       "function": "Lesen",
-      "category": "Analyse Wohnraumlüftung – standardmäßig aktiv",
-      "note": "Ausdrücklich als Ja gewählt. FHEM uint16 BE /10, eine Nachkommastelle. Physikalische Einheit und Bedeutung des Kalibrierpunkts sind nicht bestätigt; keine Umdeutung in U/min oder 1/s.",
-      "optional": false,
+      "category": "Analyse Wohnraumlüftung – optional",
+      "note": "Latest user instruction: Optional, disabled by default in HA. FHEM uint16 BE /10, one decimal; physical unit unverified. Not used for F5/F6.",
+      "optional": true,
       "key": "s_fan_exhaust_fan_speed200",
       "kind": "sensor",
       "legacy": false,
@@ -749,8 +749,8 @@
       "name": "Heizkreis-Zusatzheizungsstufe (2.06/2.14) [nicht belegt]",
       "source": "sHC1.hcBoosterStage",
       "function": "Lesen",
-      "category": "Zurückstellen – Verifikation offen",
-      "note": "hcBoosterStage der Profile 2.06/2.14 nicht mit hcStage von 2.14j verwechseln; Stufenbedeutung unter Geräte-FW 2.16 prüfen.",
+      "category": "Expert - alternative Stufenzuordnung",
+      "note": "hcBoosterStage der Profile 2.06/2.14 nicht mit hcStage von 2.14j verwechseln; Stufenbedeutung unter Geräte-FW 2.16 prüfen. Nutzerfestlegung 08.11.2026: Expert; bevorzugte Basisquelle sControl.hcStage/dhwStage aus F2ctrl. Keine Gleichsetzung der Quellen.",
       "optional": false,
       "key": "s_h_c1_hc_booster_stage",
       "kind": "sensor",
@@ -765,8 +765,8 @@
       "name": "Heizstufe 2.14j: 0 aus, 1 Solar, 2 V1 laut FHEM [nicht belegt]",
       "source": "sHC1.hcStage",
       "function": "Lesen",
-      "category": "Zurückstellen – Verifikation offen",
-      "note": "hcStage von 2.14j hat andere Enumsemantik; ein beobachteter 0-Zustand bestätigt noch keine Stufeninterpretation.",
+      "category": "Expert - alternative Stufenzuordnung",
+      "note": "hcStage von 2.14j hat andere Enumsemantik; ein beobachteter 0-Zustand bestätigt noch keine Stufeninterpretation. Nutzerfestlegung 08.11.2026: Expert; bevorzugte Basisquelle sControl.hcStage/dhwStage aus F2ctrl. Keine Gleichsetzung der Quellen.",
       "optional": false,
       "key": "s_h_c1_hc_stage",
       "kind": "sensor",
@@ -1492,13 +1492,87 @@
   "selection_overrides": [
     {
       "id": "OUT063",
-      "choice": "Ja",
-      "source": "Explicit latest user message; supersedes Optional and any unsaved workbook state"
+      "choice": "Optional",
+      "source": "Explicit latest user instruction on 2026-11-07: Speed200 values Optional; supersedes previous Ja override and workbook state",
+      "previous_choice": "Ja"
     },
     {
       "id": "OUT064",
-      "choice": "Ja",
-      "source": "Explicit latest user message; supersedes Optional and any unsaved workbook state"
+      "choice": "Optional",
+      "source": "Explicit latest user instruction on 2026-11-07: Speed200 values Optional; supersedes previous Ja override and workbook state",
+      "previous_choice": "Ja"
+    },
+    {
+      "id": "OUT032",
+      "choice": "Optional",
+      "previous_choice": "ja",
+      "source": "Explicit user instruction on 2026-11-07: Relative main fan speed Optional"
     }
-  ]
+  ],
+  "stage_display_assignment": {
+    "date": "2026-11-08",
+    "basis": [
+      "dhw_stage",
+      "dhw_stage_text",
+      "hc_stage",
+      "hc_stage_text"
+    ],
+    "expert": [
+      "booster_stage1",
+      "booster_stage2",
+      "s_d_h_w_dhw_booster_stage",
+      "s_global_booster_stage3",
+      "s_h_c1_hc_booster_stage",
+      "s_h_c1_hc_stage"
+    ],
+    "model_mapping": "SOL; also applicable to decoder 2.16; user accepted FHEM comment mapping, physical verification pending",
+    "documentation": "docs/MAPPING-STUFEN.md"
+  },
+  "heating_curve_controls": {
+    "date": "2026-11-08",
+    "source": "pHeat1 / 05pxx206",
+    "controls": [
+      {
+        "key": "hc1_gradient",
+        "parameter": "P13",
+        "min": 0,
+        "max": 1,
+        "step": 0.1,
+        "group": "Basis",
+        "replaces_read_sensor": true
+      },
+      {
+        "key": "hc1_low_end",
+        "parameter": "P14",
+        "min": 0,
+        "max": 5,
+        "step": 0.1,
+        "unit": "K",
+        "group": "Basis",
+        "replaces_read_sensor": true
+      },
+      {
+        "key": "hc1_room_influence",
+        "parameter": "P15",
+        "min": 0,
+        "max": 10,
+        "step": 0.1,
+        "group": "Expert"
+      }
+    ],
+    "documentation": "docs/HEIZKURVE-HK1.md",
+    "hardware_write_verified": false
+  },
+  "current_release": "0.5.0",
+  "profile_controls": {
+    "storage": "ESPHome Preferences, independent from retained v0.4 clock/fault key",
+    "slots": 5,
+    "parameters": [
+      "P13",
+      "P14",
+      "P15"
+    ],
+    "manual_only": true,
+    "documentation": "docs/HEIZKURVENPROFILE-v0.5.md"
+  }
 }

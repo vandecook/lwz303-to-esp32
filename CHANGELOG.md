@@ -1,7 +1,18 @@
 # Changelog
 
+## 0.5.0 - 2026-11-08
+
+- Heizkurvenprofile P13/P14/P15 dauerhaft in ESPHome: fünf bearbeitbare Speicherplätze, Namen und Entwürfe; getrennte Aktionen Speichern, Verwerfen, Anlagenwerte übernehmen und Anwenden.
+- Manuelle Anwendung ändert alle drei Parameter in einem frisch gelesenen Block 05 und erhält alle übrigen Bytes; ein SET und unabhängige vollständige Rückleseprüfung. Keine automatische Anwendung/Umschaltung, kein SET-Retry.
+- Profilerkennung anhand tatsächlicher Rohwerte einschließlich P15; Benutzerdefiniert, unbekannt oder veraltet getrennt. Letzte bestätigte Anwendung gesondert gespeichert.
+- enable_v03 und enable_v04 samt internen Aktivierungsflags entfernt; keine Ersatzschalter. Separate Schreibfreigabe und bisheriger Uhr-/Fehlerhistorien-Speicher bleiben erhalten.
+- Standard für HK1-Konfigurationsabfrage auf eine Minute geändert; vorhandene gespeicherte Intervallwahl bleibt erhalten. Kommunikationspausen weiterhin 1 Sekunde.
+- Host-/Konfigurationstests erweitert, Dokumentation und eigenes v0.5-Quellpaket. Physische Profilprüfung und Veröffentlichung offen.
+
 ## 0.4.0 – 2026-11-07
 
+- OUT063/OUT064 Speed200 auf jüngste Nutzerfestlegung Optional: in HA standardmäßig deaktiviert und im Web unter Expert; F5-/F6-Drehzahlquelle unverändert.
+- FD-Firmwareabfrage aus Profil 2.06 für alle Decoderlayouts, mit Zwei-Byte-/Zahlen-Plausibilitätsprüfung und manueller Abfragetaste; keine automatische Decoderumschaltung.
 - F2 sControl und F6 lesen, auch für das Zielgerät mit tatsächlicher FW 2.16; unabhängig von den Decoderlayouts 2.06/2.14/2.14j.
 - Geräteauswahl unbekannt / i / SOL. SOL-Anforderungstexte gemäß FHEM-Kommentar; bei i und unbekannten Codes Rohwerte, keine erfundenen kW-Zuordnungen.
 - P07/P08 als dauerhaft schreibbare Number, Bereich 0–3, gezieltes Lesen–Ändern–Schreiben–Rücklesen; bisherige Lesesensoren ersetzt.

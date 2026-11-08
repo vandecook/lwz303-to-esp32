@@ -16,6 +16,7 @@
 #include "esphome/core/log.h"
 #include "esphome/core/preferences.h"
 #include "esphome/components/select/select.h"
+#include "esphome/components/text/text.h"
 
 namespace esphome::lwz2 {
 
@@ -23,6 +24,7 @@ enum class FirmwareProfile : uint8_t {
   FW_206 = 0,
   FW_214 = 1,
   FW_214J = 2,
+  FW_216 = 3,  // Provisional 2.06-based profile with explicit field exclusions.
 };
 
 enum class CommState : uint8_t {
@@ -36,7 +38,6 @@ enum class CommState : uint8_t {
 
 class LWZ2Component : public Component, public uart::UARTDevice {
  public:
-  void set_v04_enabled(bool v) { v04_enabled_ = v; }
   void set_preferences_key(uint32_t v) { preferences_key_ = v; }
   void set_device_model(const std::string &v);
   void set_fan_speed_source(const std::string &v);
@@ -50,7 +51,6 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void set_v04_sensor(const std::string &key, sensor::Sensor *s) { v04_sensors_[key] = s; }
   void set_v04_text(const std::string &key, text_sensor::TextSensor *s) { v04_text_[key] = s; }
   void set_v04_binary(const std::string &key, binary_sensor::BinarySensor *s) { v04_binary_[key] = s; }
-  void set_v03_enabled(bool enabled) { v03_enabled_ = enabled; }
   void set_hc1_layout(const std::string &profile);
   void set_selected_sensor(const std::string &key, sensor::Sensor *s) { selected_sensors_[key] = s; }
   void set_selected_binary_sensor(const std::string &key, binary_sensor::BinarySensor *s) { selected_binary_[key] = s; }
@@ -58,6 +58,18 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void set_setpoint_number(uint8_t index, number::Number *n) { if (index < 4) setpoints_[index] = n; }
   void set_writes_enabled(bool enabled);
   bool request_setpoint(uint8_t index, float value);
+  bool request_heating_curve(uint8_t index, float value);
+  void set_heating_curve_number(uint8_t index, number::Number *n) { if (index < 3) heating_curve_[index] = n; }
+  void set_profile_select(select::Select *s) { profile_select_ = s; }
+  void set_profile_name(text::Text *t) { profile_name_ = t; }
+  void set_profile_value(uint8_t i, number::Number *n) { if (i < 3) profile_values_[i] = n; }
+  bool select_profile_slot(const std::string &slot);
+  bool edit_profile_name(const std::string &name);
+  bool edit_profile_value(uint8_t i, float value);
+  bool save_profile();
+  void discard_profile_draft();
+  bool copy_actual_to_profile();
+  bool apply_profile();
   bool request_clock_shift(int hours);
   void set_write_status_text_sensor(text_sensor::TextSensor *s) { write_status_ = s; }
   // Local controls only; none writes LWZ parameters.
@@ -69,6 +81,10 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void set_trigger_dhw(bool v) { trigger_dhw_ = v; reschedule_poll_(); }
   uint32_t effective_interval() const;
   void refresh_config() { config_pending_ = true; }
+  void refresh_firmware() {
+    firmware_pending_ = true;
+    if (firmware_version_text_sensor_) firmware_version_text_sensor_->publish_state("warte auf Abfrage");
+  }
   void reset_counters();
   void reinitialize();
   void setup() override;
@@ -77,6 +93,9 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   float get_setup_priority() const override { return setup_priority::DATA; }
 
   void set_firmware(const std::string &fw);
+  bool uses_206_layout_() const {
+    return firmware_ == FirmwareProfile::FW_206 || firmware_ == FirmwareProfile::FW_216;
+  }
   void set_status_interval(uint32_t v) { status_interval_ms_ = v; reschedule_poll_(); }
   void set_heating_interval(uint32_t v) { heating_interval_ms_ = v; }
   void set_fan_interval(uint32_t v) { fan_interval_ms_ = v; }
@@ -162,6 +181,36 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 #undef LWZ2_TEXT_SETTER
 
  protected:
+  struct HeatingProfile {
+    char name[32]{};
+    uint16_t raw[3]{};
+    bool used{false};
+  };
+  struct ProfileStorage {
+    uint32_t magic{0x4C575A05};
+    HeatingProfile slots[5]{};
+    HeatingProfile last_applied{};
+    uint8_t selected_slot{0};
+  } profiles_;
+  HeatingProfile profile_draft_, profile_pending_;
+  uint8_t profile_slot_{0};
+  bool profile_dirty_{false}, profile_write_{false}, profile_read_seen_{false};
+  bool profile_store_ok_{true};
+  uint16_t profile_actual_[3]{};
+  uint32_t profile_read_ms_{0};
+  ESPPreferenceObject profile_preference_;
+  select::Select *profile_select_{nullptr};
+  text::Text *profile_name_{nullptr};
+  number::Number *profile_values_[3]{};
+  void profiles_setup_();
+  void profiles_publish_editor_();
+  void profiles_tick_();
+  void profiles_read_(const uint8_t *data, size_t len);
+  void profiles_finish_(bool verified);
+  bool profiles_store_(const ProfileStorage &candidate);
+  bool profile_fresh_() const;
+  static bool profile_valid_(const HeatingProfile &p);
+  std::string profile_status_last_, profile_match_last_;
   struct FanFaultRecord {
     uint32_t count{0};
     bool active{false};
@@ -173,7 +222,6 @@ class LWZ2Component : public Component, public uart::UARTDevice {
     FanFaultRecord fans[2]{};  // 0 exhaust/F5, 1 supply/F6
     char reset_reason[64]{};
   } saved_;
-  bool v04_enabled_{false};
   uint32_t preferences_key_{0x4C575A04}, diagnostic_max_age_ms_{30000};
   ESPPreferenceObject v04_preference_;
   bool persistence_ok_{true};
@@ -192,6 +240,9 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   int fan_day_{-1}, fan_night_{-1}, fan_standby_{-1}, fan_manual_{-1};
   int fan_program_{-1}, program_mode_{-1}, override_stage_{-1}, override_remaining_{-1};
   std::string clock_stamp_{"unbekannt"};
+  std::string fan_stage_diagnostic_last_;
+  int fan_stage_display_last_{-1};  // Display only; never used as evidence by F5/F6.
+  void publish_fan_stage_diagnostics_(int stage);
   void v04_setup_();
   void v04_parse_(uint8_t command, const uint8_t *data, size_t len);
   void v04_tick_(bool speed_observation = false);
@@ -203,7 +254,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void v04_number_(const std::string &key, float value);
   void v04_publish_text_(const std::string &key, const std::string &value);
   enum class WriteStage : uint8_t { NONE, READ, SET, VERIFY };
-  bool v03_enabled_{false}, writes_enabled_{false}, sending_set_{false}, write_transaction_{false};
+  bool writes_enabled_{false}, sending_set_{false}, write_transaction_{false};
   FirmwareProfile hc1_layout_{FirmwareProfile::FW_206};
   WriteStage write_stage_{WriteStage::NONE};
   uint8_t write_command_{0}, write_index_{0};
@@ -213,6 +264,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   bool clock_request_seen_{false};
   std::vector<uint8_t> write_expected_;
   number::Number *setpoints_[4]{nullptr, nullptr, nullptr, nullptr};
+  number::Number *heating_curve_[3]{nullptr, nullptr, nullptr};
   text_sensor::TextSensor *write_status_{nullptr};
   std::map<std::string, sensor::Sensor *> selected_sensors_;
   std::map<std::string, binary_sensor::BinarySensor *> selected_binary_;
@@ -233,8 +285,8 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   float selected_value_(const SelectedField &rule, const uint8_t *data) const;
   static constexpr uint32_t ACK_TIMEOUT_MS = 1800;
   static constexpr uint32_t FRAME_TIMEOUT_MS = 1800;
-  static constexpr uint32_t RETRY_DELAY_MS = 250;
-  static constexpr uint32_t MIN_REQUEST_GAP_MS = 250;
+  static constexpr uint32_t RETRY_DELAY_MS = 1000;
+  static constexpr uint32_t MIN_REQUEST_GAP_MS = 1000;
   static constexpr uint8_t MAX_ATTEMPTS = 3;
 
   FirmwareProfile firmware_{FirmwareProfile::FW_214J};
@@ -248,7 +300,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   uint32_t stale_after_ms_{30000};
 
   uint32_t dynamic_interval_ms_{5000};
-  uint32_t config_interval_ms_{3600000};
+  uint32_t config_interval_ms_{60000};
   uint32_t next_config_ms_{0};
   uint32_t last_diagnostics_ms_{0};
   uint32_t successes_{0}, timeouts_{0}, retries_{0};
@@ -401,6 +453,36 @@ class LWZSetpointNumber : public number::Number {
   void control(float value) override { if (parent_) parent_->request_setpoint(index_, value); }
   LWZ2Component *parent_{nullptr};
   uint8_t index_{0};
+};
+class LWZHeatingCurveNumber : public number::Number {
+ public:
+  void set_parent(LWZ2Component *parent, uint8_t index) { parent_ = parent; index_ = index; }
+ protected:
+  void control(float value) override { if (parent_) parent_->request_heating_curve(index_, value); }
+  LWZ2Component *parent_{nullptr};
+  uint8_t index_{0};
+};
+class LWZProfileValueNumber : public number::Number {
+ public:
+  void set_parent(LWZ2Component *p, uint8_t i) { parent_ = p; index_ = i; }
+ protected:
+  void control(float value) override { if (parent_) parent_->edit_profile_value(index_, value); }
+  LWZ2Component *parent_{nullptr};
+  uint8_t index_{0};
+};
+class LWZProfileName : public text::Text {
+ public:
+  void set_parent(LWZ2Component *p) { parent_ = p; }
+ protected:
+  void control(const std::string &value) override { if (parent_) parent_->edit_profile_name(value); }
+  LWZ2Component *parent_{nullptr};
+};
+class LWZProfileSelect : public select::Select {
+ public:
+  void set_parent(LWZ2Component *p) { parent_ = p; }
+ protected:
+  void control(const std::string &value) override { if (parent_) parent_->select_profile_slot(value); }
+  LWZ2Component *parent_{nullptr};
 };
 class LWZFanStageNumber : public number::Number {
  public:

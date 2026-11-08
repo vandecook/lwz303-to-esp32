@@ -1,5 +1,7 @@
 # Heizstufen und Booster-Zuordnung
 
+Aktuelle Festlegung 08.11.2026: SOL-Mapping aus F2ctrl für sControl.hcStage/dhwStage akzeptiert, auch für Decoderprofil 2.16; Basisanzeige. Alternative F3-/F4-Stufen und FB-Boosterbits unter Expert. [Eigener Mapping-Eintrag mit Tabelle und Verifikationsstatus](MAPPING-STUFEN.md). Die Akzeptanz ersetzt keinen Geräteversuch.
+
 Prüfstand: 07.11.2026. Zielgerät laut Nutzer: Firmware 2.16. Gerätevariante und FHEM-Decoderlayout sind getrennte Merkmale.
 
 ## Durch Herstellerunterlagen bestätigt

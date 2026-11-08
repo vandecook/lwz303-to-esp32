@@ -20,6 +20,7 @@ struct Test : LWZ2Component {
   using LWZ2Component::next_config_ms_;
   using LWZ2Component::config_pending_;
   using LWZ2Component::firmware_pending_;
+  using LWZ2Component::firmware_;
   using LWZ2Component::last_fb_success_ms_;
   using LWZ2Component::consecutive_errors_;
   using LWZ2Component::mark_success_;
@@ -39,10 +40,13 @@ std::vector<uint8_t> frame(uint8_t command, std::vector<uint8_t> data) {
 
 #include "test_v03.h"
 #include "test_v04.h"
+#include "test_fw216.h"
+#include "test_heating_curve.h"
+#include "test_profiles.h"
 
 int main() {
   // Decoder fixtures are derived from the documented FHEM offsets, not hardware captures.
-  for (const auto *profile : {"2.06", "2.14", "2.14j"}) {
+  for (const auto *profile : {"2.06", "2.14", "2.14j", "2.16"}) {
     Test t; sensor::Sensor outside,flow,ret,dhw,gradient,low;
     binary_sensor::BinarySensor compressor,heating,water;
     t.set_firmware(profile);
@@ -89,11 +93,28 @@ int main() {
   t.rx.push_back(0x10);t.rx.push_back(3);t.loop();
   assert(t.successes_==1 && updated.state=="boot+0s");
   auto count=t.tx.size(); t.loop();assert(t.tx.size()==count);
+  // A queued request must wait a full second after the completed response.
+  {
+    Test pace; pace.setup(); pace.loop(); assert(pace.current_command_==5);
+    pace.inject({0x10}); pace.inject({0x10,2});
+    auto response=frame(5,{0,4,0,0});
+    for(auto b:response) pace.rx.push_back(b);
+    pace.rx.push_back(0x10);pace.rx.push_back(3);pace.loop();
+    assert(pace.state_==CommState::IDLE && pace.successes_==1);
+    pace.refresh_config(); const auto before=pace.tx.size();
+    fake_millis+=999;pace.loop();assert(pace.tx.size()==before && pace.state_==CommState::IDLE);
+    fake_millis+=1;pace.loop();assert(pace.tx.size()>before && pace.current_command_==5);
+  }
   // Timeout -> two retries -> one final failure, without blocking or resetting recovery on counter reset.
+  t.firmware_pending_=false; // Firmware probing is exercised separately below.
   fake_millis+=10000;t.loop();assert(t.current_command_==0xFB);
   for(int attempt=0;attempt<3;attempt++) {
     fake_millis+=1801;t.loop();
-    if(attempt<2) {fake_millis+=251;t.loop();}
+    if(attempt<2) {
+      const auto before=t.tx.size();
+      fake_millis+=999;t.loop();assert(t.tx.size()==before && t.state_==CommState::RETRY_WAIT);
+      fake_millis+=1;t.loop();assert(t.tx.size()>before && t.state_==CommState::WAIT_WAKE_ACK);
+    }
   }
   assert(t.timeouts_==3 && t.retries_==2 && t.total_errors_==1);
   auto errors=t.consecutive_errors_;t.reset_counters();
@@ -102,9 +123,29 @@ int main() {
   uart::UARTComponent uart;t.parent_=&uart;t.reinitialize();assert(uart.reloads==1);
   // Wraparound-safe scheduling.
   assert(!Test::time_reached_(0xfffffff0,0x10));assert(Test::time_reached_(0x11,0x10));
-  // Firmware probing is restricted to 2.06; selecting 2.14j never sends FD.
-  Test f;f.set_firmware("2.06");f.setup();f.config_pending_=false;f.next_config_ms_=fake_millis+100000;
-  f.loop();assert(f.current_command_==0xFD);
+  // FDfirm is probed in all profiles; only plausible two-byte versions are shown.
+  for (const auto *profile : {"2.06", "2.14", "2.14j", "2.16"}) {
+    Test f;text_sensor::TextSensor version;f.set_firmware(profile);f.set_firmware_version_text_sensor(&version);
+    f.setup();f.config_pending_=false;f.next_config_ms_=fake_millis+100000;
+    const auto selected=f.firmware_;f.loop();assert(f.current_command_==0xFD);
+    f.inject({0x10});f.inject({0x10,2});
+    for (auto b:frame(0xFD,{0,216})) { f.rx.push_back(b);if(b==0x10)f.rx.push_back(b);if(b==0x2b)f.rx.push_back(0x18); }
+    f.rx.push_back(0x10);f.rx.push_back(3);f.loop();
+    assert(version.state=="02.16" && f.firmware_==selected);
+    for (const auto raw : {206,214,216,439}) {
+      f.parse_frame_(0xFD,frame(0xFD,{uint8_t(raw>>8),uint8_t(raw)}));
+      assert(version.state== (raw==206?"02.06":raw==214?"02.14":raw==216?"02.16":"04.39"));
+      assert(f.firmware_==selected);
+    }
+    for (const auto raw : {0,1,99,1000,65535}) {
+      f.parse_frame_(0xFD,frame(0xFD,{uint8_t(raw>>8),uint8_t(raw)}));
+      assert(version.state.find("unbekannt")==0 && f.firmware_==selected);
+    }
+    f.parse_frame_(0xFD,frame(0xFD,{0,216,0}));assert(version.state.find("unbekannt")==0);
+    std::string reason;assert(!f.validate_frame_(frame(0xFD,{0}),reason));
+    auto bad=frame(0xFD,{0,216});bad[2]^=1;assert(!f.validate_frame_(bad,reason));
+    f.refresh_firmware();assert(f.firmware_pending_ && f.firmware_==selected);
+  }
   // A recent configuration success cannot recover expired live values.
   Test stale;binary_sensor::BinarySensor ok;sensor::Sensor temp;
   stale.set_communication_ok_binary_sensor(&ok);stale.set_outside_temperature_sensor(&temp);
@@ -112,15 +153,18 @@ int main() {
   fake_millis+=31000;stale.update_communication_state_();assert(!ok.state && std::isnan(temp.state));
   stale.current_command_=5;stale.mark_success_();assert(!ok.state && stale.stale_published_);
   stale.current_command_=0xFB;stale.mark_success_();assert(ok.state);
-  // Disabling legacy consumers leaves only configuration + FB (no F4/E8/01/09).
-  Test minimal;minimal.setup();minimal.config_pending_=false;
+  // v0.5 polls the integrated blocks without any version activation flags.
+  Test minimal;minimal.setup();minimal.config_pending_=false;minimal.firmware_pending_=false;
   minimal.next_config_ms_=fake_millis+100000;minimal.next_fb_ms_=fake_millis+100000;
-  fake_millis+=5000;minimal.loop();assert(minimal.tx.empty());
+  fake_millis+=5000;minimal.loop();assert(!minimal.tx.empty() && minimal.current_command_==0xF3);
   // Oversized unterminated frames are rejected and enter the existing retry path.
   Test oversized;oversized.setup();oversized.loop();oversized.inject({0x10});oversized.inject({2});
   oversized.rx.insert(oversized.rx.end(),520,0);oversized.loop();oversized.loop();
   assert(oversized.retries_==1 && oversized.state_==CommState::RETRY_WAIT);
   v03_tests();
   v04_tests();
-  std::cout << "PASS: 3 profiles, offsets, OR polling, validation, transport, retries, reset, wraparound, firmware gate\n";
+  fw216_tests();
+  heating_curve_tests();
+  profile_tests();
+  std::cout << "PASS: 4 profiles, offsets, OR polling, validation, transport, retries, reset, wraparound, firmware gate\n";
 }

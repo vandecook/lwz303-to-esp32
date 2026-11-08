@@ -1,8 +1,12 @@
 # Roadmap – LWZ303 to ESP32
 
-Stand: **07.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
+Festlegung 08.11.2026 umgesetzt: F2ctrl-Heizungs-/Warmwasseranforderung als Basis; SOL-Mapping einschließlich Decoder 2.16, andere Stufenquellen Expert. [Mapping](docs/MAPPING-STUFEN.md).
 
-**Aktueller Stand:** v0.4 ist lokal als Software umgesetzt. Synthetische Tests, ESPHome-Prüfung und vollständiger ESP32-C3-Build sind erfolgreich. Hinzugekommen sind Tag-/Nacht-Lüfterstufen, lokale gespeicherte F5/F6-Fehler mit HA-Rücksetzung, Geräteauswahl, F2-Stufencodes und Uhrzeitauswahl. Die v0.3-Auswahl bleibt erhalten; P07/P08 werden als Number statt doppeltem Lesesensor angeboten. Geräteprüfung und Veröffentlichung stehen aus. Details: [Validierung v0.4](docs/VALIDATION-v0.4.md).
+**Decoder FW 2.16 vorbereitet:** eigenes Profil auf 2.06-Basis; sHC1-Innentemperatur und vier sFan-Ist-/Soll-Drehzahlen vorläufig nicht verfügbar. Relative sGlobal-Istwerte bleiben F5/F6-Quelle. [Details und Verifikation](docs/DECODER-FW2.16.md).
+
+Stand: **08.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
+
+**Aktueller Stand:** v0.5 ist lokal als Software umgesetzt: dauerhaft in ESPHome gespeicherte Profile P13/P14/P15, ausschließlich manuelle Anwendung, Profilerkennung anhand tatsächlicher Lesewerte und keine Versions-Aktivierungsschalter. Die Funktionen aus v0.4 einschließlich 1-s-Kommunikationspausen bleiben enthalten. Hosttests, ESPHome-Codegenerierung und vollständiger ESP32-C3-Build erfolgreich. Geräteprüfung und Veröffentlichung stehen aus. [Bedienung](docs/HEIZKURVENPROFILE-v0.5.md), [Validierung](docs/VALIDATION-v0.5.md).
 
 ## Versionsübersicht
 
@@ -12,14 +16,20 @@ Stand: **07.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen
 | 0.2 | Basiswerte, Kommunikationsdiagnose, P13/P14 lesend, dynamische Abfrageintervalle, lokale Webbedienung und Serviceaktionen | Software umgesetzt; in v0.3 weitergeführt. Neue Hardwarefunktionen nicht vollständig geprüft |
 | **0.3** | **Freigegebene Parameterauswahl aus sieben Statusblöcken, Parameterblock 17, eindeutige Hauptquellen, optionale Entitäten, Speed200-Analysewerte, P01/P02/P04/P05 schreiben und Uhr manuell ±1h mit Rücklesen** | **Software umgesetzt und synthetisch getestet; ESP32-Build und Geräteprüfung offen** |
 | **0.4** | **Wohnraumlüftung:** feste Tag-/Nachtstufen dauerhaft ändern; aktuelle Stufe aus LWZ-Zustand ermitteln. F5/F6 in ESPHome bei Stufe > 0 und 120 Sekunden Istdrehzahl null erkennen und gespeichert halten; Rücksetzung nach bestätigtem LWZ-Neustart bzw. über HA-Automation, dauerhafte Fehlerhistorie und Meldung bei jedem neuen Fehler. **Zusätzlich Geräteauswahl i / SOL, sControl.hcStage / dhwStage für FW 2.16, Zeitumstellungs-Auswahl und Gerätenamen in Entitäten** | Software lokal umgesetzt; Hardwareprüfung und Veröffentlichung offen. Lüftungszeitprogramme bearbeiten und zeitlich begrenzte Übersteuerung gehören nicht zum v0.4-Umfang. Ausgewählte Lüftungswerte einschließlich Speed200 bereits in v0.3 enthalten |
-| 0.5 | Heizkurven-Gradient und Fußpunkt schreiben; benannte Heizkurvenprogramme für Übergangszeit, Winter und eigene Profile als Kombination aus P13/P14 speichern und anwenden | Geplant; von v0.7 vorgezogen und um Heizkurvenprofile erweitert. Raum-Sollwerte Tag/Nacht bereits in v0.3 umgesetzt |
+| 0.5 | Heizkurven-Gradient und Fußpunkt schreiben; benannte Heizkurvenprogramme für Übergangszeit, Winter und eigene Profile als Kombination aus P13/P14/P15 in ESPHome speichern und manuell anwenden | Software lokal umgesetzt; fünf Speicherplätze, Erkennung und gemeinsame Rückleseprüfung. Physische Geräteprüfung und Veröffentlichung offen |
 | **0.6** | **Alle zum jeweiligen Gerätemodell gehörenden P-Parameter auslesen und in einem eigenen Bereich „Programmierte Parameter“ verfügbar machen** | Geplant; bisher offenen Platz belegt. Leseansicht, keine pauschale Erweiterung der Schreibfunktionen |
 | 0.7 | Heizungs- und Warmwasser-Wochenzeitprogramme mit Wochentagen und Zeitfenstern lesen | Geplant; mit der bisherigen v0.5 getauscht. Die sieben Statusblöcke wurden bereits nach v0.3 vorgezogen |
 | 0.8 | Warmwasser-Zeitprogramme bearbeiten und schreiben | Geplant; bisher v0.7. Warmwasser-Sollwerte Tag/Nacht bereits in v0.3 umgesetzt; Lesen der Wochenzeitprogramme gehört zu v0.7 |
 | 0.9 | Zusätzliche Betriebsdaten und Überwachung: Verdichterstarts/-laufzeiten, Zusatzheizungsstunden soweit belegt, Sensorplausibilität und Auffälligkeiten mit Zeitpunkten | Geplant; bisher v0.10. Ausgewählte sHistory-Zähler und blockweise Datenalterung bereits in v0.3 enthalten; daraus werden keine unbelegten Verdichterstarts abgeleitet |
 | 0.10 | Heizungszeitprogramme in Home Assistant bearbeiten, dauerhaft speichern, validieren und zurücklesen | Geplant; bisher v0.11. Lesen der Wochenzeitprogramme gehört zu v0.7 |
 
-## v0.4 – Lokal umgesetzt: – Wohnraumlüftung, Geräteauswahl und sControl
+## v0.4 – Wohnraumlüftung, Geräteauswahl und sControl (lokal umgesetzt)
+
+- **Anzeige/Datenalter (08.11.):** letzte gültige Lüfterstufe behalten, fehlende/veraltete Daten in eigener Datenbasis markieren; F5/F6 weiterhin nur mit frischen Werten. ESP32-Laufzeit in Tagen und hh:mm:ss ergänzt.
+
+- **Heizkurve vorgezogen (08.11.2026):** P13/P14 als Basis-Slider, P15 als Expert-Slider; frisches Lesen-Ändern-Schreiben-Rücklesen in Block 05. Dokumentierte Versuchswerte für Übergangszeit und Kälte; keine automatische Übernahme. Benannte Profilprogramme bleiben v0.5. [Details](docs/HEIZKURVE-HK1.md).
+
+- **Aktuelle Optional-Auswahl:** Relative Drehzahl Hauptlüfter (OUT032) sowie beide Speed200-Werte (OUT063/OUT064) optional, in HA standardmäßig deaktiviert und im Geräteweb unter Expert. Die relativen Zuluft-/Abluftwerte bleiben für F5/F6 unverändert.
 
 Die bisherigen Vorhaben für Lüftungssteuerung und Lüftungsdiagnose bilden eine gemeinsame Version. Die verbleibenden Punkte sind ohne doppelte Versionsnummern neu geordnet. Der zunächst offene Platz v0.6 ist inzwischen für die Leseansicht aller P-Parameter vorgesehen.
 
@@ -35,15 +45,19 @@ Die bisherigen Vorhaben für Lüftungssteuerung und Lüftungsdiagnose bilden ein
 - **Entitätsnamen:** Alle in ESPHome erzeugten Entitäten sollen ab v0.4 den konfigurierten Gerätenamen enthalten, einschließlich Diagnose, Einstellungen und Aktionen. Einheitliches Präfix aus `device_name`, z. B. `lwz303 Abluftlüfter – Störung`; Präfix genau einmal ausgeben. Anzeigenamen, Home-Assistant-Entitätskennungen und bestehende Zuordnungen bei der Umstellung prüfen, damit weder doppelte Gerätenamen noch unbeabsichtigte zusätzliche Entitäten entstehen. In beiden v0.4-Konfigurationen angewendet; HA-Registrierung am System prüfen.
 - **sControl:** `sControl.hcStage` (Heizungsanforderung) und `sControl.dhwStage` (Warmwasseranforderung) aus F2 für v0.4 integrieren, ausdrücklich auch für Geräte-Firmware **2.16**. Die bestehende F2ctrl-Kommentartabelle als Ausgangspunkt verwenden und den F2type-Verweisfehler der FHEM-Profile 2.14/j berücksichtigen. Rohcodes erhalten, Zuordnung je Modell prüfen und unbekannte Codes kenntlich machen. Keine gemessene Leistung aus einer angeforderten Stufe ableiten.
 
-## v0.5 – Heizkurve und saisonale Heizkurvenprogramme
+## v0.5 - Heizkurve und saisonale Heizkurvenprogramme
 
-- **Einzelwerte:** Gradient **P13** und Fußpunkt **P14** der HK1-Heizkurve lesen und manuell schreiben.
-- **Wertepaare:** Ein Heizkurvenprogramm enthält jeweils die zusammengehörige Kombination **Fußpunkt + Gradient**. Ein Profilwechsel übernimmt beide Werte als gemeinsames Paar.
-- **Benannte Profile:** „Übergangszeit“, „Winter“ und eigene Programme anlegen, benennen, bearbeiten und speichern. Die konkreten Wertepaare werden für die Anlage festgelegt; keine ungeprüften Standardkombinationen vorgeben.
-- **Speicherung und Anwendung:** Die Profile in der Integration bzw. in Home Assistant verwalten. Beim manuellen Anwenden das gewählte Wertepaar in die LWZ schreiben. Ein nativer Speicher für mehrere Heizkurvenprogramme in der Geräte-Firmware 2.16 ist damit nicht vorausgesetzt oder als belegt dargestellt.
-- **Gezieltes Schreiben:** Block 05 frisch lesen, ausschließlich P13/P14 gemeinsam ändern, andere Parameter erhalten und anschließend beide Werte zurücklesen. Anlagengrenzen und Verhalten bei fehlgeschlagenem Rücklesen prüfen; Profil erst nach erfolgreicher Kontrolle als angewendet kennzeichnen.
-- **Anzeige:** Gespeichertes Profil, zuletzt erfolgreich angewendetes Profil und tatsächlich zurückgelesene Werte unterscheiden. Bei manuellen Änderungen in der LWZ einen abweichenden Zustand anzeigen, statt das gespeicherte Profil weiterhin als bestätigt aktiv auszugeben.
-- **Abgrenzung:** Zunächst manuelle Profilwahl. Eine automatische Umschaltung nach Außentemperatur, Datum oder Zeitplan ist noch nicht festgelegt. „Winter“ bezeichnet hier das saisonale Heizkurvenprofil, nicht die Uhrumstellung ±1h aus v0.3.
+Festgelegt am 08.11.2026: Profile werden dauerhaft in ESPHome gespeichert. Ausschließlich manuelle Anwendung, keine automatische Umschaltung. Die nachfolgenden Profilfunktionen sind in v0.5 lokal als Software umgesetzt; physische Geräteprüfung offen.
+
+- **Konfiguration vereinfachen:** `enable_v03` und `enable_v04` vollständig entfernen, ohne Ersatz durch einen Aktivierungsschalter. Die Funktionen sind automatisch Bestandteil der Komponente; ihre Abhängigkeiten werden intern behandelt. Bestehende Konfigurationen beim Übergang berücksichtigen. Die separate Schreibfreigabe bleibt erhalten.
+- **Einzelwerte bereits vorgezogen:** Gradient **P13**, Fußpunkt **P14** und Raumeinfluss **P15** sind in der lokalen v0.4 als einzelne Slider mit Rückleseprüfung umgesetzt. Alle drei bleiben unabhängig manuell bedienbar, auch direkt an der LWZ.
+- **Profilinhalt:** Jedes Heizkurvenprogramm enthält die zusammengehörige Kombination **P13 + P14 + P15**. P15 wird ausdrücklich mitgeführt, damit ein manueller Eingriff dort ebenfalls als Abweichung erkannt wird. Die bisherigen Vorschläge verwenden P15=0; ein bestehender Anlagenwert wird dadurch nicht automatisch geändert.
+- **Benannte Profile:** „Übergangszeit“, „Winter“ und eigene Programme anlegen, benennen, bearbeiten und dauerhaft in ESPHome speichern. Eigene Werte in den vereinbarten Sliderbereichen mit Schritt 0,1. Fünf Plätze: zwei vorbelegte Vorschläge und drei eigene, alle bearbeitbar. Entwurf/Speichern/Anwenden getrennt; ein ungespeicherter Entwurf blockiert Wechsel und Anwendung. Die Vorschlagswerte sind keine bereits bestätigten optimalen Anlageneinstellungen.
+- **Speicherung und Anwendung:** Profile und Änderungen über ESP-Neustarts erhalten. Speichern/Bearbeiten eines Profils verändert die Wärmepumpe nicht. Nur eine ausdrückliche manuelle Profilanwendung mit Schreibfreigabe schreibt in die LWZ. ESP-Neustart, Wiederverbindung oder erkannte Abweichung dürfen kein Profil erneut anwenden. Ein nativer Mehrprofilspeicher der LWZ-Firmware wird nicht vorausgesetzt.
+- **Gezieltes Schreiben:** Block 05 frisch lesen, ausschließlich P13/P14/P15 gemeinsam ändern, andere Parameter erhalten und anschließend alle drei Werte unabhängig zurücklesen. Profil erst nach erfolgreicher Kontrolle als angewendet kennzeichnen; bei Fehler keine automatische Wiederholung oder Rückkehr zu einem früheren Profil.
+- **Profilerkennung:** Die tatsächlich zurückgelesenen P13/P14/P15 mit den gespeicherten Profilkombinationen vergleichen, auf dem belegten 0,1-Raster statt über ungenaue Fließkomma-Gleichheit. Passt die Kombination zu einem hinterlegten Profil, dessen Namen als erkanntes Profil anzeigen. Passt sie zu keinem, **„Benutzerdefiniert“** anzeigen. Das gilt sowohl nach Sliderbedienung als auch nach Änderungen direkt an der Wärmepumpe, sobald sie zurückgelesen wurden. Keine automatische Rückstellung oder Änderung gespeicherter Profile.
+- **Anzeige:** Gespeichertes/ausgewähltes Profil, zuletzt erfolgreich angewendetes Profil und aktuell anhand der Anlagenwerte erkanntes Profil getrennt führen. Ein angewendetes Profil ist bei manueller Abweichung nicht weiter als aktuell aktiv auszugeben. Fehlende oder veraltete Lesedaten gesondert als unbekannt/veraltet markieren; sie beweisen keine benutzerdefinierte Kombination. Eine letzte bestätigte Zuordnung darf erkennbar als letzte Zuordnung erhalten bleiben.
+- **Abgrenzung:** Keine automatische Umschaltung nach Außentemperatur, Datum, Uhrzeit oder Jahreszeit. „Winter“ bezeichnet ein Heizkurvenprofil, nicht die Uhrumstellung ±1h aus v0.3.
 
 ## v0.6 – Programmierte Parameter
 
@@ -90,7 +104,7 @@ Die folgende Stufenzuordnung wurde laut Nutzerangabe vom **07.11.2026** der **�
 - Globales Decoderprofil und HK1-Layout unabhängig wählen. Standard: Global **2.14j**, HK1 **2.06**. Fehlende layoutabhängige Werte bleiben unbekannt; keine pauschale Freigabe eines Profils für Geräte-Firmware 2.16.
 - Fehlende bzw. veraltete Daten blockweise ungültig setzen, statt ältere Werte oder erfundene Nullwerte weiterzuverwenden.
 - Ausgewählte sFan-Ist- und Soll-Drehzahlwerte optional bereitstellen. Decoderzuordnung und physikalische Plausibilität bleiben zu prüfen.
-- **OUT063 / OUT064 als Ja, standardmäßig aktiv:** `sFan.supplyFanSpeed200` und `sFan.exhaustFanSpeed200` für die Wohnraumlüftungsanalyse. FHEM-Skalierung unsigned 16 Bit Big Endian /10, eine Nachkommastelle. Physikalische Einheit und Bedeutung des Kalibrierpunkts sind noch nicht bestätigt; keine Umdeutung in U/min oder 1/s.
+- **OUT063 / OUT064:** In v0.3 zunächst als Ja integriert; auf neue Nutzerfestlegung in v0.4 **Optional**, in HA standardmäßig deaktiviert und im Web der Expert-Gruppe zugeordnet. `sFan.supplyFanSpeed200` und `sFan.exhaustFanSpeed200` bleiben für die Wohnraumlüftungsanalyse verfügbar. FHEM-Skalierung unsigned 16 Bit Big Endian /10, eine Nachkommastelle. Physikalische Einheit und Bedeutung des Kalibrierpunkts sind noch nicht bestätigt; keine Umdeutung in U/min oder 1/s. Die F5-/F6-Quelle bleibt unverändert.
 - Vorhandene sHistory-Zähler unter ihren belegten Feldnamen lesen; ungesicherte Aggregatzuordnungen nicht ergänzen.
 
 ### v0.3 – Erste manuelle Schreibfunktionen

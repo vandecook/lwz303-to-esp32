@@ -29,6 +29,7 @@ virtual void dump_config() {} virtual float get_setup_priority() const { return 
 namespace sensor { class Sensor { public: float state = 0; void publish_state(float v) { state=v; } }; }
 namespace binary_sensor { class BinarySensor { public: bool state=false; bool valid=false; void publish_state(bool v) { state=v; valid=true; } void invalidate_state() {valid=false;} }; }
 namespace number { class Number { public: float state=0; void publish_state(float v) {state=v;} virtual void control(float)=0; }; }
+namespace text { class Text { public: std::string state; void publish_state(const std::string &s) {state=s;} protected: virtual void control(const std::string &)=0; }; }
 namespace select { class Select { public: std::string state; void publish_state(const std::string &v) {state=v;} protected: virtual void control(const std::string &) {} }; }
 inline std::map<uint32_t,std::vector<uint8_t>> fake_storage;
 inline bool fake_storage_ok=true;
@@ -63,7 +64,7 @@ def main():
     for path in ['core/component.h', 'core/log.h', 'components/uart/uart.h',
                  'components/sensor/sensor.h', 'components/binary_sensor/binary_sensor.h',
                  'components/text_sensor/text_sensor.h', 'components/number/number.h',
-                 'components/select/select.h', 'core/preferences.h']:
+                 'components/select/select.h', 'components/text/text.h', 'core/preferences.h']:
         p = BUILD / 'esphome' / path
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text('#include "runtime.h"\n')
@@ -71,7 +72,7 @@ def main():
     exe = BUILD / 'host_tests.exe'
     command = [args.compiler] + (['c++'] if args.zig else [])
     command += ['-std=c++17', '-I'+str(BUILD), '-I'+str(ROOT/'components/lwz2'),
-                str(ROOT/'components/lwz2/lwz2.cpp'), str(ROOT/'components/lwz2/v03.cpp'), str(ROOT/'components/lwz2/v04.cpp'),
+                str(ROOT/'components/lwz2/lwz2.cpp'), str(ROOT/'components/lwz2/v03.cpp'), str(ROOT/'components/lwz2/v04.cpp'), str(ROOT/'components/lwz2/profiles.cpp'),
                 str(ROOT/'tests/test_component.cpp'), '-o', str(exe)]
     subprocess.run(command, check=True, cwd=ROOT)
     subprocess.run([str(exe)], check=True, cwd=ROOT)

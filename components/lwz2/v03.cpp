@@ -22,12 +22,16 @@ void LWZ2Component::set_hc1_layout(const std::string &profile) {
 }
 
 const SelectedField *LWZ2Component::selected_rule_(const std::string &key, uint8_t command, bool &belongs) const {
-  const auto profile = command == 0xF4 ? hc1_layout_ : firmware_;
+  // 2.16 inherits verified 2.06 rules; no new offsets are invented.
+  const auto profile = command == 0xF4 ? hc1_layout_ :
+      firmware_ == FirmwareProfile::FW_216 ? FirmwareProfile::FW_206 : firmware_;
   const auto mask = 1U << static_cast<unsigned>(profile);
   belongs = false;
   for (const auto &r : SELECTED_FIELDS) {
     if (r.command == command && key == r.key) {
       belongs = true;
+      // User reports this 2.14j-layout field as incompatible on physical FW 2.16.
+      if (firmware_ == FirmwareProfile::FW_216 && key == "s_h_c1_inside_temp") continue;
       if (r.profiles & mask) return &r;
     }
   }
@@ -93,8 +97,7 @@ bool LWZ2Component::v03_schedule_() {
     write_transaction_ = true;
     return true;
   }
-  if (!v03_enabled_) return false;
-  if (v04_enabled_) for (unsigned i = 0; i < 2; i++) {
+  for (unsigned i = 0; i < 2; i++) {
     if (time_reached_(now, v04_due_[i])) {
       start_transaction_(i ? 0xF6 : 0xF2);
       return true;
@@ -111,16 +114,15 @@ bool LWZ2Component::v03_schedule_() {
 
 void LWZ2Component::v03_schedule_result_(uint8_t command) {
   for (unsigned i = 0; i < 4; i++) if (command == EXTRA_COMMANDS[i])
-    v03_due_[i] = millis() + (v04_enabled_ ? 10000 : command == 0x17 ? 60000 : command == 0xF3 ? status_interval_ms_ : 30000);
-  if (v04_enabled_) for (unsigned i = 0; i < 2; i++) if (command == (i ? 0xF6 : 0xF2))
+    v03_due_[i] = millis() + 10000;
+  for (unsigned i = 0; i < 2; i++) if (command == (i ? 0xF6 : 0xF2))
     v04_due_[i] = millis() + 10000;
 }
 
 void LWZ2Component::v03_stale_() {
-  if (!v03_enabled_) return;
-  const uint8_t commands[]{0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17};
+  const uint8_t commands[]{0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05};
   for (auto command : commands) {
-    const uint32_t interval = command == 9 ? history_interval_ms_ : command == 0x17 ? 60000 :
+    const uint32_t interval = command == 5 ? config_interval_ms_ : command == 9 ? history_interval_ms_ : command == 0x17 ? 60000 :
         command == 0xF4 ? heating_interval_ms_ : command == 0xE8 ? fan_interval_ms_ :
         (command == 0xFB || command == 0xF3) ? effective_interval() : 30000;
     if (!block_stale_[command] && millis() - block_success_[command] > std::max(stale_after_ms_, interval * 3)) {
@@ -151,7 +153,9 @@ void LWZ2Component::invalidate_block_(uint8_t command) {
     INVALIDATE_SENSOR(operating_hours_1); INVALIDATE_SENSOR(operating_hours_2);
     INVALIDATE_SENSOR(heating_hours); INVALIDATE_SENSOR(dhw_hours); INVALIDATE_SENSOR(cooling_hours);
   } else if (command == 5) {
+    block_stale_[5] = true;
     INVALIDATE_SENSOR(hc1_gradient); INVALIDATE_SENSOR(hc1_low_end);
+    for (auto *n : heating_curve_) if (n) n->publish_state(NAN);
   } else if (command == 0x17) {
     for (auto *n : setpoints_) if (n) n->publish_state(NAN);
     for (auto *n : fan_stages_) if (n) n->publish_state(NAN);
@@ -165,7 +169,8 @@ void LWZ2Component::publish_write_status_(const std::string &status) {
 }
 
 void LWZ2Component::finish_write_(const std::string &status) {
-  if (v04_enabled_ && write_command_ == 0xFC) {
+  profiles_finish_(status.rfind("verified:", 0) == 0);
+  if (write_command_ == 0xFC) {
     if (status.rfind("verified:", 0) == 0 && pending_clock_mode_ >= 0) {
       saved_.clock_mode = pending_clock_mode_;
       v04_save_();
@@ -189,6 +194,19 @@ bool LWZ2Component::request_setpoint(uint8_t index, float value) {
   }
   write_command_ = 0x17; write_index_ = index; write_value_ = value; clock_shift_ = 0;
   write_stage_ = WriteStage::READ; publish_write_status_("pending: fresh parameter read"); return true;
+}
+
+bool LWZ2Component::request_heating_curve(uint8_t index, float value) {
+  if (!writes_enabled_ || write_stage_ != WriteStage::NONE || index >= 3 || !std::isfinite(value)) {
+    publish_write_status_("rejected: disabled, busy or invalid heating curve value"); return false;
+  }
+  const float upper = index == 0 ? 1.0f : index == 1 ? 5.0f : 10.0f;
+  if (value < 0 || value > upper || std::fabs(value * 10 - std::round(value * 10)) > 0.001f) {
+    publish_write_status_("rejected: heating curve UI limits / 0.1 grid"); return false;
+  }
+  write_command_ = 0x05; write_index_ = index; write_value_ = value;
+  write_stage_ = WriteStage::READ;
+  publish_write_status_("pending: fresh heating parameter read"); return true;
 }
 
 bool LWZ2Component::request_clock_shift(int hours) {
@@ -222,6 +240,19 @@ void LWZ2Component::write_response_(const std::vector<uint8_t> &frame) {
       } else {
         write_expected_[12 + write_index_ - 4] = static_cast<uint8_t>(write_value_);
       }
+    } else if (write_command_ == 0x05) {
+      // FHEM 05pxx206: complete P13..HC2 limits block, preserve every other byte.
+      if (data.size() < 22 || data.size() > 128) { finish_write_("rejected: incomplete heating parameter block"); return; }
+      const uint16_t raw = static_cast<uint16_t>(std::lround(write_value_ * 10));
+      if (write_index_ == 3) {
+        write_expected_[0] = profile_pending_.raw[0] >> 8; write_expected_[1] = profile_pending_.raw[0] & 255;
+        write_expected_[2] = profile_pending_.raw[1] >> 8; write_expected_[3] = profile_pending_.raw[1] & 255;
+        write_expected_[4] = profile_pending_.raw[2];
+      } else if (write_index_ < 2) {
+        const uint8_t offset = write_index_ * 2;
+        write_expected_[offset] = raw >> 8;
+        write_expected_[offset + 1] = raw & 255;
+      } else write_expected_[4] = static_cast<uint8_t>(raw);
     } else {
       if (data.size() < 9 || data.size() > 128 || data[2] > 23 || data[3] > 59 || data[4] > 59 ||
           data[7] < 1 || data[7] > 12 || data[8] < 1 || data[8] > 31 || (data[1] & 15) > 6) {
@@ -232,7 +263,7 @@ void LWZ2Component::write_response_(const std::vector<uint8_t> &frame) {
       if (target < 30 || target >= 86370) { finish_write_("rejected: date rollover requires verified calendar support"); return; }
       write_expected_[2] = target / 3600;
       // Save uncertainty BEFORE SET. A power loss must never replay a seasonal shift.
-      if (v04_enabled_) {
+      {
         saved_.clock_mode = -1;
         if (!v04_save_()) { finish_write_("FAILED: cannot persist clock transaction; no SET sent"); return; }
         clock_mode_publish_();

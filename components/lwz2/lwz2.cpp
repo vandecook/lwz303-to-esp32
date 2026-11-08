@@ -10,15 +10,17 @@ namespace esphome::lwz2 {
 static const char *const TAG = "lwz2";
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.4.0 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.5.0 (device FW independent of decoder profile)");
   this->frame_.reserve(128);
-  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17}) {
+  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05}) {
     invalidate_block_(command);
     block_stale_[command] = true;
   }
   for (auto *n : setpoints_) if (n) n->publish_state(NAN);
+  for (auto *n : heating_curve_) if (n) n->publish_state(NAN);
   publish_write_status_("disabled by default; hardware write test pending");
   v04_setup_();
+  profiles_setup_();
   this->startup_ms_ = millis();
   this->setup_complete_ = true;
   if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
@@ -26,8 +28,7 @@ void LWZ2Component::setup() {
   this->config_pending_ = true;
   this->firmware_pending_ = true;
   if (this->firmware_version_text_sensor_ != nullptr)
-    this->firmware_version_text_sensor_->publish_state(
-        this->firmware_ == FirmwareProfile::FW_206 ? "pending" : "unsupported (manual profile)");
+    this->firmware_version_text_sensor_->publish_state("warte auf Abfrage");
   if (this->communication_status_text_sensor_ != nullptr)
     this->communication_status_text_sensor_->publish_state("starting");
   if (this->last_error_text_sensor_ != nullptr)
@@ -37,7 +38,8 @@ void LWZ2Component::setup() {
 void LWZ2Component::dump_config() {
   ESP_LOGCONFIG(TAG, "LWZ 2.x:");
   const char *fw = this->firmware_ == FirmwareProfile::FW_206 ? "2.06" :
-                   this->firmware_ == FirmwareProfile::FW_214 ? "2.14" : "2.14j";
+                   this->firmware_ == FirmwareProfile::FW_214 ? "2.14" :
+                   this->firmware_ == FirmwareProfile::FW_216 ? "2.16 (vorlaeufig)" : "2.14j";
   ESP_LOGCONFIG(TAG, "  Firmware profile: %s", fw);
   ESP_LOGCONFIG(TAG, "  Status (FB) interval: %" PRIu32 " ms", this->status_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Dynamic FB interval: %" PRIu32 " ms (enabled: %s)", this->dynamic_interval_ms_,
@@ -62,6 +64,8 @@ void LWZ2Component::set_firmware(const std::string &fw) {
     next = FirmwareProfile::FW_214;
   else if (fw == "2.14j")
     next = FirmwareProfile::FW_214J;
+  else if (fw == "2.16")
+    next = FirmwareProfile::FW_216;
   else {
     ESP_LOGW(TAG, "Unsupported firmware profile '%s'; keeping current profile", fw.c_str());
     return;
@@ -72,7 +76,7 @@ void LWZ2Component::set_firmware(const std::string &fw) {
 
   this->firmware_ = next;
   v04_invalidate_();
-  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17})
+  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05})
     invalidate_block_(command);
   if (!this->setup_complete_)
     return;
@@ -94,8 +98,7 @@ void LWZ2Component::set_firmware(const std::string &fw) {
   this->config_pending_ = true;
   this->firmware_pending_ = true;
   if (this->firmware_version_text_sensor_ != nullptr)
-    this->firmware_version_text_sensor_->publish_state(
-        this->firmware_ == FirmwareProfile::FW_206 ? "pending" : "unsupported (manual profile)");
+    this->firmware_version_text_sensor_->publish_state("warte auf Abfrage");
   if (this->communication_status_text_sensor_ != nullptr)
     this->communication_status_text_sensor_->publish_state("starting");
 }
@@ -120,6 +123,7 @@ void LWZ2Component::loop() {
     this->last_diagnostics_ms_ = now;
     this->publish_diagnostics_();
     this->v04_tick_();
+    this->profiles_tick_();
   }
 }
 
@@ -151,10 +155,9 @@ void LWZ2Component::scheduler_() {
   }
   if (this->firmware_pending_) {
     this->firmware_pending_ = false;
-    if (this->firmware_ == FirmwareProfile::FW_206) {
-      this->start_transaction_(0xFD);
-      return;
-    }
+    // Use the source-backed 2.06 FDfirm decoder regardless of the chosen data layout.
+    this->start_transaction_(0xFD);
+    return;
   }
   // FB is the common 2.x source for compressor/pump state, so it gets highest priority.
   if (this->time_reached_(now, this->next_fb_ms_)) {
@@ -162,11 +165,11 @@ void LWZ2Component::scheduler_() {
     return;
   }
   if (v03_schedule_()) return;
-  if ((this->v03_enabled_ || this->raw_f4_text_sensor_) && this->time_reached_(now, this->next_f4_ms_)) {
+  if (this->time_reached_(now, this->next_f4_ms_)) {
     this->start_transaction_(0xF4);
     return;
   }
-  if ((this->v03_enabled_ || this->raw_e8_text_sensor_ || this->supply_fan_speed_sensor_ || this->exhaust_fan_speed_sensor_ || this->supply_fan_airflow_set_sensor_ || this->exhaust_fan_airflow_set_sensor_ || this->supply_fan_speed_target_sensor_ || this->exhaust_fan_speed_target_sensor_) && this->time_reached_(now, this->next_e8_ms_)) {
+  if (this->time_reached_(now, this->next_e8_ms_)) {
     this->start_transaction_(0xE8);
     return;
   }
@@ -174,7 +177,7 @@ void LWZ2Component::scheduler_() {
     this->start_transaction_(0x01);
     return;
   }
-  if ((this->v03_enabled_ || this->raw_09_text_sensor_ || this->operating_hours_1_sensor_ || this->operating_hours_2_sensor_ || this->heating_hours_sensor_ || this->dhw_hours_sensor_ || this->cooling_hours_sensor_) && this->time_reached_(now, this->next_09_ms_)) {
+  if (this->time_reached_(now, this->next_09_ms_)) {
     this->start_transaction_(0x09);
     return;
   }
@@ -333,7 +336,7 @@ void LWZ2Component::finalize_failure_(const std::string &reason) {
   this->consecutive_errors_++;
   this->last_error_message_ = reason;
   if (this->current_command_ == 0xFD && this->firmware_version_text_sensor_)
-    this->firmware_version_text_sensor_->publish_state("query failed (manual profile retained)");
+    this->firmware_version_text_sensor_->publish_state("unbekannt (FD-Abfrage fehlgeschlagen)");
   this->state_ = CommState::IDLE;
   this->flush_rx_();
 
@@ -412,7 +415,7 @@ void LWZ2Component::mark_success_() {
       break;
     case 0xE8:
       this->last_e8_success_ms_ = now;
-      this->next_e8_ms_ = now + (v04_enabled_ ? std::min(fan_interval_ms_, uint32_t(10000)) : fan_interval_ms_);
+      this->next_e8_ms_ = now + std::min(fan_interval_ms_, uint32_t(10000));
       break;
     case 0x01:
       this->last_01_success_ms_ = now;
@@ -441,7 +444,7 @@ uint32_t LWZ2Component::effective_interval() const {
   const bool active = (this->trigger_compressor_ && this->compressor_) ||
                       (this->trigger_heating_ && this->heating_) || (this->trigger_dhw_ && this->dhw_);
   const uint32_t interval = this->dynamic_enabled_ && active ? this->dynamic_interval_ms_ : this->status_interval_ms_;
-  return v04_enabled_ && speed_source_ == "sGlobal" ? std::min(interval, uint32_t(10000)) : interval;
+  return speed_source_ == "sGlobal" ? std::min(interval, uint32_t(10000)) : interval;
 }
 
 void LWZ2Component::publish_diagnostics_() {
@@ -477,6 +480,7 @@ void LWZ2Component::reinitialize() {
   if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
   if (this->communication_status_text_sensor_) this->communication_status_text_sensor_->publish_state("reinitializing");
   this->reset_schedule_();
+  invalidate_block_(0x05);
   this->refresh_config();
   this->firmware_pending_ = true;
   ESP_LOGI(TAG, "RS232 protocol reinitialized");
@@ -552,7 +556,7 @@ bool LWZ2Component::validate_frame_(const std::vector<uint8_t> &frame, std::stri
     case 0x17: minimum = 20; break;
     case 0xF4: minimum = this->hc1_layout_ == FirmwareProfile::FW_214J ? 37 : 34; break;
     case 0xE8: minimum = 22; break;
-    case 0x01: minimum = this->firmware_ == FirmwareProfile::FW_206 ? 12 : 6; break;
+    case 0x01: minimum = this->uses_206_layout_() ? 12 : 6; break;
     case 0x09: minimum = 10; break;
     default: reason = "unsupported command"; return false;
   }
@@ -603,12 +607,29 @@ void LWZ2Component::parse_frame_(uint8_t command, const std::vector<uint8_t> &fr
   }
 
   if (command == 0x05) {
+    profiles_read_(data, len);
+    for (unsigned i = 0; i < 3; i++) if (heating_curve_[i]) {
+      const size_t offset = i * 2;
+      const float value = i == 2 ? (len > 4 ? data[4] / 10.0f : NAN) :
+          (len >= offset + 2 ? be16u_(data + offset) / 10.0f : NAN);
+      heating_curve_[i]->publish_state(value);
+    }
     if (this->hc1_gradient_sensor_) this->hc1_gradient_sensor_->publish_state(be16u_(data) / 10.0f);
     if (this->hc1_low_end_sensor_) this->hc1_low_end_sensor_->publish_state(be16u_(data + 2) / 10.0f);
   } else if (command == 0xFD) {
-    const unsigned version = be16u_(data);
-    char value[16];
-    std::snprintf(value, sizeof(value), "%02u.%02u", version / 100, version % 100);
+    // FHEM FDfirm/hexdate: unsigned BE integer, decimal /100 and %100 (not BCD).
+    // Exactly two bytes and 01.00..09.99 are a software plausibility policy,
+    // not a verified list of all manufacturer versions or a layout detector.
+    const unsigned version = len == 2 ? be16u_(data) : 0;
+    std::string value = "unbekannt (unerwartete FD-Antwortlaenge)";
+    if (len == 2) {
+      char text[80];
+      if (version >= 100 && version <= 999)
+        std::snprintf(text, sizeof(text), "%02u.%02u", version / 100, version % 100);
+      else
+        std::snprintf(text, sizeof(text), "unbekannt (unplausible FD-Antwort 0x%04X)", version);
+      value = text;
+    }
     if (this->firmware_version_text_sensor_) this->firmware_version_text_sensor_->publish_state(value);
   } else if (command == 0xFB) this->parse_fb_(data, len);
   else if (command == 0xF4) this->parse_f4_(data, len);
@@ -635,8 +656,8 @@ void LWZ2Component::parse_fb_(const uint8_t *d, size_t len) {
     const uint8_t lower = d[20] & 0x0F;
     const bool compressor = upper & 0x01;
     const bool booster1 = upper & 0x02;
-    const bool solar = this->firmware_ == FirmwareProfile::FW_206 ? false : (upper & 0x04);
-    const bool booster2 = this->firmware_ == FirmwareProfile::FW_206 ? (upper & 0x04) : (upper & 0x08);
+    const bool solar = this->uses_206_layout_() ? false : (upper & 0x04);
+    const bool booster2 = this->uses_206_layout_() ? (upper & 0x04) : (upper & 0x08);
     const bool heating_pump = lower & 0x01;
     const bool dhw_pump = lower & 0x02;
     const bool diverter = lower & 0x04;
@@ -664,22 +685,22 @@ void LWZ2Component::parse_f4_(const uint8_t *d, size_t len) {
 }
 
 void LWZ2Component::parse_e8_(const uint8_t *d, size_t len) {
-  if (len >= 12 && this->supply_fan_speed_sensor_ != nullptr)
-    this->supply_fan_speed_sensor_->publish_state(be16u_(d + 10));
-  if (len >= 14 && this->exhaust_fan_speed_sensor_ != nullptr)
-    this->exhaust_fan_speed_sensor_->publish_state(be16u_(d + 12));
+  if (this->supply_fan_speed_sensor_ != nullptr)
+    this->supply_fan_speed_sensor_->publish_state(this->firmware_ != FirmwareProfile::FW_216 && len >= 12 ? be16u_(d + 10) : NAN);
+  if (this->exhaust_fan_speed_sensor_ != nullptr)
+    this->exhaust_fan_speed_sensor_->publish_state(this->firmware_ != FirmwareProfile::FW_216 && len >= 14 ? be16u_(d + 12) : NAN);
   if (len >= 16 && this->supply_fan_airflow_set_sensor_ != nullptr)
     this->supply_fan_airflow_set_sensor_->publish_state(be16u_(d + 14));
   if (len >= 18 && this->exhaust_fan_airflow_set_sensor_ != nullptr)
     this->exhaust_fan_airflow_set_sensor_->publish_state(be16u_(d + 16));
-  if (len >= 20 && this->supply_fan_speed_target_sensor_ != nullptr)
-    this->supply_fan_speed_target_sensor_->publish_state(be16u_(d + 18));
-  if (len >= 22 && this->exhaust_fan_speed_target_sensor_ != nullptr)
-    this->exhaust_fan_speed_target_sensor_->publish_state(be16u_(d + 20));
+  if (this->supply_fan_speed_target_sensor_ != nullptr)
+    this->supply_fan_speed_target_sensor_->publish_state(this->firmware_ != FirmwareProfile::FW_216 && len >= 20 ? be16u_(d + 18) : NAN);
+  if (this->exhaust_fan_speed_target_sensor_ != nullptr)
+    this->exhaust_fan_speed_target_sensor_->publish_state(this->firmware_ != FirmwareProfile::FW_216 && len >= 22 ? be16u_(d + 20) : NAN);
 }
 
 void LWZ2Component::parse_01_(const uint8_t *d, size_t len) {
-  if (this->firmware_ == FirmwareProfile::FW_206) {
+  if (this->uses_206_layout_()) {
     if (len >= 2 && this->supply_stage1_airflow_sensor_ != nullptr) this->supply_stage1_airflow_sensor_->publish_state(be16u_(d + 0));
     if (len >= 4 && this->supply_stage2_airflow_sensor_ != nullptr) this->supply_stage2_airflow_sensor_->publish_state(be16u_(d + 2));
     if (len >= 6 && this->supply_stage3_airflow_sensor_ != nullptr) this->supply_stage3_airflow_sensor_->publish_state(be16u_(d + 4));
@@ -716,7 +737,7 @@ void LWZ2Component::publish_status_bits_(bool compressor, bool heating_pump, boo
   if (this->heating_circuit_pump_binary_sensor_ != nullptr) this->heating_circuit_pump_binary_sensor_->publish_state(heating_pump);
   if (this->dhw_pump_binary_sensor_ != nullptr) this->dhw_pump_binary_sensor_->publish_state(dhw_pump);
   // FHEM marks solarPump in FBglob206 as n.a.; don't invent a state for 2.06.
-  if (this->firmware_ != FirmwareProfile::FW_206 && this->solar_pump_binary_sensor_ != nullptr)
+  if (!this->uses_206_layout_() && this->solar_pump_binary_sensor_ != nullptr)
     this->solar_pump_binary_sensor_->publish_state(solar_pump);
   if (this->booster_stage1_binary_sensor_ != nullptr) this->booster_stage1_binary_sensor_->publish_state(booster1);
   if (this->booster_stage2_binary_sensor_ != nullptr) this->booster_stage2_binary_sensor_->publish_state(booster2);

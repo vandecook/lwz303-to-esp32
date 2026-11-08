@@ -94,8 +94,25 @@ Diese Fälle bilden die Abnahmegrundlage. Ausgeführte synthetische Tests und di
 
 Standardquelle für die Nullprüfung ist sGlobal; sFan ist alternativ auswählbar. `diagnostic_max_age` hat zunächst 30 Sekunden als konfigurierbaren Softwarestandard, keine bestätigte Herstellergrenze. Ohne frische EE-/17-/F6-Daten bleibt die wirksame Stufe unbekannt. Zeiten der Historie stammen aus dem zuletzt frischen LWZ-Uhrblock und sind entsprechend auf das Abfrageintervall genau.
 
+**Nutzertest vom 07.11.2026:** Nach dem zunächst offenen Quellenvergleich bestätigt der Nutzer einen Test, bei dem sowohl die relativen Zuluft-/Abluftwerte als auch die Speed200-Werte von > 0 auf 0 gegangen sind. Das Nullverhalten beim Abschalten ist damit laut Nutzerbeobachtung bestätigt. F5 verwendet weiterhin `sGlobal.outputVentilatorSpeed` (relative Abluftdrehzahl), F6 `sGlobal.inputVentilatorSpeed` (relative Zuluftdrehzahl). Eine Umschaltung ist nicht erforderlich; Speed200 bleibt ein gesonderter Analysewert. Der Abschalttest bestätigt weder dessen physikalische Einheit noch allein eine echte Ist-Rückmeldung bei angefordertem Betrieb und blockiertem Ventilator. Ein Fehlerfall mit Stufe > 0 sowie der vollständige 120-Sekunden-/Rücksetzablauf sind damit noch nicht als am Gerät geprüft dokumentiert. Die alternativen E8-Istfelder bleiben unabhängig davon zu prüfen.
+
 Für v0.4 begrenzt die aktive sGlobal-Diagnose das effektive Statusintervall auf höchstens 10 Sekunden; ein kürzeres dynamisches Intervall bleibt möglich. E8 wird ebenfalls höchstens alle 10 Sekunden eingeplant. Die tatsächliche Ankunft hängt zusätzlich von serieller Auslastung und Antworten ab. Bei Fehlern gelten Datenalterung und Abbruch der Prüfung, keine garantierte Antwortfrist.
 
 Ein eigenständiger zuverlässiger LWZ-Neustartindikator ist nicht belegt; deshalb wird die ausdrückliche HA-Rücksetztaste umgesetzt. Sie setzt beide lokalen Fehler zurück und erhält Zähler/Historie. Der Zustand „Anlauf/Prüfung“ und ein eventuell bereits gespeicherter Fehler werden getrennt dargestellt. [HA-Vorlage](HA-LUEFTERDIAGNOSE-v0.4.md).
 
 Nach unterbrochenem Uhrschreiben oder separater Stundenkorrektur steht die lokale Saisonzuordnung auf „Unbekannt“. Nur dann können die Bestätigungstasten die zuvor am Gerät geprüfte Winter-/Sommerzeitzuordnung ohne Uhrschreiben wiederherstellen. Diese Metadaten werden für die Lüfterdiagnose nicht benötigt; dafür bleiben stets LWZ-Programm und LWZ-Werte maßgeblich.
+
+
+## Letzte gültige Stufe und Datenbasis (08.11.2026)
+
+Die numerische Anzeige „Aktuelle Luefterstufe“ behält die zuletzt vollständig und mit frischen Daten ermittelte Stufe auch nach 30 Sekunden bei. Der gespeicherte Anzeigewert hat keinen Ablaufzeitpunkt innerhalb der laufenden ESP-Sitzung. Bei fehlenden, veralteten oder ungültigen Eingangsdaten wird er in der ergänzenden Anzeige „Luefterstufe Datenbasis“ als „letzte gueltige; unbestaetigt“ gekennzeichnet. Eine neue vollständige Ermittlung ersetzt ihn. Nach ESP-Neustart, Decoderwechsel oder bewusster Invalidierung durch HA-Fehlerrücksetzung wird zunächst keine aktuelle Zuordnung behauptet. Wenn noch nie ein vollständiger gültiger Satz vorlag, bleibt die numerische Anzeige NA.
+
+Die neue Diagnoseanzeige zeigt EE, Parameterblock 17 und F6 jeweils als fehlt, frisch oder veraltet, einschließlich Alter in Sekunden. Zusätzlich erscheinen Mode, ProgFAN, P07/P08/P09/P12 sowie Übersteuerungsstufe und Restzeit als Rohwerte. „Fehlt“ bedeutet seit der letzten Invalidierung nicht erfolgreich verarbeitet; „−1“ bedeutet intern nicht verfügbar. Hinter „fehlt“ angezeigte alte Rohcodes gelten nicht als aktueller Nachweis. Mode 0=manuell, 1=automatisch; ProgFAN 1=Tag, 2=Nacht, 3=Bereitschaft gemäß FHEM. Ein positiver Override-Restwert hat im bestehenden Softwaremodell Vorrang. Nicht belegte Codes werden nicht geraten.
+
+Tag 1 und Nacht 0 wurden vom Nutzer für Profil/HC1-Layout 2.06 bestätigt. Diese beiden Werte allein bestimmen die aktuelle Stufe nicht: EE und F6 sind ebenfalls erforderlich. Das HC1-Layout betrifft F4 und steuert diese Ermittlung nicht. Die konkrete Ursache der gemeldeten NA-Anzeige ist ohne die übrigen Betriebsdaten noch nicht nachgewiesen.
+
+**F5/F6 bleiben streng getrennt:** Der beibehaltene Anzeigewert wird niemals als aktuelle Diagnosegrundlage verwendet. Sind EE/17/F6 oder die Drehzahl nicht frisch und vollständig, bleibt die Fehlerprüfung „Unbekannt“ und die laufende 120-Sekunden-Nullphase wird verworfen. Bereits gespeicherte Fehler bleiben erhalten. Die 30-Sekunden-Grenze wird nur für die Gültigkeitsbewertung genutzt, nicht zum Löschen des Anzeigewerts.
+
+## ESP32-Laufzeit
+
+„ESP32 Laufzeit“ ergänzt die lesbare Form `2 d 03:04:05` (Tage, Stunden:Minuten:Sekunden), Aktualisierung alle 10 Sekunden. Basis ist der vorhandene ESPHome-Uptime-Sensor, nicht die Wärmepumpenuhr oder Sommerzeit. Die Sekundenentität „Uptime“ bleibt für bestehende Automationen erhalten, wird aber unter Expert eingeordnet und ist in HA standardmäßig deaktiviert. Bereits aktivierte HA-Entitäten werden dadurch nicht automatisch deaktiviert. Die Laufzeit bezieht sich auf den ESP32, nicht auf einen erkannten LWZ-Neustart.

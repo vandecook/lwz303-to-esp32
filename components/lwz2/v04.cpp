@@ -24,8 +24,8 @@ void LWZ2Component::clock_mode_publish_() {
                                      saved_.clock_mode == 1 ? "Sommerzeit" : "Unbekannt");
 }
 void LWZ2Component::v04_setup_() {
-  if (!v04_enabled_) return;
   v04_invalidate_();
+  publish_fan_stage_diagnostics_(-1);
   for (auto *n : fan_stages_) if (n) n->publish_state(NAN);
   v04_preference_ = global_preferences->make_preference<V04Saved>(preferences_key_);
   V04Saved loaded{};
@@ -55,6 +55,8 @@ void LWZ2Component::set_fan_speed_source(const std::string &v) {
   zero_pending_[0] = zero_pending_[1] = false;
 }
 void LWZ2Component::v04_invalidate_() {
+  profile_read_seen_ = false;
+  fan_stage_display_last_ = -1;
   speed_seen_ = program_seen_ = settings_seen_ = override_seen_ = clock_seen_ = false;
   zero_pending_[0] = zero_pending_[1] = false;
   for (const char *k : {"hc_stage", "dhw_stage", "current_fan_stage"}) v04_number_(k, NAN);
@@ -64,6 +66,26 @@ void LWZ2Component::v04_invalidate_() {
 static bool v04_fresh(bool seen, uint32_t at, uint32_t max_age) {
   return seen && millis() - at <= max_age;
 }
+void LWZ2Component::publish_fan_stage_diagnostics_(int stage) {
+  auto age = [&](bool seen, uint32_t at) {
+    if (!seen) return std::string("fehlt");
+    return std::string(v04_fresh(seen, at, diagnostic_max_age_ms_) ? "frisch/" : "veraltet/") +
+        std::to_string((millis() - at) / 1000) + "s";
+  };
+  const std::string value = std::string("Stufe=") + (stage < 0 ?
+      (fan_stage_display_last_ < 0 ? "unbekannt" : std::to_string(fan_stage_display_last_) + " (letzte gueltige; unbestaetigt)") : std::to_string(stage)) +
+      "; EE=" + age(program_seen_, program_ms_) + "; 17=" + age(settings_seen_, settings_ms_) +
+      "; F6=" + age(override_seen_, override_ms_) + "; Mode=" + std::to_string(program_mode_) +
+      "; ProgFAN=" + std::to_string(fan_program_) + "; P07/08/09/12=" +
+      std::to_string(fan_day_) + "/" + std::to_string(fan_night_) + "/" +
+      std::to_string(fan_standby_) + "/" + std::to_string(fan_manual_) +
+      "; Override=" + std::to_string(override_stage_) + "; Rest=" + std::to_string(override_remaining_);
+  if (value != fan_stage_diagnostic_last_) {
+    fan_stage_diagnostic_last_ = value;
+    v04_publish_text_("fan_stage_diagnostics", value);
+  }
+}
+
 int LWZ2Component::current_fan_stage_() const {
   if (!v04_fresh(program_seen_, program_ms_, diagnostic_max_age_ms_) ||
       !v04_fresh(settings_seen_, settings_ms_, diagnostic_max_age_ms_) ||
@@ -80,7 +102,6 @@ int LWZ2Component::current_fan_stage_() const {
 }
 
 void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
-  if (!v04_enabled_) return;
   const uint32_t now = millis();
   if (cmd == 0xF2) {
     for (unsigned i = 0; i < 2; i++) {
@@ -133,8 +154,9 @@ void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
     if (cmd == 0xFB) {
       v04_speed_[0] = len > 26 ? d[26] : NAN; v04_speed_[1] = len > 27 ? d[27] : NAN;
     } else {
-      v04_speed_[0] = len >= 14 ? be16u_(d + 12) : NAN;
-      v04_speed_[1] = len >= 12 ? be16u_(d + 10) : NAN;
+      // E8 actual speeds are explicitly unverified/incompatible in the 2.16 profile.
+      v04_speed_[0] = firmware_ != FirmwareProfile::FW_216 && len >= 14 ? be16u_(d + 12) : NAN;
+      v04_speed_[1] = firmware_ != FirmwareProfile::FW_216 && len >= 12 ? be16u_(d + 10) : NAN;
     }
     speed_seen_ = true; speed_ms_ = now;
     v04_tick_(true);  // Threshold is confirmed only on a fresh speed observation.
@@ -165,11 +187,12 @@ void LWZ2Component::v04_history_() {
   }
 }
 void LWZ2Component::v04_tick_(bool speed_observation) {
-  if (!v04_enabled_) return;
   const uint32_t now = millis();
   const int stage = current_fan_stage_();
+  if (stage >= 0) fan_stage_display_last_ = stage;
+  publish_fan_stage_diagnostics_(stage);
   const bool data_ok = v04_fresh(speed_seen_, speed_ms_, diagnostic_max_age_ms_) && stage >= 0;
-  v04_number_("current_fan_stage", stage < 0 ? NAN : float(stage));
+  v04_number_("current_fan_stage", fan_stage_display_last_ < 0 ? NAN : float(fan_stage_display_last_));
   for (unsigned i = 0; i < 2; i++) {
     std::string state = "Unbekannt";
     const bool valid = data_ok && std::isfinite(v04_speed_[i]) && v04_speed_[i] >= 0;
@@ -200,7 +223,6 @@ void LWZ2Component::v04_tick_(bool speed_observation) {
   }
 }
 void LWZ2Component::reset_fan_faults() {
-  if (!v04_enabled_) return;
   const auto stamp = v04_fresh(clock_seen_, clock_ms_, diagnostic_max_age_ms_) ? clock_stamp_ : "unbekannt";
   for (auto &r : saved_.fans) if (r.active) {
     r.active = false; std::snprintf(r.end, sizeof(r.end), "%s", stamp.c_str());
@@ -211,7 +233,7 @@ void LWZ2Component::reset_fan_faults() {
   v04_tick_();
 }
 bool LWZ2Component::request_fan_stage(uint8_t index, float value) {
-  if (!v04_enabled_ || !writes_enabled_ || write_stage_ != WriteStage::NONE || index > 1 ||
+  if (!writes_enabled_ || write_stage_ != WriteStage::NONE || index > 1 ||
       !std::isfinite(value) || value < 0 || value > 3 || value != std::floor(value)) {
     publish_write_status_("rejected: fan stage requires permission, idle writer and integer 0..3"); return false;
   }
@@ -219,7 +241,7 @@ bool LWZ2Component::request_fan_stage(uint8_t index, float value) {
   write_stage_ = WriteStage::READ; publish_write_status_("pending: fresh fan settings read"); return true;
 }
 bool LWZ2Component::request_clock_mode(const std::string &mode) {
-  if (!v04_enabled_ || (mode != "Winterzeit" && mode != "Sommerzeit")) return false;
+  if ((mode != "Winterzeit" && mode != "Sommerzeit")) return false;
   const int target = mode == "Sommerzeit" ? 1 : 0;
   if (write_stage_ != WriteStage::NONE) { publish_write_status_("rejected: writer busy"); return false; }
   if (saved_.clock_mode == target) { clock_mode_publish_(); return true; }
@@ -231,7 +253,7 @@ bool LWZ2Component::request_clock_mode(const std::string &mode) {
   return true;
 }
 void LWZ2Component::confirm_clock_mode(bool summer) {
-  if (!v04_enabled_ || write_stage_ != WriteStage::NONE || saved_.clock_mode >= 0) return;
+  if (write_stage_ != WriteStage::NONE || saved_.clock_mode >= 0) return;
   // Explicit recovery of uncertain local metadata only. Never writes the device clock.
   saved_.clock_mode = summer ? 1 : 0;
   if (!v04_save_()) {

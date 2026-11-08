@@ -13,8 +13,8 @@ class SelectionTest(unittest.TestCase):
         manifest=json.loads((ROOT/'components/lwz2/selection.json').read_text(encoding='utf-8'))
         entities=manifest['entities']
         self.assertEqual(len(entities),80)
-        self.assertEqual(sum(not r['optional'] for r in entities),33)
-        self.assertEqual(sum(r['optional'] for r in entities),47)
+        self.assertEqual(sum(not r['optional'] for r in entities),30)
+        self.assertEqual(sum(r['optional'] for r in entities),50)
         self.assertEqual(len({r['id'] for r in entities}),80)
         keys=[r['key'] for r in entities if r['kind']!='action']
         self.assertEqual(len(set(keys)),78)
@@ -23,7 +23,7 @@ class SelectionTest(unittest.TestCase):
         config=yaml.safe_load(raw)
         configured=config['lwz2']
         migrated={'p01-p12_p07_fan_stage_day':'fan_stage_day',
-                  'p01-p12_p08_fan_stage_night':'fan_stage_night'} if configured.get('enable_v04') else {}
+                  'p01-p12_p08_fan_stage_night':'fan_stage_night'}
         for r in entities:
             if r['kind']=='action':continue
             key=migrated.get(r['key'],r['key'])
@@ -39,12 +39,14 @@ class SelectionTest(unittest.TestCase):
         self.assertEqual(config['switch'][0]['restore_mode'],'ALWAYS_OFF')
         for id,key in [('OUT063','s_fan_supply_fan_speed200'),('OUT064','s_fan_exhaust_fan_speed200')]:
             entry=next(r for r in entities if r['id']==id)
-            self.assertEqual(entry['choice'],'Ja')
-            self.assertFalse(entry['optional'])
+            self.assertEqual(entry['choice'],'Optional')
+            self.assertTrue(entry['optional'])
             self.assertEqual(configured[key]['accuracy_decimals'],1)
+            self.assertTrue(configured[key]['disabled_by_default'])
+            self.assertEqual(configured[key]['web_server']['sorting_group_id'],'lwz_expert')
             self.assertNotIn('unit_of_measurement',configured[key])
             self.assertEqual(entry['unit'],'')
-        self.assertEqual({r['id'] for r in manifest['selection_overrides']},{'OUT063','OUT064'})
+        self.assertEqual({r['id'] for r in manifest['selection_overrides']},{'OUT032','OUT063','OUT064'})
         # The approved workbook is an audit source, not needed by firmware or CI.
         workbook=ROOT/'outputs/parameterkatalog-v03'/manifest['source_workbook']
         if workbook.exists():self.assertEqual(hashlib.sha256(workbook.read_bytes()).hexdigest(),manifest['source_sha256'])
@@ -54,9 +56,29 @@ class SelectionTest(unittest.TestCase):
             raw=(ROOT/filename).read_text(encoding='utf-8')
             config=yaml.safe_load(re.sub(r'!secret\s+\S+', '"validation-only"',raw))
             lwz=config['lwz2']
-            self.assertTrue(lwz['enable_v04'])
+            self.assertNotIn('enable_v03',lwz)
+            self.assertNotIn('enable_v04',lwz)
+            for key in ('profile_slot','profile_name','profile_gradient','profile_low_end','profile_room_influence','profile_recognized','profile_action_status'):
+                self.assertIn(key,lwz)
+            self.assertEqual(lwz['fan_stage_diagnostics']['entity_category'],'diagnostic')
+            uptime=next(e for e in config['sensor'] if e.get('id')=='lwz_uptime_seconds')
+            self.assertTrue(uptime['disabled_by_default'])
+            readable=next(e for e in config['text_sensor'] if e.get('id')=='lwz_uptime_readable')
+            self.assertIn('lwz_uptime_seconds',readable['lambda'])
+            for key,group in (('hc1_gradient','lwz_basic'),('hc1_low_end','lwz_basic'),('hc1_room_influence','lwz_expert')):
+                self.assertEqual(lwz[key]['mode'],'slider')
+                self.assertEqual(lwz[key]['web_server']['sorting_group_id'],group)
+            for key in ('hc_stage','dhw_stage','hc_stage_text','dhw_stage_text'):
+                self.assertEqual(lwz[key]['web_server']['sorting_group_id'],'lwz_basic')
+                self.assertNotIn('entity_category',lwz[key])
+            for key in ('s_global_booster_stage3','booster_stage2','booster_stage1',
+                        's_h_c1_hc_booster_stage','s_h_c1_hc_stage','s_d_h_w_dhw_booster_stage'):
+                self.assertEqual(lwz[key]['web_server']['sorting_group_id'],'lwz_expert')
+                self.assertEqual(lwz[key]['entity_category'],'diagnostic')
             self.assertEqual(lwz['fan_interval'],'10s')
-            self.assertEqual(config['esphome']['project']['version'],'0.4.0')
+            profile=next(e for e in config['select'] if e.get('id')=='lwz_firmware')
+            self.assertIn('2.16',profile['options'])
+            self.assertEqual(config['esphome']['project']['version'],'0.5.0')
             self.assertEqual(config['external_components'][0]['source'],'github://vandecook/lwz303-to-esp32')
             for key in ('exhaust_fault','supply_fault','hc_stage','dhw_stage','clock_mode','fan_stage_day','fan_stage_night'):
                 self.assertIn(key,lwz)
