@@ -1,6 +1,6 @@
 # Home Assistant – Lüfterdiagnose v0.4
 
-Die Fehlerentscheidung erfolgt lokal in ESPHome. Je Lüfter gibt es einen gespeicherten Problem-Binärsensor, einen Zustands- und Datenqualitätstext, einen Fehlerzähler sowie letzten Beginn und letztes Ende. Alle Entitätsnamen enthalten `device_name`.
+Die Fehlerentscheidung erfolgt lokal in ESPHome. Je Lüfter gibt es einen gespeicherten Problem-Binärsensor, einen Zustands- und Datenqualitätstext, einen Fehlerzähler sowie letzten Beginn und letztes Ende. Seit 09.11.2026 enthalten die Entitäts-Anzeigenamen kein manuelles `device_name`-Präfix mehr; die Gerätezuordnung erfolgt über die HA-Integration.
 
 ## Benachrichtigung
 
@@ -18,6 +18,6 @@ Nach Rücksetzung sind neue frische Daten erforderlich. Besteht der Fehler weite
 
 ## Umstieg von v0.3
 
-Entitäten sind jetzt explizit mit dem Gerätenamen benannt. Home Assistant verwaltet bestehende Entitätskennungen zusätzlich in seiner Registrierung; vorherige Automationen und Anzeigen vor dem Umstieg prüfen und nötigenfalls auf die neuen Entitäten umstellen. Die P07-/P08-Lesesensoren werden durch nichtoptimistische Number-Entitäten ersetzt und deshalb nicht doppelt angeboten. Die übrigen optionalen v0.3-Werte bleiben erhalten.
+Entitäten sind seit der Anpassung vom 09.11.2026 ohne explizites Gerätenamenpräfix benannt. Home Assistant verwaltet bestehende Entitätskennungen zusätzlich in seiner Registrierung; vorherige Automationen und Anzeigen vor dem Umstieg prüfen und nötigenfalls auf die neuen Entitäten umstellen. Die P07-/P08-Lesesensoren werden durch nichtoptimistische Number-Entitäten ersetzt und deshalb nicht doppelt angeboten. Die übrigen optionalen v0.3-Werte bleiben erhalten.
 
-Die Konfiguration setzt den Geräte-Anzeigenamen auf `device_name`, passend zum expliziten Präfix. Eine tatsächliche HA-Registrierung und die Anzeige durch die jeweilige HA-Version müssen am System geprüft werden; die erzeugten ESPHome-Namen enthalten das Präfix genau einmal.
+Die Konfiguration behält den Geräte-Anzeigenamen `device_name` und die expliziten internen IDs bei. Ein manuelles Präfix in den Entitätsnamen entfällt. Bereits registrierte oder vom Nutzer benannte HA-Entitäten können ihre bisherigen Anzeigenamen/Entitätskennungen behalten; die tatsächliche Darstellung nach Integration/Aktualisierung ist am System zu prüfen.

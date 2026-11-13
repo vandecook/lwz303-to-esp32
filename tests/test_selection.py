@@ -87,8 +87,8 @@ class SelectionTest(unittest.TestCase):
                 if isinstance(entries,dict): entries=entries.values()
                 for entry in entries:
                     if isinstance(entry,dict) and 'name' in entry:
-                        self.assertTrue(entry['name'].startswith('${device_name} '),entry['name'])
-                        self.assertEqual(entry['name'].count('${device_name}'),1)
+                        self.assertNotIn('${device_name}',entry['name'])
+                        self.assertNotIn('${friendly_name}',entry['name'])
             buttons=config['button']
             reset=next(b for b in buttons if b.get('id')=='lwz_reset_fan_faults')
             self.assertIn('reset_fan_faults()',reset['on_press'][0]['lambda'])

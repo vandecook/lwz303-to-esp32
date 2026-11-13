@@ -2,6 +2,8 @@
 
 ## 0.5.0 - 2026-11-08
 
+- Ergänzung 09.11.: manuelles device_name-Präfix aus allen 154 Entitäts-Anzeigenamen je YAML entfernt. Gerätezuordnung durch HA; ESPHome-Gerätename, Geräte-Anzeigename und explizite IDs unverändert.
+
 - Fester zusätzlicher Eintrag Standard (bewaehrt): P13 0,3, P14 1,0 K, P15 0 nach Nutzerbestätigung. Nicht bearbeitbar; Auswahl und manuelle Anwendung mit Schreibfreigabe, Erkennung und Neustart geprüft. Speicherformat der fünf bearbeitbaren Profile unverändert.
 
 - Heizkurvenprofile P13/P14/P15 dauerhaft in ESPHome: fünf bearbeitbare Speicherplätze, Namen und Entwürfe; getrennte Aktionen Speichern, Verwerfen, Anlagenwerte übernehmen und Anwenden.

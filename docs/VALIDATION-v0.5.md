@@ -1,5 +1,7 @@
 # Softwarevalidierung v0.5.0
 
+Ergänzung 09.11.2026: aus jeder regulären YAML wurden 154 Gerätenamenpräfixe in Entitäts-Anzeigenamen entfernt. Explizite interne IDs, ESPHome-Gerätename und Geräte-Anzeigename vor/nach Änderung verglichen und unverändert. Auswahl-/Konfigurationstest und Codegenerierung für beide YAMLs prüfen die neue Benennung. Der unten dokumentierte vollständige Build stammt vor dieser reinen Namensänderung; kein zusätzlicher vollständiger Build. Die tatsächliche HA-Registrierung/Anzeige bleibt am System zu prüfen.
+
 Ergänzung fester Standard: P13=0,3, P14=1,0 K, P15=0 vom Nutzer bestätigt. Der zusätzliche unveränderbare Eintrag wurde auf Erkennung, Bearbeitungssperre, Speichersperre, Übernahmesperre, Anwendung nur mit Schreibfreigabe und erhaltene Auswahl nach Neustart geprüft. Das gespeicherte Fünf-Profil-Datenformat wurde mit dem bisherigen v0.5-Paket verglichen und ist unverändert. Der aktualisierte vollständige ESP32-C3-Build und die Beispiel-Codegenerierung sind erfolgreich; physische Anwendung weiterhin offen.
 
 Stand 08.11.2026. Zielhardware ESP32-C3, LWZ-Geräte-Firmware 2.x. Bisherige reale Nutzerbeobachtungen ausschließlich an LWZ 303 SOL mit FW 2.16 und deaktivierter Solarfunktion. Die neuen v0.5-Prüfungen erfolgen ohne angeschlossene Wärmepumpe, ohne Flashen, GitHub-Veröffentlichung oder Änderungen an Home Assistant.
@@ -15,7 +17,7 @@ Stand 08.11.2026. Zielhardware ESP32-C3, LWZ-Geräte-Firmware 2.x. Bisherige rea
 - Der vollständige simulierte UART-Austausch GET → ein SET → GET bestätigt genau einen SET und drei erfolgreiche Transaktionen. Entzug der Schreibfreigabe vor SET bricht die Anwendung ab. Unsichere SET-Antwort führt zum GET, nicht zum erneuten SET. Unvollständige Parameterblöcke und abweichende Rücklesewerte bestätigen keine Anwendung. Die letzte erfolgreich gespeicherte Anwendung wird getrennt von der Erkennung geführt.
 - Neustart während einer begonnenen Anwendung löst keinen weiteren SET aus. Profilspeicher und bisherige Uhr-/Fehlerhistorie bleiben über getrennte Schlüssel erhalten. Ungültiger Profilspeicher wird nicht ungeprüft angewendet.
 - Speicherung des Profils und Speicherung einer erfolgreichen Anwendung werden auf Fehler geprüft; ein erfolgreicher LWZ-Readback bei anschließendem Speicherfehler wird gesondert gemeldet.
-- Auswahl-/Konfigurationsvertrag: ursprünglicher 80-Einträge-Katalog erhalten, aktuelle Optional-Auswahl und Basis-/Expert-Zuordnung unverändert, Gerätenamen einmalig enthalten, beide YAMLs auf 0.5.0 und ohne `enable_v03`/`enable_v04`.
+- Auswahl-/Konfigurationsvertrag: ursprünglicher 80-Einträge-Katalog erhalten, aktuelle Optional-Auswahl und Basis-/Expert-Zuordnung unverändert, Entitäts-Anzeigenamen ohne manuelles Gerätenamenpräfix (Änderung 09.11.2026), beide YAMLs auf 0.5.0 und ohne `enable_v03`/`enable_v04`.
 - Migration geprüft: alte Versions-Aktivierungsoptionen werden vom Schema ausdrücklich abgewiesen.
 - ESPHome 2026.10.2: beide YAML-Konfigurationen mit lokaler Komponentenquelle, synthetischen Zugangsdaten und ausdrücklich gewähltem Decoderprofil 2.16 validiert; C++-Codegenerierung einschließlich nativer Number-, Select- und Text-Entitäten erfolgreich.
 

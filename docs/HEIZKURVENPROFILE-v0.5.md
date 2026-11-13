@@ -24,7 +24,7 @@ Die fünf übrigen Plätze können bearbeitet und benannt werden. „Profil 1“
 3. Optional „Profil Anlagenwerte jetzt lesen“ und anschließend „Profil Anlagenwerte in Entwurf“ verwenden. Das übernimmt nur vollständige, frische Werte innerhalb der Profilbereiche. Es schreibt nichts in die LWZ.
 4. „Profil Entwurf speichern“ speichert den Entwurf dauerhaft im ESP32. „Profil Entwurf verwerfen“ stellt die im gewählten Platz gespeicherten Werte wieder her. Ein ungespeicherter Entwurf blockiert Platzwechsel und Anwendung, damit Änderungen nicht stillschweigend verloren gehen.
 5. Für den festen Standard genügt seine Auswahl; vorheriges Speichern ist nicht erforderlich. Auch er wird erst über „Profil jetzt anwenden“ mit Schreibfreigabe übertragen.
-6. Erst mit eingeschalteter **LWZ Schreibfreigabe** und der Taste **Profil jetzt anwenden** wird das gespeicherte Profil auf die Anlage übertragen. Eine laufende Schreibtransaktion blockiert parallele Änderungen. Aktionsstatus und Schreibstatus zeigen das Ergebnis.
+6. Erst mit eingeschalteter **Schreibfreigabe** und der Taste **Profil jetzt anwenden** wird das gespeicherte Profil auf die Anlage übertragen. Eine laufende Schreibtransaktion blockiert parallele Änderungen. Aktionsstatus und Schreibstatus zeigen das Ergebnis.
 
 Die Auswahl, die gespeicherten Profile und die letzte bestätigte Anwendung bleiben über ESP-Neustarts erhalten. Ungespeicherte Entwürfe werden nach Neustart verworfen. Die Schreibfreigabe startet weiterhin ausgeschaltet. Es gibt **keine automatische Anwendung** bei Neustart, Wiederverbindung, Temperaturänderung, Jahreszeitenwechsel oder manueller Abweichung. Es wird auch nicht automatisch zu einem früheren Profil zurückgeschrieben.
 
@@ -60,7 +60,7 @@ Die Profilspeicherung verwendet einen eigenen Preferences-Schlüssel. Uhrzeitmod
 - `enable_v03` und `enable_v04` aus der YAML entfernen. Die Optionen und internen Aktivierungsflags sind vollständig entfernt; es gibt keinen Ersatz-Aktivierungsschalter. Die Funktionen werden automatisch integriert. Alte YAML-Dateien mit diesen Optionen müssen angepasst werden; sie werden nicht stillschweigend umgedeutet.
 - Der vorhandene Gerätename (`device_name` / ESPHome-Name) bleibt für die Speicherzuordnung maßgeblich; beim Umstieg den bisherigen Namen beibehalten.
 - Die separate Schreibfreigabe bleibt erhalten. Native Anlagen-Slider und F5/F6 funktionieren weiter; die Kommunikationspausen betragen weiterhin jeweils 1 Sekunde.
-- Beide regulären YAML-Dateien enthalten die neuen Bedienelemente, Gerätenamen und `refresh: 0s` bei der GitHub-Quelle. Solange v0.5 nicht auf GitHub veröffentlicht ist, die lokale Paketkonfiguration mit `source: components` verwenden.
+- Beide regulären YAML-Dateien enthalten die neuen Bedienelemente, Gerätezuordnung und `refresh: 0s` bei der GitHub-Quelle. Solange v0.5 nicht auf GitHub veröffentlicht ist, die lokale Paketkonfiguration mit `source: components` verwenden.
 - Das Paket enthält Quelltext und Dokumentation. Etwaige Prüfbinaries mit synthetischen Zugangsdaten werden nicht ausgeliefert oder auf die Anlage übertragen.
 
 Die Softwareprüfungen und ihre Grenzen stehen im [Validierungsbericht v0.5](VALIDATION-v0.5.md). Physische Profil-Schreibversuche und die Optimierung der Vorschlagswerte sind noch nicht erfolgt.
