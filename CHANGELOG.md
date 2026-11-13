@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 - 2026-11-13 (lokales Quellpaket)
+
+- Aufklappbare Hilfe im Webserver: Bedeutung von frisch/Ein/Aus und Erklaerung aller Datenbloecke, einschließlich 01 und FD als ergänzende Abfragen.
+- ESPHome-v3-Weboberfläche und Hilfe gemeinsam lokal eingebettet, ohne CDN-Abfrage und ohne neue Entitäten oder Änderungen bestehender Entitätsnamen.
+- Unveränderte LWZ-Abfrage- und Steuerlogik. Versionsangaben 0.6.1, eigenes Paket mit Prüfsummen; Ausgabe 0.6.0 bleibt erhalten.
+
 ## 0.6.0 - 2026-11-13 (lokales Quellpaket)
 
 - Letzte gültige Messwerte, Statusbits und gelesene Einstellungen bei seriellen Datenlücken erhalten. Neustart der seriellen Kommunikation verwirft interne Gültigkeit, erhält aber die Anzeige. Decoderwechsel und nicht unterstützte Felder bleiben ausdrücklich unbekannt.

@@ -1,4 +1,4 @@
-# Betriebsdaten und Datenqualität - v0.6.0
+# Betriebsdaten und Datenqualität - v0.6.1
 
 Stand: 13.11.2026. Lokales Quellpaket; keine Änderung der Wärmepumpenparameter und keine automatische Regelung.
 
@@ -35,4 +35,8 @@ Neue Gültigkeitsanzeigen und vorläufige Zweckanzeige ergänzen die vorhandenen
 
 Vorhandene Protokoll-, Datenalterungs- und Lüfterprüfungen bleiben aktiv. Keine neuen, nicht vereinbarten Temperatur-/Sprung-/Stillstandsgrenzen und keine automatische Korrektur von Vorlauf/Rücklauf. Verdichterstartzähler und zusätzliche Heizstabstunden werden ohne belegte Quelle nicht ergänzt. Diese Punkte bleiben für spätere 0.6.x offen. HA-Statistik und Wochenprogramme gehören zu ihren getrennten Roadmap-Versionen.
 
-Quellpaket enthält die regulären GitHub-Konfigurationen sowie `lwz303-local.yaml` (Nutzerkonfiguration) und `lwz303-sol-local.yaml` (Beispiel) mit lokaler Komponentenquelle. Bis zur Veröffentlichung für den neuen lokalen Stand diese lokale Konfiguration mit eigenen Zugangsdaten verwenden. Keine Prüfung am echten Gerät, kein Flashen oder GitHub-Publish durch diese Erstellung. [Prüfbericht](VALIDATION-v0.6.md).
+Quellpaket enthält die regulären GitHub-Konfigurationen sowie `lwz303-local.yaml` (Nutzerkonfiguration) und `lwz303-sol-local.yaml` (Beispiel) mit lokaler Komponentenquelle. Bis zur Veröffentlichung für den neuen lokalen Stand diese lokale Konfiguration mit eigenen Zugangsdaten verwenden. Keine Prüfung am echten Gerät, kein Flashen oder GitHub-Publish durch diese Erstellung. [Prüfbericht](VALIDATION-v0.6.1.md).
+
+## Webserver-Hilfe ab v0.6.1
+
+Oben im Geräteweb steht der aufklappbare Bereich **„Datenblöcke erklärt – was bedeutet frisch?“**. Er erklärt Ein/Aus der Frische-Anzeigen, die elf überwachten Datenblöcke sowie 01 und FD. Die Hilfe ist statisch und erzeugt keine zusätzlichen LWZ-Abfragen. Entitätsnamen und Zuordnungen bleiben unverändert. Die ursprüngliche ESPHome-v3-Oberfläche aus ESPHome 2026.10.2 und die Hilfe werden gemeinsam über `js_include` lokal eingebettet; `js_url` bleibt leer, daher keine CDN-Abfrage. `local: false` wählt hier den ESPHome-HTML-Rahmen mit der eingebetteten JavaScript-Datei und bedeutet nicht, dass externe Dateien geladen werden. Quelldateien, Herkunft und MIT-Lizenz stehen unter `web/`.

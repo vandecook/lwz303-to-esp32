@@ -1,3 +1,7 @@
+# Validierung v0.6.1
+
+Aktueller Bericht: [Webserver-Hilfe und Prüfung v0.6.1](docs/VALIDATION-v0.6.1.md). Die folgenden Berichte dokumentieren frühere Ausgaben.
+
 # Validierung v0.6.0
 
 Aktueller Bericht: [Softwarevalidierung v0.6](docs/VALIDATION-v0.6.md). Die folgenden Berichte sind historische Prüfstände.

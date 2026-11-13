@@ -7,7 +7,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.6.0"
+    version: "0.6.1"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -45,6 +45,9 @@ preferences:
   flash_write_interval: 1min
 
 web_server:
+  # Weboberflaeche und Datenblock-Hilfe bleiben lokal eingebettet; keine CDN-Abfrage.
+  js_include: web/lwz-webserver-v3-with-help.js
+  js_url: ""
   sorting_groups:
     - id: lwz_basic
       name: "Basis"
@@ -57,7 +60,7 @@ web_server:
       sorting_weight: 20
   port: 80
   version: 3
-  local: true
+  local: false
   log: true
   auth:
     type: digest
