@@ -45,9 +45,6 @@ preferences:
   flash_write_interval: 1min
 
 web_server:
-  # Weboberflaeche und Datenblock-Hilfe bleiben lokal eingebettet; keine CDN-Abfrage.
-  js_include: web/lwz-webserver-v3-with-help.js
-  js_url: ""
   sorting_groups:
     - id: lwz_basic
       name: "Basis"
@@ -85,6 +82,7 @@ uart:
 
 lwz2:
   id: lwz303
+  web_help: true
   uart_id: lwz_uart
   # These are decoder profiles, not the physical device firmware (2.16).
   firmware: "2.14j"

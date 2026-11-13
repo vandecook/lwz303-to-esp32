@@ -11,6 +11,7 @@ jobs:
       - run: python tests/run_host_tests.py
       - run: pip install esphome==2026.10.2
       - run: python tests/test_selection.py
+      - run: python tests/test_web_help.py
       - name: ESPHome configuration and code generation
         run: |
           cat > secrets.yaml <<'EOF'

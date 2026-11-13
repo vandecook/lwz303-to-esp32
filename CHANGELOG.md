@@ -2,6 +2,7 @@
 
 ## 0.6.1 - 2026-11-13 (lokales Quellpaket)
 
+- Nachbesserung ohne Versionserhöhung auf Nutzerwunsch: Webserver-Ressource direkt in der externen LWZ-Komponente mitliefern. `lwz2.web_help: true` bindet sie aus dem tatsächlichen Komponentenpfad ein; kein manuelles `web_server.js_include` und kein `/root/config/web` mehr erforderlich. Vorheriges Paket im lokalen Revisionsverzeichnis gesichert.
 - Aufklappbare Hilfe im Webserver: Bedeutung von frisch/Ein/Aus und Erklaerung aller Datenbloecke, einschließlich 01 und FD als ergänzende Abfragen.
 - ESPHome-v3-Weboberfläche und Hilfe gemeinsam lokal eingebettet, ohne CDN-Abfrage und ohne neue Entitäten oder Änderungen bestehender Entitätsnamen.
 - Unveränderte LWZ-Abfrage- und Steuerlogik. Versionsangaben 0.6.1, eigenes Paket mit Prüfsummen; Ausgabe 0.6.0 bleibt erhalten.

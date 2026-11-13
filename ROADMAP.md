@@ -105,6 +105,8 @@ Am 08.11.2026 von der bisherigen v0.9 vorgezogen. Der belegte und festgelegte Um
 
 **Ausgaben:** 0.6.0 als Quellpaket erstellt; 0.6.1 ergänzt ausschließlich die lokal eingebettete Webserver-Hilfe und Versionsangaben. Das Paket 0.6.0 bleibt unverändert erhalten. [Prüfbericht 0.6.1](docs/VALIDATION-v0.6.1.md).
 
+**Ausnahme auf Nutzerwunsch:** Die Korrektur des GitHub-Ressourcenpfads bleibt bei 0.6.1 ohne Versionserhöhung. Das vorherige ZIP wird im Revisionsverzeichnis erhalten; Nachbesserung und neue Prüfsumme sind dokumentiert.
+
 ### Versionsführung ab v0.6
 
 **Festlegung 13.11.2026:** Die erste fertige Ausgabe erhält **0.6.0**. Nachfolgende Änderungen werden als **0.6.1, 0.6.2 usw.** getrennt nachvollziehbar geführt; eine bereits ausgelieferte Version wird nicht unter gleicher Nummer verändert.

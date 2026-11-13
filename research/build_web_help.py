@@ -14,6 +14,9 @@ module=re.search(r'<script\b[^>]*type=module[^>]*>(.*?)</script>',html,re.S).gro
 help_js=(root/'web/lwz-help.js').read_text(encoding='utf-8')
 combined='// ESPHome webserver v3, bundled with ESPHome 2026.10.2.\n// Upstream license: ESPHOME-WEBSERVER-LICENSE.txt. LWZ help appended below.\n'+module+'\n;\n'+help_js
 (root/'web/lwz-webserver-v3-with-help.js').write_text(combined,encoding='utf-8',newline='\n')
+(root/'components/lwz2/web_help.js').write_text(combined,encoding='utf-8',newline='\n')
 manifest={'source':'ESPHome 2026.10.2 components/web_server/server_index_v3.h','upstream':'https://github.com/esphome/esphome-webserver','header_sha256':hashlib.sha256(header.read_bytes()).hexdigest(),'upstream_module_sha256':hashlib.sha256(module.encode()).hexdigest(),'help_sha256':hashlib.sha256(help_js.encode()).hexdigest(),'combined_sha256':hashlib.sha256(combined.encode()).hexdigest()}
 (root/'web/SOURCES.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+(root/'components/lwz2/web_help_sources.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+(root/'components/lwz2/WEB_HELP_LICENSE.txt').write_bytes((root/'web/ESPHOME-WEBSERVER-LICENSE.txt').read_bytes())
 print('Prepared bundled, offline ESPHome v3 frontend with static LWZ help')

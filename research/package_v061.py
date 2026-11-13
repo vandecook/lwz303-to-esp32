@@ -18,7 +18,7 @@ user_local=(root/'lwz303.yaml').read_text(encoding='utf-8').replace('source: git
 (out/'lwz303-local.yaml').write_text(user_local,encoding='utf-8')
 files=[root/name for name in ('README.md','CHANGELOG.md','ROADMAP.md','VALIDATION.md','LICENSE',
                               'lwz303.yaml','lwz303-sol-example.yaml','.gitignore','.github/workflows/validate.yaml')]
-files+=sorted(p for p in (root/'components/lwz2').iterdir() if p.suffix in {'.cpp','.h','.py','.json'})
+files+=sorted(p for p in (root/'components/lwz2').iterdir() if p.suffix in {'.cpp','.h','.py','.json','.js','.txt'})
 files+=sorted((root/'docs').glob('*.md'))
 files+=sorted(p for p in (root/'tests').iterdir() if p.suffix in {'.py','.cpp','.h'})
 files+=sorted((root/'ha').glob('*.yaml'))
@@ -50,6 +50,11 @@ with zipfile.ZipFile(archive) as z:
     assert len([n for n in z.namelist() if n.endswith('.pdf')])==2
     assert 'source: components' in z.read('lwz303-sol-local.yaml').decode('utf-8')
     assert 'source: components' in z.read('lwz303-local.yaml').decode('utf-8')
+    assert z.read('components/lwz2/web_help.js') == (root/'web/lwz-webserver-v3-with-help.js').read_bytes()
+    for config_name in ('lwz303.yaml','lwz303-sol-example.yaml','lwz303-local.yaml','lwz303-sol-local.yaml'):
+        config_text = z.read(config_name).decode('utf-8')
+        assert 'web_help: true' in config_text
+        assert 'js_include:' not in config_text
 print(f'v0.6.1 source package: {archive.name}; {len(files)+3} files; {archive.stat().st_size/1024/1024:.2f} MiB; references verified')
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 (out / (archive.name + '.sha256')).write_text(digest + '  ' + archive.name + '\n', encoding='utf-8')

@@ -4,6 +4,7 @@ from esphome.components import binary_sensor, sensor, text_sensor, uart, number,
 from esphome.core import CORE
 import zlib
 from .metadata import SELECTED_ENTITIES
+from .web_help import validate_web_help
 from esphome.const import (
     CONF_ID,
     DEVICE_CLASS_TEMPERATURE,
@@ -160,6 +161,7 @@ CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(LWZ2Component),
+            cv.Optional("web_help", default=False): cv.boolean,
             cv.Optional("device_model", default="unknown"): cv.one_of("i", "SOL", "unknown"),
             cv.Optional("fan_speed_source", default="sGlobal"): cv.one_of("sGlobal", "sFan"),
             cv.Optional("diagnostic_max_age", default="30s"): cv.positive_time_period_milliseconds,
@@ -274,6 +276,9 @@ CONFIG_SCHEMA = (
     .extend(cv.COMPONENT_SCHEMA)
     .extend(uart.UART_DEVICE_SCHEMA)
 )
+
+
+FINAL_VALIDATE_SCHEMA = validate_web_help
 
 
 async def to_code(config):

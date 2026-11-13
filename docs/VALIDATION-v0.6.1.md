@@ -27,3 +27,13 @@ Die SHA-256-Prüfsumme des bereits ausgelieferten Pakets 0.6.0 wurde erneut gepr
 Eigenes Quellpaket 0.6.1 mit lokalen Konfigurationen, Webressourcen, Herkunft/Lizenz, Änderungsverlauf und SHA-256-Prüfsummen. Keine Zugangsdaten oder Prüfbinaries im Paket. Keine Übertragung auf den ESP32 oder GitHub-Veröffentlichung ausgeführt. Die Hilfe erscheint am realen Gerät erst nach Kompilieren und Übertragen der neuen Konfiguration/Firmware.
 
 Die in [v0.6.0](VALIDATION-v0.6.md) dokumentierten Prüfungen und Grenzen gelten für die unveränderte Betriebslogik weiter. Die vorläufige F2-Betriebszweckzuordnung und zusätzliche, noch nicht definierte Plausibilitätsgrenzen werden durch diese Oberflächenänderung nicht bestätigt.
+
+## Nachbesserung 0.6.1 - Ressourcenpfad bei GitHub-Komponenten
+
+Anlass: `js_include: web/...` verweist auf das lokale Konfigurationsverzeichnis, auch wenn die Datei im GitHub-Repository liegt. Nach ausdrücklichem Nutzerwunsch erfolgt die Korrektur ohne Versionserhöhung.
+
+- Ressource, Lizenz und Herkunft direkt in `components/lwz2`; neue Option `web_help: true`. Der abschließende Konfigurationsschritt verwendet den tatsächlichen Komponentenpfad und bindet das Asset automatisch ein. Beide Hauptkonfigurationen enthalten keinen manuellen `js_include` mehr.
+- Vier Regressionstests erfolgreich: Komponentenpfad, deaktivierte Hilfe ohne Webserver, fehlender/falscher Webserver und Konflikt mit eigener JavaScript-Datei.
+- Isolierte Prüfung mit einer Kopie ausschließlich von `components/lwz2` in einem simulierten externen Checkout und getrenntem Konfigurationsordner: weder dort noch am Repository-Hauptpfad ist ein `web`-Ordner vorhanden. ESPHome-Codegenerierung erfolgreich; eingebettete JavaScript-Bytes stimmen vollständig mit der vorgesehenen Hilfe überein.
+- Beide regulären Konfigurationen erneut erfolgreich generiert; Auswahl-/Konfigurationstests erfolgreich. Native C++-Quellen und die Weboberfläche bleiben gegenüber dem bereits vollständig gebauten 0.6.1-Stand unverändert. Für diese reine Änderung der Python-Pfadauflösung ist kein neuer vollständiger Firmware-Build erfolgt; der oben genannte Build dokumentiert die ursprüngliche 0.6.1-Oberfläche.
+- Vorheriges ZIP unverändert unter `revisions/lwz303-v0.6.1-vor-github-webfix.zip` aufbewahrt. Das aktuelle Paket wird unter der bisherigen Versionsnummer neu gepackt und erhält eine neue SHA-256-Prüfsumme.

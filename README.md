@@ -25,7 +25,7 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 
 ## Aktueller Funktionsstand
 
-**v0.6.1:** Aufklappbare, lokal eingebettete Webserver-Hilfe erklärt alle Datenblöcke und die Bedeutung von „frisch“. Die Entitätsnamen und ihre Zuordnung bleiben unverändert.
+**v0.6.1 (nachgebessert):** Aufklappbare, lokal eingebettete Webserver-Hilfe erklärt alle Datenblöcke und die Bedeutung von „frisch“. Mit `lwz2.web_help: true` wird sie direkt aus der externen Komponente geladen. Ein eigener `web`-Ordner neben der YAML ist nicht mehr nötig; alte manuelle `web_server.js_include`-Einträge entfernen. Für die GitHub-Quelle den vollständigen korrigierten Ordner `components/lwz2` einschließlich `.py`- und `.js`-Dateien veröffentlichen. Die Entitätsnamen und ihre Zuordnung bleiben unverändert.
 
 **v0.6.0:** Letzte gültige LWZ-Werte bleiben bei seriellen Kommunikationsproblemen sichtbar. Neue Datenqualitätsanzeigen und Gültigkeitssensoren je Statusblock kennzeichnen fehlende/veraltete Daten unabhängig von der Anzeige. Vier Betriebsstundenzähler entsprechen FHEM (`09his206`), ganze Stunden; keine Kühlungsstunden. Der vorläufige Verdichter-Betriebszweck aus F2 wird getrennt von gleichzeitigem Bedarf angezeigt. Details, Datenquellen und Grenzen: [v0.6.0](docs/BETRIEBSDATEN-v0.6.md), [Prüfstand](docs/VALIDATION-v0.6.md).
 
