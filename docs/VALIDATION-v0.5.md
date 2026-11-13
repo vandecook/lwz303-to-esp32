@@ -1,5 +1,7 @@
 # Softwarevalidierung v0.5.0
 
+Ergänzung 09.11.: HK1 Zusatzheizungsstufe in beiden YAMLs und Metadaten explizit mit 0 Nachkommastellen konfiguriert. Das war bereits der Schema-Standard für einheitenlose ausgewählte Sensoren; diese Änderung macht die Vorgabe ausdrücklich, ändert aber weder den ganzzahligen F4-Rohcode noch den internen Float-Sensortyp. Bestehende HA-Anzeigepräzision kann die Darstellung separat beeinflussen. Auswahltest geprüft; kein zusätzlicher Binärbuild für diese reine Präzisionsvorgabe.
+
 Ergänzung 09.11.2026: aus jeder regulären YAML wurden 154 Gerätenamenpräfixe in Entitäts-Anzeigenamen entfernt. Explizite interne IDs, ESPHome-Gerätename und Geräte-Anzeigename vor/nach Änderung verglichen und unverändert. Auswahl-/Konfigurationstest und Codegenerierung für beide YAMLs prüfen die neue Benennung. Der unten dokumentierte vollständige Build stammt vor dieser reinen Namensänderung; kein zusätzlicher vollständiger Build. Die tatsächliche HA-Registrierung/Anzeige bleibt am System zu prüfen.
 
 Ergänzung fester Standard: P13=0,3, P14=1,0 K, P15=0 vom Nutzer bestätigt. Der zusätzliche unveränderbare Eintrag wurde auf Erkennung, Bearbeitungssperre, Speichersperre, Übernahmesperre, Anwendung nur mit Schreibfreigabe und erhaltene Auswahl nach Neustart geprüft. Das gespeicherte Fünf-Profil-Datenformat wurde mit dem bisherigen v0.5-Paket verglichen und ist unverändert. Der aktualisierte vollständige ESP32-C3-Build und die Beispiel-Codegenerierung sind erfolgreich; physische Anwendung weiterhin offen.

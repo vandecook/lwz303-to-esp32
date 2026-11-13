@@ -1,6 +1,17 @@
 # Changelog
 
+## 0.6.0 - 2026-11-13 (lokales Quellpaket)
+
+- Letzte gültige Messwerte, Statusbits und gelesene Einstellungen bei seriellen Datenlücken erhalten. Neustart der seriellen Kommunikation verwirft interne Gültigkeit, erhält aber die Anzeige. Decoderwechsel und nicht unterstützte Felder bleiben ausdrücklich unbekannt.
+- Datenqualität mit Alter pro Statusblock und elf getrennten Frische-Binärsensoren. Keine veralteten Werte als frische Diagnose-/Rücklesegrundlage verwenden; bestehende F5/F6- und Schreibprüfungen erhalten.
+- F2 heatRequest/heatRequest2 als Rohcodes; vorläufiger Betriebszweck nur bei frischen Quellen und übereinstimmenden Anforderungscodes. Gleichzeitiger Bedarf ist eine eigene Anzeige und beweist keine gleichzeitige Wärmelieferung.
+- Vier FHEM-Betriebsstundenzähler in ganzen Stunden, neutrale Zähler 1/2; keine Kühlungsstunden-Entität. Heizungs-/Warmwasser-Anzeigenamen vereinfacht.
+- Profil-Editorstatus ohne Schrägstrich benannt. Projektangaben und Startmeldung 0.6.0; versioniertes Paket und Prüfbericht. HA-Statistik bleibt separat.
+- Keine erfundenen Verdichterstart-/Zusatzheizungszähler und keine unbestätigten Temperaturalarmgrenzen. Diese Erweiterungen bleiben für spätere 0.6.x offen. Neue Geräteprüfung für v0.6.0 steht aus.
+
 ## 0.5.0 - 2026-11-08
+
+- Ergänzung 09.11.: HK1 Zusatzheizungsstufe explizit mit accuracy_decimals: 0 in beiden YAMLs und Auswahlmetadaten. Ganzzahlige Anzeige; der bestehende unsigned Stufencode bleibt unverändert. ESPHome-Sensoren verwenden intern weiterhin Float.
 
 - Ergänzung 09.11.: manuelles device_name-Präfix aus allen 154 Entitäts-Anzeigenamen je YAML entfernt. Gerätezuordnung durch HA; ESPHome-Gerätename, Geräte-Anzeigename und explizite IDs unverändert.
 

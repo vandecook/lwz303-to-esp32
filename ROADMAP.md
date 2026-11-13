@@ -4,9 +4,18 @@ Festlegung 08.11.2026 umgesetzt: F2ctrl-Heizungs-/Warmwasseranforderung als Basi
 
 **Decoder FW 2.16 vorbereitet:** eigenes Profil auf 2.06-Basis; sHC1-Innentemperatur und vier sFan-Ist-/Soll-Drehzahlen vorläufig nicht verfügbar. Relative sGlobal-Istwerte bleiben F5/F6-Quelle. [Details und Verifikation](docs/DECODER-FW2.16.md).
 
-Stand: **08.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
+Stand: **13.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
 
-**Aktueller Stand:** v0.5 ist lokal als Software umgesetzt: dauerhaft in ESPHome gespeicherte Profile P13/P14/P15, ausschließlich manuelle Anwendung, Profilerkennung anhand tatsächlicher Lesewerte und keine Versions-Aktivierungsschalter. Die Funktionen aus v0.4 einschließlich 1-s-Kommunikationspausen bleiben enthalten. Hosttests, ESPHome-Codegenerierung und vollständiger ESP32-C3-Build erfolgreich. Geräteprüfung und Veröffentlichung stehen aus. [Bedienung](docs/HEIZKURVENPROFILE-v0.5.md), [Validierung](docs/VALIDATION-v0.5.md).
+**Praxisstand 13.11.2026:** Laut Nutzer sind die bisherigen Funktionen soweit getestet; das System läuft. Ältere Hinweise auf offene Geräteprüfungen unten dokumentieren den damaligen Prüfstand und sind keine neue pauschale Testsperre. Die Rückmeldung bestätigt keine Einzelprüfung aller Modelle und Sonderfälle.
+
+**Aktueller Stand:** v0.6.0 lokal umgesetzt: letzte gültige Anzeigen bei seriellen Kommunikationsproblemen erhalten, separate Datenfrische je Block, FHEM-Betriebsstunden ohne Kühlungsstunden und vorläufiger Verdichter-Betriebszweck. Heizkurvenprofile, Lüfterdiagnose und bisherige Schreibwege bleiben enthalten. Hosttests, beide ESPHome-Codegenerierungen und vollständiger ESP32-C3-Build erfolgreich. Neue Geräteprüfung und GitHub-Veröffentlichung stehen aus. [Bedienung](docs/BETRIEBSDATEN-v0.6.md), [Validierung](docs/VALIDATION-v0.6.md).
+
+## Vorgemerkte Konfigurationspflege
+
+- **13.11.2026 - Anzeige bei Kommunikationsproblemen:** Letzte gültige Mess-, Status- und gelesene Einstellwerte bei ausbleibenden LWZ-Antworten weiter anzeigen. Zeitweilige Kommunikationsprobleme und Datenalter dürfen vorhandene Anzeigen nicht auf unbekannt/nicht verfügbar setzen. Kommunikationsstatus, letzte erfolgreiche Aktualisierung und Datenqualität getrennt ausweisen. Noch nie gelesene oder im gewählten Decoder nicht unterstützte Werte bleiben unbekannt. In v0.6.0 lokal umgesetzt; neue Geräteprüfung offen.
+- **Interne Gültigkeit beibehalten:** Behaltene Anzeigewerte sind keine frischen Beobachtungen. F5/F6, Plausibilitätsprüfungen, Schreibfreigabeprüfungen und Rücklesebestätigungen weiterhin nur auf frische gültige Daten stützen. HA-Auswertungen müssen Datenlücken anhand des separaten Gültigkeitsstatus erkennen; weder Starts noch Laufzeit aus gehaltenen Zuständen ableiten. Ein Ausfall der ESPHome-Verbindung zu HA ist von einer Störung der seriellen LWZ-Kommunikation zu unterscheiden.
+
+- **09.11.2026 vorgemerkt, in v0.6.0 umgesetzt:** Profil-Editorstatus in beiden YAMLs zu **`Gespeichertes Profil und Editorstatus`** umbenannt. Entitätsnamen beider Konfigurationen auf Schrägstriche geprüft; keine weiteren gefunden.
 
 ## Versionsübersicht
 
@@ -17,11 +26,11 @@ Stand: **08.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen
 | **0.3** | **Freigegebene Parameterauswahl aus sieben Statusblöcken, Parameterblock 17, eindeutige Hauptquellen, optionale Entitäten, Speed200-Analysewerte, P01/P02/P04/P05 schreiben und Uhr manuell ±1h mit Rücklesen** | **Software umgesetzt und synthetisch getestet; ESP32-Build und Geräteprüfung offen** |
 | **0.4** | **Wohnraumlüftung:** feste Tag-/Nachtstufen dauerhaft ändern; aktuelle Stufe aus LWZ-Zustand ermitteln. F5/F6 in ESPHome bei Stufe > 0 und 120 Sekunden Istdrehzahl null erkennen und gespeichert halten; Rücksetzung nach bestätigtem LWZ-Neustart bzw. über HA-Automation, dauerhafte Fehlerhistorie und Meldung bei jedem neuen Fehler. **Zusätzlich Geräteauswahl i / SOL, sControl.hcStage / dhwStage für FW 2.16, Zeitumstellungs-Auswahl und einheitliche Entitätsnamen** | Software lokal umgesetzt; Hardwareprüfung und Veröffentlichung offen. Lüftungszeitprogramme bearbeiten und zeitlich begrenzte Übersteuerung gehören nicht zum v0.4-Umfang. Ausgewählte Lüftungswerte einschließlich Speed200 bereits in v0.3 enthalten |
 | 0.5 | Heizkurven-Gradient und Fußpunkt schreiben; benannte Heizkurvenprogramme für Übergangszeit, Winter und eigene Profile als Kombination aus P13/P14/P15 in ESPHome speichern und manuell anwenden | Software lokal umgesetzt; fester bewährter Standard plus fünf bearbeitbare Speicherplätze, Erkennung und gemeinsame Rückleseprüfung. Physische Geräteprüfung und Veröffentlichung offen |
-| **0.6** | **Zusätzliche Betriebsdaten und Überwachung: Verdichterstarts/-laufzeiten, Zusatzheizungsstunden soweit belegt, Sensorplausibilität und Auffälligkeiten mit Zeitpunkten** | Geplant; am 08.11.2026 von v0.9 vorgezogen. Vorhandene sHistory-Zähler und blockweise Datenalterung wiederverwenden; keine unbelegten Verdichterstarts ableiten |
+| **0.6.0** | **FHEM-Betriebsstunden ohne Kühlung, Anzeige letzter gültiger Werte, getrennte blockweise Datenfrische und vorläufiger Verdichter-Betriebszweck** | Lokal umgesetzt; neue Geräteprüfung und Veröffentlichung offen. Weitere unbelegte Zähler und noch zu definierende Plausibilitätsgrenzen bleiben für spätere 0.6.x |
 | 0.7 | Alle zum jeweiligen Gerätemodell gehörenden P-Parameter auslesen und in einem eigenen Bereich „Programmierte Parameter“ verfügbar machen | Geplant; bisher v0.6. Leseansicht, keine pauschale Erweiterung der Schreibfunktionen |
-| 0.8 | Heizungs- und Warmwasser-Wochenzeitprogramme mit Wochentagen und Zeitfenstern lesen | Geplant; bisher v0.7. Die sieben Statusblöcke wurden bereits nach v0.3 vorgezogen |
-| 0.9 | Warmwasser-Zeitprogramme bearbeiten und schreiben | Geplant; bisher v0.8. Warmwasser-Sollwerte Tag/Nacht bereits in v0.3 umgesetzt; Lesen der Wochenzeitprogramme gehört nun zu v0.8 |
-| 0.10 | Heizungszeitprogramme in Home Assistant bearbeiten, dauerhaft speichern, validieren und zurücklesen | Geplant; unverändert. Lesen der Wochenzeitprogramme gehört nun zu v0.8 |
+| **0.xx** | **Alle Wochenprogramme für Heizung, Warmwasser und Lüftung lesen, in Home Assistant bearbeiten und dauerhaft in die LWZ schreiben; validieren und zurücklesen** | Geplant; Versionsnummer noch offen. Am 13.11.2026 aus den bisherigen v0.8/v0.9/v0.10 und dem vorgemerkten Lüftungszeitprogramm zusammengeführt |
+
+Die bisherigen Einzelvorhaben für Wochenprogramme in v0.8, v0.9 und v0.10 entfallen als getrennte Versionsziele. Ihre Inhalte gehören vollständig zu v0.xx; die frei gewordenen Nummern sind vorerst nicht neu belegt.
 
 ## v0.4 – Wohnraumlüftung, Geräteauswahl und sControl (lokal umgesetzt)
 
@@ -33,7 +42,7 @@ Stand: **08.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen
 
 Die bisherigen Vorhaben für Lüftungssteuerung und Lüftungsdiagnose bilden eine gemeinsame Version. Die verbleibenden Punkte sind ohne doppelte Versionsnummern neu geordnet. Am 08.11.2026 wurde die bisherige v0.9 als neue v0.6 vorgezogen; die bisherigen v0.6 bis v0.8 wurden jeweils um eine Version verschoben. Die Leseansicht aller P-Parameter gehört damit zu v0.7.
 
-- **Bedienung:** Nur die festen Lüfterstufen Tag/Nacht (P07/P08) dauerhaft ändern, mit gezieltem Schreiben und Rücklesen. Laut aktuellem Nutzerkenntnisstand ist zeitlich begrenzte Übersteuerung über FHEM nicht möglich; sie wird für v0.4 nicht vorgesehen. Aktuelle Stufe zur Diagnose aus der LWZ ermitteln. Lüftungszeitprogramme in v0.4 nicht bearbeiten; für später ohne feste Zielversion vormerken.
+- **Bedienung:** Nur die festen Lüfterstufen Tag/Nacht (P07/P08) dauerhaft ändern, mit gezieltem Schreiben und Rücklesen. Laut aktuellem Nutzerkenntnisstand ist zeitlich begrenzte Übersteuerung über FHEM nicht möglich; sie wird für v0.4 nicht vorgesehen. Aktuelle Stufe zur Diagnose aus der LWZ ermitteln. Lüftungszeitprogramme gehören zur geplanten v0.xx.
 - **Analyse:** Zuluft- und Abluftventilator getrennt bewerten. Die bereits in v0.3 enthaltenen Ist-/Soll-Drehzahlwerte sowie OUT063/OUT064 (Speed200) als Datengrundlage verwenden; Einheit, Kalibrierbedeutung und Decoderzuordnung zunächst am Gerät verifizieren.
 - **Zustandsbewertung in ESPHome:** F5 lokal erkennen, wenn die gültige Abluft-Istdrehzahl bei tatsächlich wirksamer Lüfterstufe > 0 ununterbrochen 120 Sekunden null ist; F6 entsprechend für Zuluft. Beide Lüfter unabhängig überwachen. Datenlücken ergeben „Unbekannt“. Die Zwei-Minuten-Regel ersetzt für diese Fehlererkennung die bisher allgemein geplanten Mindestdrehzahlgrenzen. Details und Abnahmefälle: [Lüfterdiagnose v0.4](docs/LUEFTERDIAGNOSE-v0.4.md).
 - **Zeitprogramme:** Tag/Nacht und zeitweise Übersteuerungen der Wärmepumpe bei der tatsächlich wirksamen Lüfterstufe berücksichtigen. Aktuellen LWZ-Programmzustand bevorzugen; keine unabhängige HA-Zeitsteuerung zur Fehlerentscheidung. Uhrumstellungen dürfen den monoton gemessenen 120-Sekunden-Zeitraum nicht beeinflussen.
@@ -61,12 +70,48 @@ Festgelegt am 08.11.2026: Profile werden dauerhaft in ESPHome gespeichert. Aussc
 
 ## v0.6 – Betriebsdaten und Überwachung
 
-Am 08.11.2026 von der bisherigen v0.9 vorgezogen. Noch nicht umgesetzt.
+**Festlegung 13.11.2026 - Betriebsstunden:** Kühlungsstunden (`coolingHours`) bei der LWZ303 nicht anzeigen und nicht für spätere Versionen einplanen; laut Nutzer ist diese Funktion an der LWZ303 nicht verfügbar. In beiden Hauptkonfigurationen ist die Entität bereits nicht enthalten. Die allgemeine FHEM-Decoderreferenz bleibt unverändert.
+
+**Verbindliche Zählerdefinition gemäß FHEM:** Für die 2.x-Decoder das Layout `sHistory` / `09his206` verwenden. Alle vier Werte als vorzeichenlose 16-Bit-Zahlen (Big Endian) ohne Skalierung in ganzen Stunden anzeigen. Die Definition ist damit festgelegt; zusätzliche Aggregatzuordnungen sind dafür nicht erforderlich.
+
+| FHEM-Feld | ESPHome-Schlüssel | Anzeige | Nutzdatenbytes |
+|---|---|---|---|
+| `operatingHours1` | `operating_hours_1` | Betriebsstunden-Zähler 1 | 0–1 |
+| `operatingHours2` | `operating_hours_2` | Betriebsstunden-Zähler 2 | 2–3 |
+| `heatingHours` | `heating_hours` | Heizungsstunden | 4–5 |
+| `DHWhours` | `dhw_hours` | Warmwasserstunden | 6–7 |
+
+Quelle: [FHEM-Referenz, 09his206](docs/references/fhem/00_THZ.pm). Zähler 1/2 wie in FHEM neutral benennen; keine Umdeutung zu Verdichterstarts oder Heizstabstunden. `coolingHours` bleibt ausgeschlossen. Das abweichende Layout `09his` anderer Firmwarefamilien wird nicht auf diese Zähler übertragen.
+
+**Festlegung 10.11.2026 – Temperaturmesspunkte:** Die beobachteten Unterschiede zwischen ECHOII und internen WP-Temperaturen werden entsprechend Nutzerfestlegung auf die unterschiedlichen Messpunkte von Vorlauf und Rücklauf zurückgeführt. Die bestehende Decoderzuordnung bleibt erhalten. Eine zeitweise negative WP-Spreizung allein wird nicht als Fehler bewertet und löst weder eine automatische Vertauschung noch eine Korrektur aus.
+
+Am 08.11.2026 von der bisherigen v0.9 vorgezogen. Der belegte und festgelegte Umfang ist lokal als v0.6.0 umgesetzt; siehe [Bedienung und Grenzen](docs/BETRIEBSDATEN-v0.6.md). Zusätzliche Quellen und nicht definierte Grenzwertprüfungen bleiben für spätere 0.6.x offen.
+
+**Abgrenzung 13.11.2026:** Die Verdichterstatistik mit Kalenderzählern, Trends, Bewertung, Dashboard und Benachrichtigungen gehört zur eigenständigen HA-Version 0.1.0 und nicht zur ESPHome-v0.6. Hier verbleiben die Bereitstellung belegter Gerätewerte und die gerätenahe Plausibilitätsüberwachung.
 
 - Zusätzliche Verdichterstarts und -laufzeiten sowie Zusatzheizungsstunden erfassen, soweit die betreffenden Quellen und Bedeutungen belegt sind. Vorhandene sHistory-Zähler wiederverwenden; unterschiedliche Zähler nicht ohne Nachweis gleichsetzen.
 - Sensorwerte auf Plausibilität prüfen und erkannte Auffälligkeiten mit Zeitpunkten sichtbar machen. Fehlende, veraltete und tatsächlich auffällige Werte unterscheiden.
 - Keine unbelegten Verdichterstarts aus Kommunikationsunterbrechungen, Abfrageausfällen oder unbekannten Zuständen ableiten. Bereits umgesetzte Datenalterung und F5/F6-Diagnose berücksichtigen.
 - Konkrete zusätzliche Datenfelder und Bewertungsgrenzen vor der Umsetzung quellenbasiert festlegen.
+
+### Folgeumfang für spätere v0.6.x
+
+- **Zusätzliche Quellen:** Belegte Quellen für einen echten Verdichterstartzähler und Zusatzheizungsstunden bestimmen; nicht verfügbare Werte aus dem Umfang streichen, keine Ersatzwerte erfinden.
+- **Verdichter-Betriebszweck (in 0.6.0 vorläufig umgesetzt; Gerätebestätigung offen):** Zusätzlich zum Verdichter-Ein/Aus-Status den aktuellen Zweck Heizung, Warmwasser, Abtauen oder nicht eindeutig zuordenbar bereitstellen. FHEM `F2ctrl.heatRequest` nennt 0=Warmwasser, 2=Heizung, 5=aus und 6=Verdampfer-Abtauen; `heatRequest2` ist laut Kommentar gleichartig. Beide Rohcodes werden in v0.6.0 veröffentlicht; frische Quellen und übereinstimmende Codes sind für eine Zuordnung erforderlich. Zuordnung und Umschaltverhalten auf FW 2.16 vor Verwendung prüfen. F2-Anforderungsstufen und Pumpenstatus ergänzend betrachten, jedoch nicht als Nachweis gleichzeitiger Wärmelieferung verwenden. Bei gleichzeitigem Heizungs-/Warmwasserbedarf dies getrennt als Anforderung ausweisen; Betriebszweck „beides“ nur nach belastbarem Nachweis vorsehen. Aus Anforderung allein keinen laufenden Verdichter ableiten. Startzählung und Laufzeitauswertung nach Zweck gehören zu HA 0.1.0; ein Zweckwechsel bei durchlaufendem Verdichter ist kein zusätzlicher Start.
+- **Prüfumfang:** Festlegen, welche Sensoren auf Wertebereich, Sprünge, auffällig konstante Werte und welche Statuskombinationen auf Widersprüche geprüft werden. Zählerrücksetzung und Überlauf gesondert berücksichtigen.
+- **Grenzen und Zeiten:** Zulässige Bereiche, Änderungsraten, Mindestdauer, Rückkehr zum Normalzustand und betriebsabhängige Ausnahmen pro Prüfung festlegen. Negative WP-Spreizung allein bleibt ausdrücklich ausgenommen.
+- **Datenqualität und Anzeige:** Letzte gültige Werte bei LWZ-Kommunikationsproblemen erhalten. In v0.6.0 sind Alter/Gültigkeit je Block umgesetzt. Zusätzliche Plausibilitätsereignisse einschließlich Zeitpunkt noch konkretisieren; HA kann gehaltene Zustände anhand der neuen Frische-Binärsensoren unterscheiden.
+- **Abfrage und Abnahme:** Abfrageintervalle, Umgang mit Datenlücken und konkrete Geräteprüfungen festlegen. Bestehende F5/F6-Diagnose sowie geprüfte Schreibwege müssen erhalten bleiben.
+
+### Versionsführung ab v0.6
+
+**Festlegung 13.11.2026:** Die erste fertige Ausgabe erhält **0.6.0**. Nachfolgende Änderungen werden als **0.6.1, 0.6.2 usw.** getrennt nachvollziehbar geführt; eine bereits ausgelieferte Version wird nicht unter gleicher Nummer verändert.
+
+- Für jede Unterversion einen eigenen Eintrag in CHANGELOG.md mit Datum, Änderungen, Korrekturen, Prüfstand und verbleibenden Einschränkungen führen.
+- Versionsnummern in ESPHome-Projektangaben, Komponenten-Startmeldung, Paketnamen und zugehöriger Dokumentation übereinstimmend aktualisieren.
+- Bei Veröffentlichung jeder Unterversion einen eigenen Git-Tag und ein eindeutig zugeordnetes Paket bereitstellen; ältere Ausgaben erhalten. Quellstand und zugehörige Tests über den Commit nachvollziehbar machen.
+- Noch nicht ausgelieferte Änderungen bis zur Fertigstellung als unveröffentlicht kennzeichnen. Die Planung allein erzeugt keine fertige 0.6.0 und keine Veröffentlichung.
+- HA 0.1.x wird unabhängig von ESPHome 0.6.x versioniert.
 
 ## v0.7 – Programmierte Parameter
 
@@ -77,6 +122,17 @@ Nutzerfestlegung vom 07.11.2026: **Alle P-Werte auslesen und in einem eigenen Be
 - Einen eigenen Bedienbereich für die programmierten Parameter vorsehen. Vorhandene Lesequellen wiederverwenden; gleiche Werte nicht durch doppelte Abfragen oder doppelte Entitäten vervielfachen.
 - Gespeicherten Sollwert und aktuell wirksamen Sollwert eindeutig unterscheiden. Datenalterung und Aktualisierung der Konfigurationswerte sichtbar berücksichtigen.
 - Leseumfang, Register und Skalierung anhand Herstellerunterlagen, FHEM-Decoder und Geräteprüfung vervollständigen. Zusätzliche Schreibfreigaben sind mit dieser Festlegung nicht beauftragt; bereits vorhandene oder separat geplante Schreibfunktionen bleiben ihrem jeweiligen Versionsumfang zugeordnet.
+
+## v0.xx - Alle Wochenprogramme lesen und schreiben
+
+**Festlegung 13.11.2026:** Wochenprogramme für **Heizung, Warmwasser und Lüftung** in einer gemeinsamen neuen Version bündeln. `0.xx` ist ein Platzhalter; die genaue Versionsnummer und der Umsetzungstermin bleiben offen. Noch nicht umgesetzt.
+
+- **Lesen:** Alle am gewählten Modell und Decoder belegten Wochenprogramme mit Wochentagen und Zeitfenstern aus der LWZ lesen und anzeigen. Vorhandene Tagesgruppen und mehrere Zeitfenster entsprechend dem tatsächlichen Geräteformat berücksichtigen.
+- **Bearbeiten:** Wochenprogramme in Home Assistant bearbeiten; Entwurf und tatsächlich aus der LWZ gelesenen Stand getrennt anzeigen. Änderungen erst durch ausdrückliches manuelles Anwenden übertragen.
+- **Schreiben:** Geänderte Wochenprogramme mit Schreibfreigabe dauerhaft in der LWZ speichern. Vorher frisch lesen, nur die gewünschten Programmfelder ändern und andere Inhalte erhalten. Anschließend unabhängig zurücklesen und erst bei Übereinstimmung Erfolg melden; keine blinde Wiederholung bei unklarem Schreibausgang.
+- **Validierung:** Zulässige Tage, Anzahl der Zeitfenster, Zeitraster, deaktivierte Zeitfenster, Tageswechsel und Überschneidungsregeln anhand des belegten Geräteformats prüfen. Nicht belegte oder nicht unterstützte Programme kenntlich machen.
+- **Abnahme:** Lesen, manuelles Ändern und Rücklesen für alle drei Programmbereiche am Zielgerät prüfen, einschließlich Erhalt anderer Einstellungen, Verbindungsunterbrechungen und dauerhaftem Erhalt der Programme.
+- **Einordnung:** Bisherige Planung v0.8 (Lesen), v0.9 (Warmwasser schreiben), v0.10 (Heizung schreiben) sowie das vorgemerkte Lüftungszeitprogramm sind hier zusammengeführt. Die bestehende LWZ-Zeitsteuerung führt die gespeicherten Programme aus.
 
 ## Modellabhängige Zuordnung P21 bis P25
 
@@ -111,7 +167,7 @@ Die folgende Stufenzuordnung wurde laut Nutzerangabe vom **07.11.2026** der **�
 - Die **47 optionalen Entitäten** sind mit eingebaut, in Home Assistant zunächst deaktiviert und dort ohne Firmwareupdate aktivierbar. Das Geräteweb hat Basis- und Expert-Gruppen; ein eigener Schalter zum Ausblenden der Webgruppe ist nicht umgesetzt.
 - **Doppelte Werte nur einmal veröffentlichen:** gemeinsame Temperaturen und Aktorzustände stammen aus sGlobal. sHC1 überschreibt sie nicht zusätzlich. Unterschiedliche Raumtemperaturquellen und aktive gegenüber gespeicherten Sollwerten bleiben getrennt.
 - Globales Decoderprofil und HK1-Layout unabhängig wählen. Standard: Global **2.14j**, HK1 **2.06**. Fehlende layoutabhängige Werte bleiben unbekannt; keine pauschale Freigabe eines Profils für Geräte-Firmware 2.16.
-- Fehlende bzw. veraltete Daten blockweise ungültig setzen, statt ältere Werte oder erfundene Nullwerte weiterzuverwenden.
+- Datenfrische blockweise intern bewerten. Gemäß Festlegung vom 13.11.2026 bei veralteten Daten den letzten gültigen Anzeigewert behalten und die Datenqualität separat markieren; keine erfundenen Nullwerte. Die Veröffentlichung wurde in v0.6.0 entsprechend angepasst.
 - Ausgewählte sFan-Ist- und Soll-Drehzahlwerte optional bereitstellen. Decoderzuordnung und physikalische Plausibilität bleiben zu prüfen.
 - **OUT063 / OUT064:** In v0.3 zunächst als Ja integriert; auf neue Nutzerfestlegung in v0.4 **Optional**, in HA standardmäßig deaktiviert und im Web der Expert-Gruppe zugeordnet. `sFan.supplyFanSpeed200` und `sFan.exhaustFanSpeed200` bleiben für die Wohnraumlüftungsanalyse verfügbar. FHEM-Skalierung unsigned 16 Bit Big Endian /10, eine Nachkommastelle. Physikalische Einheit und Bedeutung des Kalibrierpunkts sind noch nicht bestätigt; keine Umdeutung in U/min oder 1/s. Die F5-/F6-Quelle bleibt unverändert.
 - Vorhandene sHistory-Zähler unter ihren belegten Feldnamen lesen; ungesicherte Aggregatzuordnungen nicht ergänzen.
@@ -136,6 +192,31 @@ Die folgende Stufenzuordnung wurde laut Nutzerangabe vom **07.11.2026** der **�
 
 Prüfstand und Grenzen: [Softwarevalidierung v0.3](docs/VALIDATION-v0.3.md). Erfolgreiche Softwaretests sind kein abgeschlossener Hardwaretest.
 
+## Eigenständige Home-Assistant-Versionen
+
+Die HA-Verdichterstatistik erhält eine eigene Versionsfolge, unabhängig von den ESPHome-Versionen 0.x. Eine HA-Veröffentlichung erfordert keine gleichzeitige neue ESPHome-Version. Bestehende gültige Entitäten werden als Datenquellen verwendet; zusätzlich benötigte Firmwarewerte werden bei Bedarf separat geplant.
+
+| HA-Version | Inhalt | Status |
+|---|---|---|
+| **HA 0.1.0** | **Verdichterstatistik: Kalenderzähler, Tagesauswertung, Takt-/Pausenlängen, Trends, einstellbare Bewertung, Dashboard und Benachrichtigungen** | Geplant; noch nicht umgesetzt |
+
+### HA 0.1.0 - Verdichterstatistik und Auswertung
+
+**Umfang HA 0.1.0:** Die Kalenderzähler für Verdichterstarts und Verdichterlaufzeit werden in HA umgesetzt: heute, gestern sowie Wochen-, Monats- und Jahreszähler. ESPHome stellt die belegten LWZ-Grundwerte und den gültigen Verdichterstatus bereit; Kalenderwechsel, Speicherung der Periodenwerte und deren Anzeige gehören zur HA-Lösung. Keine Tages-, Wochen-, Monats- oder Jahreszähler in ESPHome einbauen. Datenlücken und unbekannte Zustände dürfen keine erfundenen Starts oder Laufzeiten erzeugen. Die konkrete HA-Konfiguration ist noch zu erstellen.
+
+**Geplante HA-Auswertungen (13.11.2026):**
+
+- Je Kalendertag Starts, Verdichterlaufzeit und Laufzeitanteil auswerten; vollständige Taktlaufzeiten gesondert mit Mittelwert, Median und kürzestem Takt erfassen. Über Mitternacht laufende Takte korrekt berücksichtigen; Tageslaufzeit geteilt durch Tagesstarts ist dann keine exakte mittlere Taktlänge.
+- Änderung und Tendenz anzeigen: Vergleich mit dem Vortag sowie gleitenden 7- und 28-Tage-Referenzen. Laufenden Tag nur bis zur gleichen Uhrzeit vergleichen; absolute und prozentuale Änderung zeigen, bei Referenz null keine Prozentzahl berechnen.
+- Bewertungsgrenzen für unauffällig, beobachten und auffällig konfigurierbar planen. Herstellergrenzen nur mit Nachweis für die LWZ303 übernehmen; anlagenbezogene Trends getrennt von technischen Grenzwerten bewerten. Konkrete Zahlen und Mindestdatenbasis bleiben vor der Umsetzung festzulegen.
+- HA-Benachrichtigung bei anhaltendem starkem Anstieg der Starts, wiederholt kurzen Takten oder auffällig zunehmender Laufzeit planen. Vergleichbare Außentemperaturen und Betriebsarten berücksichtigen. Mindestabweichung, Beobachtungsdauer, Wiederholsperre und Entwarnung vorsehen; Datenlücken nicht als Anlagenstörung melden. Noch keine Benachrichtigungsautomation erstellt.
+- Zusätzlich sinnvoll: Verteilung der Takt- und Pausenlängen, Starts pro beobachteter Stunde, Zusatzheizungsanteil und Trennung Heizen/Warmwasser/Abtauen, jeweils nur mit belastbaren Quellen. Ein Wechsel der Betriebsart bei weiterlaufendem Verdichter zählt nicht als Start.
+- Datenabdeckung und Auswertungsbeginn sichtbar machen; unvollständige Tage und durch Lücken abgeschnittene Takte kennzeichnen und nicht ungeprüft bewerten. Änderungen an Heizkurvenprofilen für Vorher-/Nachher-Vergleiche markieren. Energieeffizienz bleibt in der separaten HA-Lösung.
+
+- **Lieferumfang:** Separates HA-Paket mit Sensoren, Helfern und Automationen, dazu Dashboard und Einrichtungsanleitung; eigene Versionskennzeichnung und Änderungsverlauf.
+- **Datenquellen und Grenzen:** Vorhandenen Verdichterstatus und belegte Gerätewerte verwenden. Ohne belegten LWZ-Startzähler sind die Starts nur während gültiger HA-Beobachtung erfassbar; HA-Ausfälle und Kommunikationslücken sichtbar kennzeichnen. Keine ESPHome-Erweiterung für lokale Kalenderzähler vorsehen.
+- **Abnahme:** Bestätigte Aus-/Ein-Wechsel, Neustarts, Datenlücken, Takte über Mitternacht, Kalenderwechsel, Speicherung, Trendberechnung und Benachrichtigungen prüfen. Entitätszuordnung, Meldeziel und konkrete Bewertungsgrenzen vor der Umsetzung festlegen.
+
 ## Übergreifende Anforderungen
 
 - Geräte-Firmware und Decoderlayout getrennt dokumentieren; keine erfundenen Register, P-Nummern, Einheiten oder Grenzwerte.
@@ -144,6 +225,6 @@ Prüfstand und Grenzen: [Softwarevalidierung v0.3](docs/VALIDATION-v0.3.md). Erf
 - Eindeutige Entitäten und Hauptquellen; keine zusätzlichen Ausgaben allein aufgrund mehrfacher Datenblöcke.
 - Keine automatische Heizungs-/Warmwasserregelung durch die neuen manuellen Schreibfunktionen.
 - Wärmepumpenneustart zur Fehlerbehebung wird durch HA gesteuert, nicht selbständig durch ESPHome. ESPHome-Fehlerstatus nach bestätigtem Neustart bzw. ausdrücklicher Rücksetzung aus der HA-Automation zurücksetzen; bestehende Neustart-/Fingerbot-Lösung bleibt bei HA.
-- Lüftungszeitprogramme später bearbeiten können; aus v0.4 herausgenommen, Zielversion noch offen.
+- Alle Wochenprogramme für Heizung, Warmwasser und Lüftung gemeinsam in v0.xx lesen und schreiben; aus den bisherigen Einzelplanungen zusammengeführt, konkrete Versionsnummer noch offen.
 - Echo II bleibt eine unabhängige Option für eine spätere Version.
 - Energieeffizienz bleibt in der separaten Home-Assistant-Lösung außerhalb dieser Integration.

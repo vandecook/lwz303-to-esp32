@@ -83,10 +83,11 @@ void v03_tests() {
   f4.resize(39);decoder.parse_frame_(0xF4,frame(0xF4,f4));assert(std::isnan(inside_f4.state));
   decoder.parse_frame_(0xFC,frame(0xFC,{0,4,12,15,16,26,0,11,6}));assert(weekday.state=="Friday");
   // Independent block expiry even while FB remains healthy.
+  decoder.parse_frame_(0xF3,frame(0xF3,f3)); // Repopulate after explicit decoder changes.
   
   std::vector<uint8_t> e8(22); e8[11]=36;decoder.parse_frame_(0xE8,frame(0xE8,e8));assert(fan_speed.state==36);
   fake_millis+=91001;decoder.v03_stale_();
-  assert(std::isnan(dhw_target.state) && mode.state=="unavailable" && std::isnan(fan_speed.state));
+  assert(dhw_target.state==47 && mode.state=="unknown(9)" && fan_speed.state==36);
   // Four targeted writes: preserve every other byte, wait for independent readback, no optimistic success.
   for (unsigned index=0;index<4;index++) {
     V03 t;text_sensor::TextSensor status;t.set_write_status_text_sensor(&status);t.setup();

@@ -10,7 +10,7 @@ namespace esphome::lwz2 {
 static const char *const TAG = "lwz2";
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.5.0 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.6.0 (device FW independent of decoder profile)");
   this->frame_.reserve(128);
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05}) {
     invalidate_block_(command);
@@ -33,6 +33,7 @@ void LWZ2Component::setup() {
     this->communication_status_text_sensor_->publish_state("starting");
   if (this->last_error_text_sensor_ != nullptr)
     this->last_error_text_sensor_->publish_state("none");
+  v06_publish_();
 }
 
 void LWZ2Component::dump_config() {
@@ -101,6 +102,7 @@ void LWZ2Component::set_firmware(const std::string &fw) {
     this->firmware_version_text_sensor_->publish_state("warte auf Abfrage");
   if (this->communication_status_text_sensor_ != nullptr)
     this->communication_status_text_sensor_->publish_state("starting");
+  v06_publish_();
 }
 
 void LWZ2Component::loop() {
@@ -124,6 +126,7 @@ void LWZ2Component::loop() {
     this->publish_diagnostics_();
     this->v04_tick_();
     this->profiles_tick_();
+    this->v06_publish_();
   }
 }
 
@@ -475,14 +478,19 @@ void LWZ2Component::reinitialize() {
   this->startup_ms_ = millis();
   this->last_fb_success_ms_ = 0;
   this->compressor_ = this->heating_ = this->dhw_ = false;
-  this->publish_stale_numeric_states_();
+  // Reinitialization clears evidence, not the last displayed measurements.
+  for (unsigned c = 0; c < 256; c++) {
+    block_seen_[c] = false;
+    block_stale_[c] = true;
+  }
+  v04_invalidate_(false);
   this->stale_published_ = false;
   if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
   if (this->communication_status_text_sensor_) this->communication_status_text_sensor_->publish_state("reinitializing");
   this->reset_schedule_();
-  invalidate_block_(0x05);
   this->refresh_config();
   this->firmware_pending_ = true;
+  v06_publish_();
   ESP_LOGI(TAG, "RS232 protocol reinitialized");
 }
 
@@ -597,6 +605,7 @@ void LWZ2Component::parse_frame_(uint8_t command, const std::vector<uint8_t> &fr
   const uint8_t *data = frame.data() + 4;
   const size_t len = frame.size() - 4;
   block_success_[command] = millis();
+  block_seen_[command] = true;
   block_stale_[command] = false;
   parse_selected_(command, data, len);
   v04_parse_(command, data, len);
@@ -636,6 +645,7 @@ void LWZ2Component::parse_frame_(uint8_t command, const std::vector<uint8_t> &fr
   else if (command == 0xE8) this->parse_e8_(data, len);
   else if (command == 0x01) this->parse_01_(data, len);
   else if (command == 0x09) this->parse_09_(data, len);
+  v06_publish_();
 }
 
 void LWZ2Component::parse_fb_(const uint8_t *d, size_t len) {
@@ -760,7 +770,7 @@ void LWZ2Component::update_communication_state_() {
         this->communication_ok_binary_sensor_->publish_state(false);
       if (this->communication_status_text_sensor_ != nullptr)
         this->communication_status_text_sensor_->publish_state("disconnected");
-      this->publish_stale_numeric_states_();
+      // Keep displayed values; freshness is exposed independently.
     }
   }
 }
@@ -789,6 +799,73 @@ void LWZ2Component::publish_stale_numeric_states_() {
   INVALIDATE_NUMERIC(supply_fan_speed_target);
   INVALIDATE_NUMERIC(exhaust_fan_speed_target);
 #undef INVALIDATE_NUMERIC
+}
+
+uint32_t LWZ2Component::block_max_age_(uint8_t command) const {
+  const uint32_t interval = command == 5 ? config_interval_ms_ : command == 9 ? history_interval_ms_ :
+      command == 0x17 ? 60000 : command == 0xF4 ? heating_interval_ms_ :
+      command == 0xE8 ? fan_interval_ms_ :
+      (command == 0xFB || command == 0xF3) ? effective_interval() : 30000;
+  if (command == 0xF2 || command == 0xF6) return diagnostic_max_age_ms_;
+  return std::max(stale_after_ms_, interval * 3);
+}
+
+bool LWZ2Component::block_fresh_(uint8_t command) const {
+  return block_seen_[command] && !block_stale_[command] &&
+      millis() - block_success_[command] <= block_max_age_(command);
+}
+
+void LWZ2Component::v06_publish_() {
+  const uint32_t now = millis();
+  auto binary = [&](const char *key, bool value) {
+    auto it = v04_binary_.find(key);
+    if (it != v04_binary_.end()) it->second->publish_state(value);
+  };
+  std::string quality;
+  for (uint8_t c : {0xFB, 0xF3, 0xF4, 0xE8, 0x09, 0xEE, 0xFC, 0x17, 0x05, 0xF2, 0xF6}) {
+    char code[4]; std::snprintf(code, sizeof(code), "%02X", c);
+    if (!quality.empty()) quality += "; ";
+    quality += code;
+    quality += "=";
+    quality += !block_seen_[c] ? "fehlt" : block_fresh_(c) ? "frisch/" : "veraltet/";
+    if (block_seen_[c]) quality += std::to_string((now - block_success_[c]) / 1000) + "s";
+    binary((std::string("block_") + code + "_fresh").c_str(), block_fresh_(c));
+  }
+  v04_publish_text_("data_quality", quality);
+  // Require a recent FB observation as well as F2. Held compressor state is display-only.
+  const bool live = block_fresh_(0xFB) && now - block_success_[0xFB] <= diagnostic_max_age_ms_;
+  const bool control = block_fresh_(0xF2);
+  std::string status = !live ? "Verdichterstatus fehlt/veraltet" :
+      !control ? "F2 fehlt/veraltet" : "frisch; FHEM-Zuordnung vorlaeufig";
+  bool classified = false;
+  if (live && !compressor_) {
+    v04_publish_text_("compressor_purpose", "Aus");
+    status = "frischer Verdichterstatus";
+    classified = true;
+  } else if (live && control) {
+    std::string purpose = "Nicht eindeutig zuordenbar";
+    // Two matching request bytes avoid attributing a transitional/contradictory snapshot.
+    if (heat_request_ == heat_request2_) {
+      if (heat_request_ == 0) { purpose = "Warmwasser (vorlaeufig)"; classified = true; }
+      else if (heat_request_ == 2) { purpose = "Heizung (vorlaeufig)"; classified = true; }
+      else if (heat_request_ == 6) { purpose = "Abtauen (vorlaeufig)"; classified = true; }
+    }
+    v04_publish_text_("compressor_purpose", purpose);
+    if (!classified) status = "frisch; Anforderung unbekannt oder widerspruechlich";
+  }
+  binary("compressor_purpose_valid", classified);
+  v04_publish_text_("compressor_purpose_data_status", status);
+  if (control) {
+    // Stage interpretation is only supported for SOL, and describes requests, not heat delivery.
+    std::string demand = "Nicht zugeordnet (Modell unbekannt/i)";
+    if (device_model_ == "SOL") {
+      const bool known = requested_hc_ >= 0 && requested_hc_ <= 5 && requested_dhw_ >= 0 && requested_dhw_ <= 3;
+      demand = !known ? "Unbekannte Anforderungscodes" :
+          requested_hc_ > 0 && requested_dhw_ > 0 ? "Heizung und Warmwasser angefordert" :
+          requested_hc_ > 0 ? "Nur Heizung angefordert" : requested_dhw_ > 0 ? "Nur Warmwasser angefordert" : "Keine Anforderung";
+    }
+    v04_publish_text_("simultaneous_demand", demand);
+  }
 }
 
 int16_t LWZ2Component::be16s_(const uint8_t *p) {

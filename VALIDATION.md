@@ -1,3 +1,7 @@
+# Validierung v0.6.0
+
+Aktueller Bericht: [Softwarevalidierung v0.6](docs/VALIDATION-v0.6.md). Die folgenden Berichte sind historische Prüfstände.
+
 # Validierung v0.5.0
 
 Aktueller Bericht: [Softwarevalidierung v0.5](docs/VALIDATION-v0.5.md). Die folgenden Berichte dokumentieren historische Versionen.

@@ -757,7 +757,8 @@
       "legacy": false,
       "unit": "",
       "block": "sHC1",
-      "field": "hcBoosterStage"
+      "field": "hcBoosterStage",
+      "accuracy_decimals": 0
     },
     {
       "choice": "ja",
@@ -1480,13 +1481,13 @@
       "note": "Spätes F4-Feld fehlt im 2.14j-Auszug; Antwortlänge prüfen. Nicht mit 0 ersetzen."
     },
     {
-      "choice": "Später",
+      "choice": "Nein",
       "id": "OUT096",
       "name": "Kühlungsstunden laut Feldname [h (Feldname)]",
       "source": "sHistory.coolingHours",
       "function": "Lesen",
-      "category": "Zurückstellen – Verifikation offen",
-      "note": "Kühlungsstunden bisher 0; tatsächliche Kühlfunktion/Zählerverwendung nicht bestätigt."
+      "category": "Nicht anzeigen - LWZ303 nicht verfügbar",
+      "note": "Nutzerfestlegung 13.11.2026: Kühlfunktion in der LWZ303 nicht verfügbar. Kühlungsstunden nicht anzeigen und nicht für eine spätere LWZ303-Version vorsehen."
     }
   ],
   "selection_overrides": [

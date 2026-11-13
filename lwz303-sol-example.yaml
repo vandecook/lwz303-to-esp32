@@ -7,7 +7,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.5.0"
+    version: "0.6.0"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -323,6 +323,7 @@ lwz2:
       sorting_group_id: lwz_expert
   s_h_c1_hc_booster_stage:
     name: "HK1 Zusatzheizungsstufe"
+    accuracy_decimals: 0
     web_server:
       sorting_group_id: lwz_expert
     entity_category: diagnostic
@@ -347,12 +348,12 @@ lwz2:
     web_server:
       sorting_group_id: lwz_expert
   heating_hours:
-    name: "Heizungsstunden laut Feldname"
+    name: "Heizungsstunden"
     disabled_by_default: true
     web_server:
       sorting_group_id: lwz_expert
   dhw_hours:
-    name: "Warmwasserstunden laut Feldname"
+    name: "Warmwasserstunden"
     disabled_by_default: true
     web_server:
       sorting_group_id: lwz_expert
@@ -494,7 +495,7 @@ lwz2:
     web_server:
       sorting_group_id: lwz_expert
   profile_selected:
-    name: "Profil gespeichert / Editorstatus"
+    name: "Gespeichertes Profil und Editorstatus"
     web_server:
       sorting_group_id: lwz_profiles
   profile_recognized:
@@ -529,6 +530,42 @@ lwz2:
     entity_category: config
     web_server:
       sorting_group_id: lwz_expert
+  data_quality:
+    name: "Datenqualitaet je Statusblock"
+  compressor_purpose:
+    name: "Verdichter Betriebszweck vorlaeufig"
+  compressor_purpose_data_status:
+    name: "Verdichter Betriebszweck Datenstatus"
+  compressor_purpose_valid:
+    name: "Verdichter Betriebszweck gueltig"
+  simultaneous_demand:
+    name: "Gleichzeitiger Bedarf laut F2"
+  heat_request:
+    name: "Betriebsanforderung F2 Rohcode"
+  heat_request2:
+    name: "Betriebsanforderung F2 Vergleichscode"
+  block_FB_fresh:
+    name: "Datenblock FB frisch"
+  block_F3_fresh:
+    name: "Datenblock F3 frisch"
+  block_F4_fresh:
+    name: "Datenblock F4 frisch"
+  block_E8_fresh:
+    name: "Datenblock E8 frisch"
+  block_09_fresh:
+    name: "Datenblock 09 frisch"
+  block_EE_fresh:
+    name: "Datenblock EE frisch"
+  block_FC_fresh:
+    name: "Datenblock FC frisch"
+  block_17_fresh:
+    name: "Datenblock 17 frisch"
+  block_05_fresh:
+    name: "Datenblock 05 frisch"
+  block_F2_fresh:
+    name: "Datenblock F2 frisch"
+  block_F6_fresh:
+    name: "Datenblock F6 frisch"
   communication_ok:
     name: "Kommunikation OK"
   communication_status:

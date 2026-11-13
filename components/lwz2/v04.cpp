@@ -54,13 +54,19 @@ void LWZ2Component::set_fan_speed_source(const std::string &v) {
   speed_seen_ = false;
   zero_pending_[0] = zero_pending_[1] = false;
 }
-void LWZ2Component::v04_invalidate_() {
-  profile_read_seen_ = false;
-  fan_stage_display_last_ = -1;
+void LWZ2Component::v04_invalidate_(bool clear_display) {
+  for (uint8_t c : {0xF2, 0xF6}) {
+    block_seen_[c] = false;
+    block_stale_[c] = true;
+  }
+  if (clear_display) profile_read_seen_ = false;
+  if (clear_display) fan_stage_display_last_ = -1;
   speed_seen_ = program_seen_ = settings_seen_ = override_seen_ = clock_seen_ = false;
   zero_pending_[0] = zero_pending_[1] = false;
-  for (const char *k : {"hc_stage", "dhw_stage", "current_fan_stage"}) v04_number_(k, NAN);
-  for (const char *k : {"hc_stage_text", "dhw_stage_text"}) v04_publish_text_(k, "unbekannt");
+  if (clear_display) {
+    for (const char *k : {"hc_stage", "dhw_stage", "current_fan_stage", "heat_request", "heat_request2"}) v04_number_(k, NAN);
+    for (const char *k : {"hc_stage_text", "dhw_stage_text", "compressor_purpose", "simultaneous_demand"}) v04_publish_text_(k, "unbekannt");
+  }
   // A decoder change/reconnect never clears a latched fault.
 }
 static bool v04_fresh(bool seen, uint32_t at, uint32_t max_age) {
@@ -104,6 +110,12 @@ int LWZ2Component::current_fan_stage_() const {
 void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
   const uint32_t now = millis();
   if (cmd == 0xF2) {
+    heat_request_ = len >= 2 ? d[0] : -1;
+    heat_request2_ = len >= 2 ? d[1] : -1;
+    requested_hc_ = len >= 4 ? d[2] : -1;
+    requested_dhw_ = len >= 4 ? d[3] : -1;
+    v04_number_("heat_request", heat_request_ < 0 ? NAN : float(heat_request_));
+    v04_number_("heat_request2", heat_request2_ < 0 ? NAN : float(heat_request2_));
     for (unsigned i = 0; i < 2; i++) {
       const std::string key = i ? "dhw_stage" : "hc_stage";
       const int code = len > 3 ? d[2 + i] : -1;
@@ -217,10 +229,7 @@ void LWZ2Component::v04_tick_(bool speed_observation) {
     v04_publish_text_(key + "_data_status", state);
     v04_publish_text_(key + "_status", saved_.fans[i].active ? "Stoerung gespeichert" : state);
   }
-  if (block_stale_[0xF2] || now - block_success_[0xF2] > diagnostic_max_age_ms_) {
-    v04_number_("hc_stage", NAN); v04_number_("dhw_stage", NAN);
-    v04_publish_text_("hc_stage_text", "unbekannt"); v04_publish_text_("dhw_stage_text", "unbekannt");
-  }
+  // F2 display values are retained; v0.6 exposes freshness separately.
 }
 void LWZ2Component::reset_fan_faults() {
   const auto stamp = v04_fresh(clock_seen_, clock_ms_, diagnostic_max_age_ms_) ? clock_stamp_ : "unbekannt";

@@ -248,7 +248,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void v04_setup_();
   void v04_parse_(uint8_t command, const uint8_t *data, size_t len);
   void v04_tick_(bool speed_observation = false);
-  void v04_invalidate_();
+  void v04_invalidate_(bool clear_display = true);
   bool v04_save_();
   int current_fan_stage_() const;
   void v04_history_();
@@ -274,6 +274,11 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   uint32_t v03_due_[4]{0, 0, 0, 0};
   uint32_t block_success_[256]{};
   bool block_stale_[256]{};
+  bool block_seen_[256]{};
+  int heat_request_{-1}, heat_request2_{-1}, requested_hc_{-1}, requested_dhw_{-1};
+  void v06_publish_();
+  uint32_t block_max_age_(uint8_t command) const;
+  bool block_fresh_(uint8_t command) const;
   void parse_selected_(uint8_t command, const uint8_t *data, size_t len, bool invalidate = false);
   void v03_stale_();
   void invalidate_block_(uint8_t command);

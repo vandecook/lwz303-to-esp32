@@ -127,12 +127,15 @@ LWZProfileSelect = lwz2_ns.class_("LWZProfileSelect", select.Select)
 LWZProfileName = lwz2_ns.class_("LWZProfileName", text.Text)
 LWZProfileValueNumber = lwz2_ns.class_("LWZProfileValueNumber", number.Number)
 LWZClockModeSelect = lwz2_ns.class_("LWZClockModeSelect", select.Select)
-V04_SENSORS = ("hc_stage", "dhw_stage", "current_fan_stage", "exhaust_fault_count", "supply_fault_count")
+V04_SENSORS = ("hc_stage", "dhw_stage", "current_fan_stage", "exhaust_fault_count", "supply_fault_count", "heat_request", "heat_request2")
 V04_TEXT = ("hc_stage_text", "dhw_stage_text", "fan_stage_diagnostics", "exhaust_status", "supply_status",
             "exhaust_data_status", "supply_data_status", "exhaust_fault_begin", "exhaust_fault_end",
             "supply_fault_begin", "supply_fault_end", "fault_reset_reason", "persistence_status", "lwz_error_memory",
             "profile_selected", "profile_recognized", "profile_last_applied", "profile_action_status", "profile_data_status")
-V04_BINARY = ("exhaust_fault", "supply_fault")
+V06_TEXT = ("data_quality", "compressor_purpose", "compressor_purpose_data_status", "simultaneous_demand")
+V04_TEXT += V06_TEXT
+V06_BINARY = tuple(f"block_{cmd}_fresh" for cmd in ("FB", "F3", "F4", "E8", "09", "EE", "FC", "17", "05", "F2", "F6")) + ("compressor_purpose_valid",)
+V04_BINARY = ("exhaust_fault", "supply_fault") + V06_BINARY
 
 def selected_schema():
     result = {}
@@ -162,7 +165,7 @@ CONFIG_SCHEMA = (
             cv.Optional("diagnostic_max_age", default="30s"): cv.positive_time_period_milliseconds,
             **{cv.Optional(k): sensor.sensor_schema(accuracy_decimals=0, **({} if k in ("hc_stage", "dhw_stage") else {"entity_category": ENTITY_CATEGORY_DIAGNOSTIC})) for k in V04_SENSORS},
             **{cv.Optional(k): text_sensor.text_sensor_schema(**({} if k in ("hc_stage_text", "dhw_stage_text", "profile_recognized") else {"entity_category": ENTITY_CATEGORY_DIAGNOSTIC})) for k in V04_TEXT},
-            **{cv.Optional(k): binary_sensor.binary_sensor_schema(device_class="problem") for k in V04_BINARY},
+            **{cv.Optional(k): binary_sensor.binary_sensor_schema(**({"entity_category": ENTITY_CATEGORY_DIAGNOSTIC} if k in V06_BINARY else {"device_class": "problem"})) for k in V04_BINARY},
             cv.Optional("fan_stage_day"): number.number_schema(LWZFanStageNumber, entity_category="config"),
             cv.Optional("fan_stage_night"): number.number_schema(LWZFanStageNumber, entity_category="config"),
             cv.Optional("profile_slot"): select.select_schema(LWZProfileSelect, entity_category="config"),

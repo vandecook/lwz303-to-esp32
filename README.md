@@ -1,4 +1,4 @@
-# LWZ303 to ESP32 – v0.5.0
+# LWZ303 to ESP32 – v0.6.0
 
 ## Zweck des Projekts
 
@@ -9,7 +9,7 @@ Dieses Projekt dient der **Migration der bisherigen FHEM-Anbindung einer Stiebel
 - **Nur für Geräte-Firmware der Reihe 2.x.** Die Firmwareversion bezeichnet hier die Wärmepumpe, nicht ESPHome oder die Projektversion. Firmware 4.x und andere Reihen gehören nicht zum vorgesehenen Umfang.
 - Das eigene **Decoderprofil für Geräte-Firmware 2.16** basiert auf dem FHEM-Decoderlayout 2.06, praktischen Tests und plausiblen Ergebnissen aus den bisherigen Beobachtungen. Bekannte Ausnahmen werden ausdrücklich als nicht verfügbar behandelt. [Details zum Decoderprofil 2.16](docs/DECODER-FW2.16.md).
 - **Praktisch getestet wurde bisher ausschließlich mit einer LWZ 303 SOL mit Geräte-Firmware 2.16. Die Solarfunktion war dabei deaktiviert.** Die aktiven Solarfunktionen und andere Gerätemodelle sind damit nicht als getestet ausgewiesen.
-- Tests und Beobachtungen bestätigen jeweils die dokumentierten Teilfunktionen; sie bedeuten keine vollständige Prüfung aller Messwerte und Schreibfunktionen. Ergänzend gibt es synthetische Softwaretests. [Validierungsstand](docs/VALIDATION-v0.5.md).
+- Tests und Beobachtungen bestätigen jeweils die dokumentierten Teilfunktionen; sie bedeuten keine vollständige Prüfung aller Messwerte und Schreibfunktionen. Ergänzend gibt es synthetische Softwaretests. [Validierungsstand](docs/VALIDATION-v0.6.md).
 
 ## Verwendete Hardware
 
@@ -24,6 +24,8 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 - [FHEM: 00_THZ.pm, verwendete Referenzrevision](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm) – Decoder, Datenfelder, Skalierungen und Schreibverfahren. Eine unveränderte Kopie mit Lizenz und Herkunftsnachweis ist als [Dokumentationsreferenz](docs/references/README.md) im Paket enthalten.
 
 ## Aktueller Funktionsstand
+
+**v0.6.0:** Letzte gültige LWZ-Werte bleiben bei seriellen Kommunikationsproblemen sichtbar. Neue Datenqualitätsanzeigen und Gültigkeitssensoren je Statusblock kennzeichnen fehlende/veraltete Daten unabhängig von der Anzeige. Vier Betriebsstundenzähler entsprechen FHEM (`09his206`), ganze Stunden; keine Kühlungsstunden. Der vorläufige Verdichter-Betriebszweck aus F2 wird getrennt von gleichzeitigem Bedarf angezeigt. Details, Datenquellen und Grenzen: [v0.6.0](docs/BETRIEBSDATEN-v0.6.md), [Prüfstand](docs/VALIDATION-v0.6.md).
 
 **v0.5:** Heizkurvenprofile P13/P14/P15 dauerhaft in ESPHome speichern, benennen, bearbeiten und ausschließlich manuell anwenden. Fester Standard „bewährt“ (0,3/1,0 K/0) plus fünf bearbeitbare Speicherplätze (Übergangszeit, Winter, drei eigene), Entwurf/Speichern/Anwenden getrennt. Tatsächliche Anlagenwerte bestimmen die Anzeige des erkannten Profils oder „Benutzerdefiniert“; fehlende/veraltete Werte sind gesondert markiert. Keine automatische Umschaltung und kein erneutes Anwenden nach Neustart. [Bedienung und Migration](docs/HEIZKURVENPROFILE-v0.5.md).
 
@@ -66,7 +68,7 @@ external_components:
     components: [lwz2]
 ```
 
-Solange v0.5 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den lokalen Paketstand liegt zusätzlich `lwz303-sol-local.yaml` mit `source: components` bei. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
+Solange v0.6.0 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den lokalen Paketstand liegt zusätzlich `lwz303-sol-local.yaml` mit `source: components` bei. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
 
 Komponenteneinstellungen: `device_model: unknown`, `fan_speed_source: sGlobal`, `diagnostic_max_age: 30s`, `fan_interval: 10s`. Die Funktionen sind ohne Versions-Aktivierungsflags integriert. Beide mitgelieferten Hauptkonfigurationen enthalten die Profilbedienung. Das gespeicherte Modell ist vor der Interpretation der F2-Texte auszuwählen; bei unbekanntem Modell werden Rohcodes angezeigt.
 
@@ -74,7 +76,7 @@ Für die aktive Diagnose wird das sGlobal-Abfrageintervall auf höchstens 10 Sek
 
 Quellen und unveränderte FHEM-/Herstellerreferenzen: [Referenzverzeichnis](docs/references/README.md). Die Stiebel-Eltron-Unterlagen sind lokal unter `docs/references/stiebel-eltron/` abgelegt und von Git ausgeschlossen; das lokale Paket enthält die Original-PDFs.
 
-Prüfstand: [Softwarevalidierung v0.5](docs/VALIDATION-v0.5.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
+Prüfstand: [Softwarevalidierung v0.6](docs/VALIDATION-v0.6.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
 
 ## Anschluss und Installation
 
@@ -132,7 +134,7 @@ Letzter Erfolg und HK1-Zeitpunkt sind ausdrücklich `boot+…s`, unabhängig von
 
 Erfolgreiche Abfragen zählen gültige Antworten mit passendem Befehl, Prüfsumme und Mindestlänge. Fehlgeschlagene Abfragen zählen endgültige Fehler nach maximal drei Versuchen. Timeouts zählen einzelne abgelaufene Wartezeiten; Retries zählen eingeplante Wiederholungen (maximal zwei je Transaktion). Letzter Fehler, letzter Erfolg und Kommunikationszustand ergänzen die Zähler.
 
-Nicht blockierender DLE-Handshake, 1800-ms-ACK-/Frame-Timeouts und Fehler-Backoff bleiben erhalten. Seit der Anpassung vom 08.11.2026 gelten 1000 ms Mindestpause nach erfolgreicher Antwort und 1000 ms Abstand vor einem erneuten Leseversuch (zuvor jeweils 250 ms). Empfangsframe und UART-Arbeit pro Schleife sind begrenzt. Veraltete numerische Livewerte werden NaN: Schwelle ist Maximum aus `stale_after` (30 s) und dreifachem effektivem FB-Intervall. Eine Konfigurationsantwort macht veraltete FB-Werte nicht aktuell. Binäre Betriebszustände behalten ihren letzten Wert: immer mit „Kommunikation OK“ bewerten.
+Nicht blockierender DLE-Handshake, 1800-ms-ACK-/Frame-Timeouts und Fehler-Backoff bleiben erhalten. Seit der Anpassung vom 08.11.2026 gelten 1000 ms Mindestpause nach erfolgreicher Antwort und 1000 ms Abstand vor einem erneuten Leseversuch (zuvor jeweils 250 ms). Empfangsframe und UART-Arbeit pro Schleife sind begrenzt. Letzte gültige numerische und binäre Anzeigen bleiben bei Datenalterung erhalten. Die interne Frist ist das Maximum aus `stale_after` (30 s) und dreifachem geplantem Intervall; separate Frische-Sensoren und die Datenqualitätsanzeige kennzeichnen veraltete Quellen. Eine Konfigurationsantwort macht veraltete FB-Werte nicht aktuell. Gehaltene Werte nicht ohne passende Frischeprüfung für Auswertungen verwenden.
 
 ## Urheberrecht und Lizenzen
 

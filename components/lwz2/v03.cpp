@@ -18,6 +18,9 @@ void LWZ2Component::set_hc1_layout(const std::string &profile) {
   else if (profile == "2.14j") hc1_layout_ = FirmwareProfile::FW_214J;
   else return;
   parse_selected_(0xF4, nullptr, 0, true);
+  block_seen_[0xF4] = false;
+  block_stale_[0xF4] = true;
+  v06_publish_();
   next_f4_ms_ = millis();
 }
 
@@ -122,17 +125,16 @@ void LWZ2Component::v03_schedule_result_(uint8_t command) {
 void LWZ2Component::v03_stale_() {
   const uint8_t commands[]{0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05};
   for (auto command : commands) {
-    const uint32_t interval = command == 5 ? config_interval_ms_ : command == 9 ? history_interval_ms_ : command == 0x17 ? 60000 :
-        command == 0xF4 ? heating_interval_ms_ : command == 0xE8 ? fan_interval_ms_ :
-        (command == 0xFB || command == 0xF3) ? effective_interval() : 30000;
-    if (!block_stale_[command] && millis() - block_success_[command] > std::max(stale_after_ms_, interval * 3)) {
+    if (!block_stale_[command] && millis() - block_success_[command] > block_max_age_(command)) {
       block_stale_[command] = true;
-      invalidate_block_(command);
+      // Expired observations remain visible, but cannot be used as fresh evidence.
     }
   }
 }
 
 void LWZ2Component::invalidate_block_(uint8_t command) {
+  block_seen_[command] = false;
+  block_stale_[command] = true;
   parse_selected_(command, nullptr, 0, true);
 #define INVALIDATE_SENSOR(name) if (name##_sensor_) name##_sensor_->publish_state(NAN)
 #define INVALIDATE_BINARY(name) if (name##_binary_sensor_) name##_binary_sensor_->invalidate_state()

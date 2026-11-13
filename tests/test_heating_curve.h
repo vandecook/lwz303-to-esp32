@@ -50,7 +50,7 @@ void heating_curve_tests() {
       assert(controls[0].state==0.3f && controls[1].state==1 && std::isnan(controls[2].state));
       t.invalidate_block_(5); for(auto &n:controls) assert(std::isnan(n.state));
       t.parse_frame_(5,frame(5,std::vector<uint8_t>(22,0)));
-      t.reinitialize(); for(auto &n:controls) assert(std::isnan(n.state));
+      t.reinitialize(); for(auto &n:controls) assert(n.state==0); // Display retained; profile freshness reset.
     }
   }
   std::cout << "PASS heating curve: P13/P14/P15 bounds/grid, byte preservation, readback, uncertainty, stale/reset\n";
