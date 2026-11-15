@@ -1,3 +1,7 @@
+# Validierung v0.6.2
+
+Aktueller Bericht: [Abtauzustand und Prüfung v0.6.2](docs/VALIDATION-v0.6.2.md). Die folgenden Berichte dokumentieren frühere Ausgaben.
+
 # Validierung v0.6.1
 
 Aktueller Bericht: [Webserver-Hilfe und Prüfung v0.6.1](docs/VALIDATION-v0.6.1.md). Die folgenden Berichte dokumentieren frühere Ausgaben.

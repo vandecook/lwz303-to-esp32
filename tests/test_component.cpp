@@ -44,9 +44,11 @@ std::vector<uint8_t> frame(uint8_t command, std::vector<uint8_t> data) {
 #include "test_heating_curve.h"
 #include "test_profiles.h"
 #include "test_v06.h"
+#include "test_v062.h"
 
 int main() {
   v06_tests();
+  v062_tests();
   // Decoder fixtures are derived from the documented FHEM offsets, not hardware captures.
   for (const auto *profile : {"2.06", "2.14", "2.14j", "2.16"}) {
     Test t; sensor::Sensor outside,flow,ret,dhw,gradient,low;

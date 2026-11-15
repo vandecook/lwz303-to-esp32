@@ -7,7 +7,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.6.1"
+    version: "0.6.2"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -531,6 +531,18 @@ lwz2:
     entity_category: config
     web_server:
       sorting_group_id: lwz_expert
+  defrost_evaporator_active:
+    name: "Verdampfer taut ab (vorlaeufig)"
+  defrost_evaporator_valid:
+    name: "Abtauzustand gueltig"
+  defrost_evaporator_raw:
+    name: "Abtauen F2 Rohcode"
+  defrost_evaporator_status:
+    name: "Abtauzustand"
+  defrost_evaporator_data_status:
+    name: "Abtauen Datenstatus"
+  defrost_request_comparison:
+    name: "Abtauen Abgleich Betriebsanforderung"
   data_quality:
     name: "Datenqualitaet je Statusblock"
   compressor_purpose:

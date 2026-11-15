@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.2 - 2026-11-15 (lokales Quellpaket)
+
+- F2ctrl.defrostEvaporator als ganzes Rohbyte (Nutzdatenbyte 8): 0x10 aus, 0x30 Verdampfer-Abtauen, andere Codes unbekannt. Keine ungeprüfte Bitmasken-Auswertung.
+- Eigene Abtauanzeige und separate Gültigkeit/Datenqualität, unabhängig von Verdichter-Ein/Aus und ohne zusätzliche Abfragen oder Schreibbefehle. Letzte Anzeige bei Datenlücken behalten; bei frischen unbekannten Codes ausdrücklich unbekannt anzeigen.
+- Diagnostischer Abgleich mit heatRequest/heatRequest2: Übereinstimmung, widersprüchliche Angaben oder unbekannte Anforderung getrennt ausweisen. Die vorhandene vorläufige Verdichter-Betriebszweckanzeige bleibt erhalten.
+- Beide Hauptkonfigurationen, lokal eingebettete Webhilfe und Paketversion aktualisiert. GitHub-kompatible Webressourcen-Einbindung aus der nachgebesserten 0.6.1 bleibt erhalten.
+- Neue Tests für direkte Abtauzustände, unbekannte Codes, fehlendes Feld, Kommunikationslücken, Wiederverbindung, Decoderwechsel und Zeitüberlauf. Physische Bestätigung der FHEM-Zuordnung auf FW 2.16 bleibt offen.
+
 ## 0.6.1 - 2026-11-13 (lokales Quellpaket)
 
 - Nachbesserung ohne Versionserhöhung auf Nutzerwunsch: Webserver-Ressource direkt in der externen LWZ-Komponente mitliefern. `lwz2.web_help: true` bindet sie aus dem tatsächlichen Komponentenpfad ein; kein manuelles `web_server.js_include` und kein `/root/config/web` mehr erforderlich. Vorheriges Paket im lokalen Revisionsverzeichnis gesichert.

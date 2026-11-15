@@ -44,7 +44,7 @@
           <tr><th scope="row"><code>FC</code></th><td><strong>Geräteuhr:</strong> Uhrzeit, Datum und Wochentag der LWZ.</td></tr>
           <tr><th scope="row"><code>17</code></th><td><strong>Grundeinstellungen P01–P12:</strong> unter anderem Raum- und Warmwasser-Solltemperaturen sowie Lüfterstufen.</td></tr>
           <tr><th scope="row"><code>05</code></th><td><strong>Heizkurveneinstellungen:</strong> unter anderem Gradient P13, Fußpunkt P14 und Raumeinfluss P15.</td></tr>
-          <tr><th scope="row"><code>F2</code></th><td><strong>Betriebsanforderungen:</strong> Heizung, Warmwasser und Hinweise zum Verdichter-Betriebszweck. Anforderungen sind kein Nachweis tatsächlicher Wärmelieferung.</td></tr>
+          <tr><th scope="row"><code>F2</code></th><td><strong>Betriebsanforderungen:</strong> Heizung, Warmwasser, Verdichter-Betriebszweck und direkter Verdampfer-Abtauzustand. Abtau-Rohbyte 0x10 (dezimal 16) = aus, 0x30 (dezimal 48) = Abtauen; Zuordnung für FW 2.16 vorläufig. Anforderungen sind kein Nachweis tatsächlicher Wärmelieferung.</td></tr>
           <tr><th scope="row"><code>F6</code></th><td><strong>Zeitweise Lüftungsübersteuerung:</strong> vorübergehende Lüfterstufe und verbleibende Dauer.</td></tr>
           <tr><th scope="row"><code>01</code></th><td><strong>Lüftereinstellungen:</strong> konfigurierte Lüfterwerte, abhängig vom Decoderprofil.</td></tr>
           <tr><th scope="row"><code>FD</code></th><td><strong>Firmwareabfrage:</strong> Versionsnummer der LWZ. Sie ändert nicht automatisch das Decoderprofil.</td></tr>

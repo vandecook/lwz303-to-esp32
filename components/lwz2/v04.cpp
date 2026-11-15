@@ -55,6 +55,7 @@ void LWZ2Component::set_fan_speed_source(const std::string &v) {
   zero_pending_[0] = zero_pending_[1] = false;
 }
 void LWZ2Component::v04_invalidate_(bool clear_display) {
+  defrost_evaporator_raw_ = -1;
   for (uint8_t c : {0xF2, 0xF6}) {
     block_seen_[c] = false;
     block_stale_[c] = true;
@@ -64,6 +65,10 @@ void LWZ2Component::v04_invalidate_(bool clear_display) {
   speed_seen_ = program_seen_ = settings_seen_ = override_seen_ = clock_seen_ = false;
   zero_pending_[0] = zero_pending_[1] = false;
   if (clear_display) {
+    v04_number_("defrost_evaporator_raw", NAN);
+    v04_publish_text_("defrost_evaporator_status", "Unbekannt (noch kein gueltiger Abtauzustand)");
+    auto defrost = v04_binary_.find("defrost_evaporator_active");
+    if (defrost != v04_binary_.end()) defrost->second->invalidate_state();
     for (const char *k : {"hc_stage", "dhw_stage", "current_fan_stage", "heat_request", "heat_request2"}) v04_number_(k, NAN);
     for (const char *k : {"hc_stage_text", "dhw_stage_text", "compressor_purpose", "simultaneous_demand"}) v04_publish_text_(k, "unbekannt");
   }
@@ -110,6 +115,10 @@ int LWZ2Component::current_fan_stage_() const {
 void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
   const uint32_t now = millis();
   if (cmd == 0xF2) {
+    // FHEM F2ctrl: hex position 20 -> payload byte 8, raw 10=off / 30=defrost.
+    defrost_evaporator_raw_ = len > 8 ? d[8] : -1;
+    if (defrost_evaporator_raw_ >= 0)
+      v04_number_("defrost_evaporator_raw", float(defrost_evaporator_raw_));
     heat_request_ = len >= 2 ? d[0] : -1;
     heat_request2_ = len >= 2 ? d[1] : -1;
     requested_hc_ = len >= 4 ? d[2] : -1;

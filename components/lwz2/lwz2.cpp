@@ -10,7 +10,7 @@ namespace esphome::lwz2 {
 static const char *const TAG = "lwz2";
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.6.1 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.6.2 (device FW independent of decoder profile)");
   this->frame_.reserve(128);
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05}) {
     invalidate_block_(command);
@@ -866,6 +866,45 @@ void LWZ2Component::v06_publish_() {
     }
     v04_publish_text_("simultaneous_demand", demand);
   }
+  publish_defrost_state_();
+}
+
+void LWZ2Component::publish_defrost_state_() {
+  const bool fresh = block_fresh_(0xF2);
+  const bool present = defrost_evaporator_raw_ >= 0;
+  const bool known = defrost_evaporator_raw_ == 0x10 || defrost_evaporator_raw_ == 0x30;
+  auto valid = v04_binary_.find("defrost_evaporator_valid");
+  if (valid != v04_binary_.end()) valid->second->publish_state(fresh && present && known);
+  if (!fresh || !present) {
+    // Missing observations never turn a retained ON into OFF.
+    v04_publish_text_("defrost_evaporator_data_status", !fresh ?
+        "F2 fehlt/veraltet; letzte Anzeige unbestaetigt" : "F2 frisch; Abtau-Rohbyte fehlt; letzte Anzeige unbestaetigt");
+    v04_publish_text_("defrost_request_comparison", "Nicht vergleichbar: Abtauquelle fehlt/veraltet");
+    return;
+  }
+  char code[8]; std::snprintf(code, sizeof(code), "0x%02X", unsigned(defrost_evaporator_raw_));
+  v04_publish_text_("defrost_evaporator_data_status", std::string("F2 frisch; Rohbyte ") + code +
+      (known ? "; FHEM-Zuordnung vorlaeufig" : "; unbekannter Code"));
+  auto active = v04_binary_.find("defrost_evaporator_active");
+  if (!known) {
+    if (active != v04_binary_.end()) active->second->invalidate_state();
+    v04_publish_text_("defrost_evaporator_status", std::string("Unbekannt (F2 ") + code + ")");
+    v04_publish_text_("defrost_request_comparison", "Nicht vergleichbar: unbekannter Abtaucode");
+    return;
+  }
+  const bool defrost = defrost_evaporator_raw_ == 0x30;
+  if (active != v04_binary_.end()) active->second->publish_state(defrost);
+  v04_publish_text_("defrost_evaporator_status", defrost ?
+      "Verdampfer taut ab (vorlaeufig)" : "Kein Verdampfer-Abtauen (vorlaeufig)");
+  // This comparison is diagnostic only; a fresh direct code remains independently valid.
+  const bool request_known = heat_request_ == 0 || heat_request_ == 2 || heat_request_ == 5 || heat_request_ == 6;
+  std::string comparison;
+  if (heat_request_ != heat_request2_) comparison = "Widerspruch zwischen heatRequest und heatRequest2";
+  else if (!request_known) comparison = "Nicht vergleichbar: unbekannter Anforderungscode";
+  else if (defrost == (heat_request_ == 6)) comparison = "Stimmig mit Betriebsanforderung";
+  else comparison = defrost ? "Widerspruch: Abtauzustand Ein, keine Abtauanforderung" :
+      "Widerspruch: Abtauzustand Aus, Abtauanforderung aktiv";
+  v04_publish_text_("defrost_request_comparison", comparison);
 }
 
 int16_t LWZ2Component::be16s_(const uint8_t *p) {

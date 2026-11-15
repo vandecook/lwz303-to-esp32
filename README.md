@@ -1,4 +1,4 @@
-# LWZ303 to ESP32 – v0.6.1
+# LWZ303 to ESP32 – v0.6.2
 
 ## Zweck des Projekts
 
@@ -9,7 +9,7 @@ Dieses Projekt dient der **Migration der bisherigen FHEM-Anbindung einer Stiebel
 - **Nur für Geräte-Firmware der Reihe 2.x.** Die Firmwareversion bezeichnet hier die Wärmepumpe, nicht ESPHome oder die Projektversion. Firmware 4.x und andere Reihen gehören nicht zum vorgesehenen Umfang.
 - Das eigene **Decoderprofil für Geräte-Firmware 2.16** basiert auf dem FHEM-Decoderlayout 2.06, praktischen Tests und plausiblen Ergebnissen aus den bisherigen Beobachtungen. Bekannte Ausnahmen werden ausdrücklich als nicht verfügbar behandelt. [Details zum Decoderprofil 2.16](docs/DECODER-FW2.16.md).
 - **Praktisch getestet wurde bisher ausschließlich mit einer LWZ 303 SOL mit Geräte-Firmware 2.16. Die Solarfunktion war dabei deaktiviert.** Die aktiven Solarfunktionen und andere Gerätemodelle sind damit nicht als getestet ausgewiesen.
-- Tests und Beobachtungen bestätigen jeweils die dokumentierten Teilfunktionen; sie bedeuten keine vollständige Prüfung aller Messwerte und Schreibfunktionen. Ergänzend gibt es synthetische Softwaretests. [Validierungsstand](docs/VALIDATION-v0.6.1.md).
+- Tests und Beobachtungen bestätigen jeweils die dokumentierten Teilfunktionen; sie bedeuten keine vollständige Prüfung aller Messwerte und Schreibfunktionen. Ergänzend gibt es synthetische Softwaretests. [Validierungsstand](docs/VALIDATION-v0.6.2.md).
 
 ## Verwendete Hardware
 
@@ -24,6 +24,8 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 - [FHEM: 00_THZ.pm, verwendete Referenzrevision](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm) – Decoder, Datenfelder, Skalierungen und Schreibverfahren. Eine unveränderte Kopie mit Lizenz und Herkunftsnachweis ist als [Dokumentationsreferenz](docs/references/README.md) im Paket enthalten.
 
 ## Aktueller Funktionsstand
+
+**v0.6.2:** Eigener Verdampfer-Abtauzustand aus dem F2-Rohbyte, unabhängig vom Verdichterstatus. Rohcode, Zustands-/Gültigkeitsanzeige und Abgleich mit Betriebsanforderungen. Unbekannte Codes bleiben unbekannt; Kommunikationslücken behalten die letzte Anzeige bei zurückgenommener Gültigkeit. Zuordnung für FW 2.16 weiterhin vorläufig. Die korrigierte GitHub-Einbindung der Webhilfe aus 0.6.1 bleibt enthalten. [Bedienung und Grenzen](docs/ABTAUEN-v0.6.2.md).
 
 **v0.6.1 (nachgebessert):** Aufklappbare, lokal eingebettete Webserver-Hilfe erklärt alle Datenblöcke und die Bedeutung von „frisch“. Mit `lwz2.web_help: true` wird sie direkt aus der externen Komponente geladen. Ein eigener `web`-Ordner neben der YAML ist nicht mehr nötig; alte manuelle `web_server.js_include`-Einträge entfernen. Für die GitHub-Quelle den vollständigen korrigierten Ordner `components/lwz2` einschließlich `.py`- und `.js`-Dateien veröffentlichen. Die Entitätsnamen und ihre Zuordnung bleiben unverändert.
 
@@ -70,7 +72,7 @@ external_components:
     components: [lwz2]
 ```
 
-Solange v0.6.1 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den lokalen Paketstand liegt zusätzlich `lwz303-sol-local.yaml` mit `source: components` bei. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
+Solange v0.6.2 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den lokalen Paketstand liegt zusätzlich `lwz303-sol-local.yaml` mit `source: components` bei. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
 
 Komponenteneinstellungen: `device_model: unknown`, `fan_speed_source: sGlobal`, `diagnostic_max_age: 30s`, `fan_interval: 10s`. Die Funktionen sind ohne Versions-Aktivierungsflags integriert. Beide mitgelieferten Hauptkonfigurationen enthalten die Profilbedienung. Das gespeicherte Modell ist vor der Interpretation der F2-Texte auszuwählen; bei unbekanntem Modell werden Rohcodes angezeigt.
 
@@ -78,7 +80,7 @@ Für die aktive Diagnose wird das sGlobal-Abfrageintervall auf höchstens 10 Sek
 
 Quellen und unveränderte FHEM-/Herstellerreferenzen: [Referenzverzeichnis](docs/references/README.md). Die Stiebel-Eltron-Unterlagen sind lokal unter `docs/references/stiebel-eltron/` abgelegt und von Git ausgeschlossen; das lokale Paket enthält die Original-PDFs.
 
-Prüfstand: [Softwarevalidierung v0.6.1](docs/VALIDATION-v0.6.1.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
+Prüfstand: [Softwarevalidierung v0.6.2](docs/VALIDATION-v0.6.2.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
 
 ## Anschluss und Installation
 

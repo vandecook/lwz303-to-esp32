@@ -128,14 +128,15 @@ LWZProfileSelect = lwz2_ns.class_("LWZProfileSelect", select.Select)
 LWZProfileName = lwz2_ns.class_("LWZProfileName", text.Text)
 LWZProfileValueNumber = lwz2_ns.class_("LWZProfileValueNumber", number.Number)
 LWZClockModeSelect = lwz2_ns.class_("LWZClockModeSelect", select.Select)
-V04_SENSORS = ("hc_stage", "dhw_stage", "current_fan_stage", "exhaust_fault_count", "supply_fault_count", "heat_request", "heat_request2")
+V04_SENSORS = ("hc_stage", "dhw_stage", "current_fan_stage", "exhaust_fault_count", "supply_fault_count", "heat_request", "heat_request2", "defrost_evaporator_raw")
 V04_TEXT = ("hc_stage_text", "dhw_stage_text", "fan_stage_diagnostics", "exhaust_status", "supply_status",
             "exhaust_data_status", "supply_data_status", "exhaust_fault_begin", "exhaust_fault_end",
             "supply_fault_begin", "supply_fault_end", "fault_reset_reason", "persistence_status", "lwz_error_memory",
             "profile_selected", "profile_recognized", "profile_last_applied", "profile_action_status", "profile_data_status")
-V06_TEXT = ("data_quality", "compressor_purpose", "compressor_purpose_data_status", "simultaneous_demand")
+V06_TEXT = ("data_quality", "compressor_purpose", "compressor_purpose_data_status", "simultaneous_demand",
+            "defrost_evaporator_status", "defrost_evaporator_data_status", "defrost_request_comparison")
 V04_TEXT += V06_TEXT
-V06_BINARY = tuple(f"block_{cmd}_fresh" for cmd in ("FB", "F3", "F4", "E8", "09", "EE", "FC", "17", "05", "F2", "F6")) + ("compressor_purpose_valid",)
+V06_BINARY = tuple(f"block_{cmd}_fresh" for cmd in ("FB", "F3", "F4", "E8", "09", "EE", "FC", "17", "05", "F2", "F6")) + ("compressor_purpose_valid", "defrost_evaporator_active", "defrost_evaporator_valid")
 V04_BINARY = ("exhaust_fault", "supply_fault") + V06_BINARY
 
 def selected_schema():

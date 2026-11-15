@@ -3,6 +3,6 @@
   "upstream": "https://github.com/esphome/esphome-webserver",
   "header_sha256": "b9d1211e0f0a75d196e7c6fc4ee7c213b7cf56b434f662823feeeb2df65d519f",
   "upstream_module_sha256": "31b6295c324dacfbe6e477d032904e02908adaf9db7744adbc95b595a2286e6e",
-  "help_sha256": "ddda628a20d54684817e4b439a67c336072ebe21de2445d4b74141897ba05a7a",
-  "combined_sha256": "f836f075ad5406c2497123c40a24c1855d25f16e75341ff8c23a82c5f587b1d2"
+  "help_sha256": "69e988a33d796ede614bed9c6cb6be0b546d8eed46e190668828b239cb07bd3e",
+  "combined_sha256": "29892e25a10d704c5fd98ca1e29112308f20ae2240276cada9ed74825d83b3df"
 }
