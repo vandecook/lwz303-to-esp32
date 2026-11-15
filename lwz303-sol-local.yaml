@@ -532,7 +532,7 @@ lwz2:
     web_server:
       sorting_group_id: lwz_expert
   defrost_evaporator_active:
-    name: "Verdampfer taut ab (vorlaeufig)"
+    name: "Abtauen"
   defrost_evaporator_valid:
     name: "Abtauzustand gueltig"
   defrost_evaporator_raw:

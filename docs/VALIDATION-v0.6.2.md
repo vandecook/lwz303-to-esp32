@@ -12,6 +12,8 @@ Stand: 15.11.2026. Zielhardware ESP32-C3; reale LWZ 303 SOL laut Nutzer Firmware
 
 ## Vollständiger ESP32-C3-Build
 
+Nachträgliche Anzeigevereinfachung innerhalb 0.6.2: Binärsensorname „Abtauen“, bekannter Textzustand „Ja“/„Nein“. Die C++-Tests einschließlich beider Textwerte und die Konfigurationsgenerierung wurden dafür erneut erfolgreich ausgeführt. Der unten dokumentierte vollständige Gerätebuild erfolgte vor dieser reinen Namens-/Textanpassung.
+
 Vollständiger ESP32-C3-Build mit ESPHome 2026.10.2 und ESP-IDF 5.5.6 erfolgreich, ohne Compilerwarnungen oder Fehler im abschließenden Build. Die sechs kompilierten Komponentenquellen stimmen bytegenau mit dem ausgelieferten Quellstand überein. Alle sechs neuen Entitäten sind in der erzeugten Konfiguration registriert. Die eingebettete Weboberfläche wurde entpackt und bytegenau mit der vorgesehenen Komponentendatei abgeglichen.
 
 - RAM: **112453 / 321296 Byte**.

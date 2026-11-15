@@ -18,7 +18,7 @@ Es wird keine Bitmaske aus dem Unterschied dieser Werte abgeleitet. Insbesondere
 
 | Schlüssel | Zweck |
 |---|---|
-| `defrost_evaporator_active` | Verdampfer taut ab; bei frischem bekanntem Code Ein/Aus |
+| `defrost_evaporator_active` | Abtauen; reiner binärer Zustand |
 | `defrost_evaporator_valid` | Aktueller Abtaucode ist frisch, vorhanden und in der vorläufigen Tabelle bekannt |
 | `defrost_evaporator_raw` | Ganzzahliger Rohwert 0–255; Hex-Schreibweise zusätzlich im Datenstatus |
 | `defrost_evaporator_status` | Verständlicher Zustand oder ausdrücklicher Hinweis auf einen unbekannten Code |

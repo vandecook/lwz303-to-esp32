@@ -2,6 +2,8 @@
 
 ## 0.6.2 - 2026-11-15 (lokales Quellpaket)
 
+- Anzeige vereinfacht: Binärsensor „Abtauen“, Textzustand ausschließlich „Ja“ oder „Nein“ bei bekanntem Code. Hinweise zur Datenqualität bleiben in den separaten Diagnoseanzeigen.
+
 - F2ctrl.defrostEvaporator als ganzes Rohbyte (Nutzdatenbyte 8): 0x10 aus, 0x30 Verdampfer-Abtauen, andere Codes unbekannt. Keine ungeprüfte Bitmasken-Auswertung.
 - Eigene Abtauanzeige und separate Gültigkeit/Datenqualität, unabhängig von Verdichter-Ein/Aus und ohne zusätzliche Abfragen oder Schreibbefehle. Letzte Anzeige bei Datenlücken behalten; bei frischen unbekannten Codes ausdrücklich unbekannt anzeigen.
 - Diagnostischer Abgleich mit heatRequest/heatRequest2: Übereinstimmung, widersprüchliche Angaben oder unbekannte Anforderung getrennt ausweisen. Die vorhandene vorläufige Verdichter-Betriebszweckanzeige bleibt erhalten.

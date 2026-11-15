@@ -895,7 +895,7 @@ void LWZ2Component::publish_defrost_state_() {
   const bool defrost = defrost_evaporator_raw_ == 0x30;
   if (active != v04_binary_.end()) active->second->publish_state(defrost);
   v04_publish_text_("defrost_evaporator_status", defrost ?
-      "Verdampfer taut ab (vorlaeufig)" : "Kein Verdampfer-Abtauen (vorlaeufig)");
+      "Ja" : "Nein");
   // This comparison is diagnostic only; a fresh direct code remains independently valid.
   const bool request_known = heat_request_ == 0 || heat_request_ == 2 || heat_request_ == 5 || heat_request_ == 6;
   std::string comparison;

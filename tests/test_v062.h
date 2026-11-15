@@ -22,12 +22,13 @@ void v062_tests() {
   };
   feed(0x30); // No FB observation: still valid, from the direct F2 field.
   assert(raw.state==48 && active.valid && active.state && valid.state);
-  assert(state.state=="Verdampfer taut ab (vorlaeufig)");
+  assert(state.state=="Ja");
   assert(data.state.find("0x30")!=std::string::npos && comparison.state=="Stimmig mit Betriebsanforderung");
   std::vector<uint8_t> fb(32); fb[20]=0;
   t.parse_frame_(0xFB,frame(0xFB,fb)); // Explicitly stopped compressor does not mask defrost.
   assert(active.state && valid.state);
   feed(0x10,2,2);
+  assert(state.state=="Nein");
   assert(raw.state==16 && active.valid && !active.state && valid.state);
   assert(comparison.state=="Stimmig mit Betriebsanforderung");
   t.parse_frame_(0xF2,frame(0xF2,{2,2,0,0,0,0,0,0x30,0x10}));
