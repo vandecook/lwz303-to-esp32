@@ -4,11 +4,15 @@ Festlegung 08.11.2026 umgesetzt: F2ctrl-Heizungs-/Warmwasseranforderung als Basi
 
 **Decoder FW 2.16 vorbereitet:** eigenes Profil auf 2.06-Basis; sHC1-Innentemperatur und vier sFan-Ist-/Soll-Drehzahlen vorläufig nicht verfügbar. Relative sGlobal-Istwerte bleiben F5/F6-Quelle. [Details und Verifikation](docs/DECODER-FW2.16.md).
 
-Stand: **15.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
+Stand: **16.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
 
 **Praxisstand 13.11.2026:** Laut Nutzer sind die bisherigen Funktionen soweit getestet; das System läuft. Ältere Hinweise auf offene Geräteprüfungen unten dokumentieren den damaligen Prüfstand und sind keine neue pauschale Testsperre. Die Rückmeldung bestätigt keine Einzelprüfung aller Modelle und Sonderfälle.
 
-**Aktueller Stand:** v0.6.2 lokal als Software umgesetzt: direkter Verdampfer-Abtauzustand aus F2 mit Rohwert, unabhängiger Anzeige, Datenfrische und Abgleich der Betriebsanforderungen. Die Funktionen und die korrigierte GitHub-Webhilfe aus 0.6.1 bleiben enthalten. Geräteprüfung der neuen F2-Zuordnung und Veröffentlichung stehen aus. [Bedienung](docs/ABTAUEN-v0.6.2.md), [Prüfbericht](docs/VALIDATION-v0.6.2.md).
+**Aktueller Stand:** v0.7.0 als lokales Quellpaket erstellt: eigener Bereich „Programmierte Parameter“, 70 belegte P-Felder lesen und 31 der 32 gewünschten Parameter einstellen. **P86 bleibt mangels belegtem 2.x-Zugriff offen.** Bestehende Entitätsnamen und IDs bleiben unverändert. Neue Parameterzugriffe am Gerät prüfen; Veröffentlichung offen. Die Abtau-Integration aus 0.6.2 ist vom Nutzer am 16.11.2026 als funktionierend bestätigt. [Bedienung und Katalog](docs/PARAMETER-v0.7.md), [Prüfbericht](docs/VALIDATION-v0.7.md).
+
+**Priorität 15.11.2026:** v0.7 „Programmierte Parameter“ wird als nächstes Umsetzungsvorhaben vorgezogen. Noch offene Erweiterungen für spätere 0.6.x, die Wochenprogramme in 0.xx und HA 0.1.0 folgen nachrangig. Die Abtau-Integration aus 0.6.2 ist seit 16.11.2026 vom Nutzer am Gerät bestätigt.
+
+**Verbindliche Bestandssicherung 15.11.2026:** Bestehende ESPHome-Entitätsbezeichnungen nicht mehr verändern. Namen, explizite IDs, Konfigurationsschlüssel sowie die für Home Assistant maßgebliche Geräte- und Entitätsidentität erhalten, damit vorhandene Dashboards, Automationen und Historien weiter zugeordnet bleiben. Bestehende Entitäten wiederverwenden; neue Parameter nur ergänzen. Auch die Einführung des Bereichs „Programmierte Parameter“ darf keine Umbenennung oder Neuanlage bereits vorhandener Entitäten auslösen.
 
 ## Vorgemerkte Konfigurationspflege
 
@@ -27,8 +31,8 @@ Stand: **15.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen
 | **0.4** | **Wohnraumlüftung:** feste Tag-/Nachtstufen dauerhaft ändern; aktuelle Stufe aus LWZ-Zustand ermitteln. F5/F6 in ESPHome bei Stufe > 0 und 120 Sekunden Istdrehzahl null erkennen und gespeichert halten; Rücksetzung nach bestätigtem LWZ-Neustart bzw. über HA-Automation, dauerhafte Fehlerhistorie und Meldung bei jedem neuen Fehler. **Zusätzlich Geräteauswahl i / SOL, sControl.hcStage / dhwStage für FW 2.16, Zeitumstellungs-Auswahl und einheitliche Entitätsnamen** | Software lokal umgesetzt; Hardwareprüfung und Veröffentlichung offen. Lüftungszeitprogramme bearbeiten und zeitlich begrenzte Übersteuerung gehören nicht zum v0.4-Umfang. Ausgewählte Lüftungswerte einschließlich Speed200 bereits in v0.3 enthalten |
 | 0.5 | Heizkurven-Gradient und Fußpunkt schreiben; benannte Heizkurvenprogramme für Übergangszeit, Winter und eigene Profile als Kombination aus P13/P14/P15 in ESPHome speichern und manuell anwenden | Software lokal umgesetzt; fester bewährter Standard plus fünf bearbeitbare Speicherplätze, Erkennung und gemeinsame Rückleseprüfung. Physische Geräteprüfung und Veröffentlichung offen |
 | **0.6.1** | **FHEM-Betriebsstunden ohne Kühlung, Anzeige letzter gültiger Werte, getrennte blockweise Datenfrische und vorläufiger Verdichter-Betriebszweck** | Lokal umgesetzt; neue Geräteprüfung und Veröffentlichung offen. Weitere unbelegte Zähler und noch zu definierende Plausibilitätsgrenzen bleiben für spätere 0.6.x |
-| **0.6.2** | **Verdampfer-Abtauzustand aus F2: Rohbyte, eigene Zustandsanzeige und Datenfrische; Abgleich mit Betriebsanforderung** | Lokal als Software umgesetzt; Zuordnung an FW 2.16 am Gerät prüfen, Veröffentlichung offen |
-| 0.7 | Alle zum jeweiligen Gerätemodell gehörenden P-Parameter auslesen und in einem eigenen Bereich „Programmierte Parameter“ verfügbar machen | Geplant; bisher v0.6. Leseansicht, keine pauschale Erweiterung der Schreibfunktionen |
+| **0.6.2** | **Verdampfer-Abtauzustand aus F2: Rohbyte, eigene Zustandsanzeige und Datenfrische; Abgleich mit Betriebsanforderung** | Umgesetzt; Abtau-Integration am 16.11.2026 vom Nutzer am Gerät als funktionierend bestätigt. Veröffentlichung offen |
+| **0.7.0** | Programmierte Parameter: 70 belegte P-Felder lesen; P1–P15, P19, P31, P32, P37–P42, P49, P54–P58 und P79 einstellbar; bestehende Entitäten erhalten | Lokal umgesetzt; P86 weiterhin offen (kein belegter 2.x-Zugriff). Neue Geräteprüfung und Veröffentlichung offen |
 | **0.xx** | **Alle Wochenprogramme für Heizung, Warmwasser und Lüftung lesen, in Home Assistant bearbeiten und dauerhaft in die LWZ schreiben; validieren und zurücklesen** | Geplant; Versionsnummer noch offen. Am 13.11.2026 aus den bisherigen v0.8/v0.9/v0.10 und dem vorgemerkten Lüftungszeitprogramm zusammengeführt |
 
 Die bisherigen Einzelvorhaben für Wochenprogramme in v0.8, v0.9 und v0.10 entfallen als getrennte Versionsziele. Ihre Inhalte gehören vollständig zu v0.xx; die frei gewordenen Nummern sind vorerst nicht neu belegt.
@@ -97,7 +101,7 @@ Am 08.11.2026 von der bisherigen v0.9 vorgezogen. Der belegte und festgelegte Um
 
 ### Folgeumfang für spätere v0.6.x
 
-- **Anforderung 15.11.2026 - Verdampfer-Abtauzustand aus F2:** Zusätzlich zur bisherigen vorläufigen Ableitung aus `heatRequest = 6` das FHEM-Feld `F2ctrl.defrostEvaporator` auswerten. Rohbyte anzeigen und einen eigenen Zustand „Verdampfer taut ab“ mit separater Datenfrische/Gültigkeit bereitstellen. Laut FHEM-Kommentar bedeutet `0x10` aus und `0x30` Verdampfer-Abtauen; andere Codes als unbekannt behandeln. Das Feld ist in FHEM als Rohbyte definiert, daher nicht ungeprüft als einzelnes Bit interpretieren. Mit `heatRequest`/`heatRequest2` vergleichen; widersprüchliche Angaben getrennt kenntlich machen. Abtauzustand nicht allein von einem eingeschalteten Verdichter abhängig machen. Bei Kommunikationslücken letzte gültige Anzeige erhalten und Gültigkeit zurücknehmen. Rohwerte und Zustandswechsel während eines tatsächlichen Abtauvorgangs an FW 2.16 prüfen. Das separate `sDisplay.defrost`-Bit neuerer Firmwareprofile nicht auf 2.x übertragen. Grundlage: [FHEM-F2-Referenz](docs/references/fhem/00_THZ.pm), Definition `F2ctrl`. Ziel: **Release 0.6.2**. Status: lokal als Software umgesetzt; Geräteprüfung und Veröffentlichung offen. Statistik und Auswertung von Abtauvorgängen bleiben dem eigenständigen HA-Umfang zugeordnet.
+- **Anforderung 15.11.2026 - Verdampfer-Abtauzustand aus F2:** Zusätzlich zur bisherigen vorläufigen Ableitung aus `heatRequest = 6` das FHEM-Feld `F2ctrl.defrostEvaporator` auswerten. Rohbyte anzeigen und einen eigenen Zustand „Verdampfer taut ab“ mit separater Datenfrische/Gültigkeit bereitstellen. Laut FHEM-Kommentar bedeutet `0x10` aus und `0x30` Verdampfer-Abtauen; andere Codes als unbekannt behandeln. Das Feld ist in FHEM als Rohbyte definiert, daher nicht ungeprüft als einzelnes Bit interpretieren. Mit `heatRequest`/`heatRequest2` vergleichen; widersprüchliche Angaben getrennt kenntlich machen. Abtauzustand nicht allein von einem eingeschalteten Verdichter abhängig machen. Bei Kommunikationslücken letzte gültige Anzeige erhalten und Gültigkeit zurücknehmen. Rohwerte und Zustandswechsel während eines tatsächlichen Abtauvorgangs an FW 2.16 prüfen. Das separate `sDisplay.defrost`-Bit neuerer Firmwareprofile nicht auf 2.x übertragen. Grundlage: [FHEM-F2-Referenz](docs/references/fhem/00_THZ.pm), Definition `F2ctrl`. Ziel: **Release 0.6.2**. Status: umgesetzt; Abtau-Integration am 16.11.2026 vom Nutzer am Gerät als funktionierend bestätigt. Veröffentlichung offen. Statistik und Auswertung von Abtauvorgängen bleiben dem eigenständigen HA-Umfang zugeordnet.
 
 - **Zusätzliche Quellen:** Belegte Quellen für einen echten Verdichterstartzähler und Zusatzheizungsstunden bestimmen; nicht verfügbare Werte aus dem Umfang streichen, keine Ersatzwerte erfinden.
 - **Verdichter-Betriebszweck (in 0.6.0 vorläufig umgesetzt; Gerätebestätigung offen):** Zusätzlich zum Verdichter-Ein/Aus-Status den aktuellen Zweck Heizung, Warmwasser, Abtauen oder nicht eindeutig zuordenbar bereitstellen. FHEM `F2ctrl.heatRequest` nennt 0=Warmwasser, 2=Heizung, 5=aus und 6=Verdampfer-Abtauen; `heatRequest2` ist laut Kommentar gleichartig. Beide Rohcodes werden in v0.6.0 veröffentlicht; frische Quellen und übereinstimmende Codes sind für eine Zuordnung erforderlich. Zuordnung und Umschaltverhalten auf FW 2.16 vor Verwendung prüfen. F2-Anforderungsstufen und Pumpenstatus ergänzend betrachten, jedoch nicht als Nachweis gleichzeitiger Wärmelieferung verwenden. Bei gleichzeitigem Heizungs-/Warmwasserbedarf dies getrennt als Anforderung ausweisen; Betriebszweck „beides“ nur nach belastbarem Nachweis vorsehen. Aus Anforderung allein keinen laufenden Verdichter ableiten. Startzählung und Laufzeitauswertung nach Zweck gehören zu HA 0.1.0; ein Zweckwechsel bei durchlaufendem Verdichter ist kein zusätzlicher Start.
@@ -122,13 +126,33 @@ Am 08.11.2026 von der bisherigen v0.9 vorgezogen. Der belegte und festgelegte Um
 
 ## v0.7 – Programmierte Parameter
 
+**Umsetzungsstand 16.11.2026:** v0.7.0 lokal erstellt. 31 der 32 unten angeforderten Einstellungen sind implementiert; P86 bleibt als einziger angeforderter Parameter offen. Keine Übernahme des neueren Registers `0A05A3` ohne Nachweis für FW 2.16. 70 belegte P-Felder lesend berücksichtigt, neue Datenfrischeanzeige und eigener Webbereich ergänzt. Bestehende Namen, IDs, Domänen und Geräteidentität durch Kompatibilitätsprüfung geschützt. Neue Schreibzugriffe noch am Gerät prüfen. [Details](docs/PARAMETER-v0.7.md).
+
+**Priorisiert am 15.11.2026:** Nächstes Umsetzungsvorhaben vor weiteren funktionalen 0.6.x-Erweiterungen. Bestehende Entitätsbezeichnungen und Identitäten bleiben verbindlich unverändert. Vor Abschluss beide YAML-Konfigurationen mit dem aktuellen Bestand vergleichen: keine bestehenden Namen, IDs oder Konfigurationsschlüssel ändern oder entfernen; vorhandene Parameterquellen und Entitäten wiederverwenden. Die neue Bereichszuordnung ausschließlich ohne Änderung der bestehenden HA-Zuordnung umsetzen.
+
 Nutzerfestlegung vom 07.11.2026: **Alle P-Werte auslesen und in einem eigenen Bereich „Programmierte Parameter“ verfügbar machen.** Der Bereich zeigt gespeicherte Einstellungen getrennt von aktuellen Prozess- und Messwerten.
+
+**Erweiterung 16.11.2026 – einstellbare Parameter:** Für v0.7 zusätzlich manuelles Einstellen und dauerhaftes Schreiben der folgenden 32 Parameter planen:
+
+- P1–P12
+- P13–P15
+- P19
+- P31 und P32
+- P37–P42
+- P49
+- P54–P58
+- P79
+- P86
+
+Bereits vorhandene Einstellmöglichkeiten unverändert weiterverwenden; keine doppelten Entitäten anlegen und keine bestehenden Entitätsnamen oder IDs ändern. Je Parameter Modell-/Firmwareverfügbarkeit, Register, Datentyp, Skalierung, Einheit, gültigen Wertebereich und Schrittweite anhand der Referenzen prüfen. Nicht unterstützte oder noch unbelegte Schreibwege nicht freigeben; offene Zuordnungen vor der Umsetzung dokumentieren.
+
+Schreiben nur nach ausdrücklicher manueller Bedienung und mit bestehender Schreibfreigabe: betroffenen Block frisch lesen, ausschließlich gewünschte Felder ändern, übrige Inhalte erhalten und unabhängig zurücklesen. Erfolg erst nach bestätigtem Rücklesen anzeigen; bei unklarem Schreibausgang keinen Schreibbefehl blind wiederholen. Neustart oder Wiederverbindung dürfen keine Einstellungen automatisch erneut schreiben. Die Parameterliste ist bis auf P86 als Software in v0.7.0 umgesetzt; die zusätzliche Geräteprüfung steht aus.
 
 - Alle dokumentierten und am gewählten Modell tatsächlich verfügbaren P-Parameter erfassen; Varianten LWZ 303 i / Integral und LWZ 303 / 403 SOL sowie Geräte-Firmware 2.16 berücksichtigen. Keine lückenlose P-Nummernfolge erfinden und keine modellfremden Werte als vorhanden darstellen.
 - Parameter mit belegter P-Nummer, verständlichem Namen, Wert, Einheit und Verfügbarkeits-/Verifikationsstatus anzeigen. Unbekannte oder nicht auslesbare Werte kenntlich machen, statt sie mit null zu füllen. Nachweislich nicht vorhandene Parameter wie P25 beim i-Modell ausblenden bzw. als nicht anwendbar dokumentieren.
 - Einen eigenen Bedienbereich für die programmierten Parameter vorsehen. Vorhandene Lesequellen wiederverwenden; gleiche Werte nicht durch doppelte Abfragen oder doppelte Entitäten vervielfachen.
 - Gespeicherten Sollwert und aktuell wirksamen Sollwert eindeutig unterscheiden. Datenalterung und Aktualisierung der Konfigurationswerte sichtbar berücksichtigen.
-- Leseumfang, Register und Skalierung anhand Herstellerunterlagen, FHEM-Decoder und Geräteprüfung vervollständigen. Zusätzliche Schreibfreigaben sind mit dieser Festlegung nicht beauftragt; bereits vorhandene oder separat geplante Schreibfunktionen bleiben ihrem jeweiligen Versionsumfang zugeordnet.
+- Leseumfang und die oben festgelegten Schreibfunktionen anhand Herstellerunterlagen, FHEM-Decoder und Geräteprüfung vervollständigen. Weitere Parameter gehören zunächst nur zur Leseansicht; bestehende Schreibfunktionen bleiben erhalten.
 
 ## v0.xx - Alle Wochenprogramme lesen und schreiben
 

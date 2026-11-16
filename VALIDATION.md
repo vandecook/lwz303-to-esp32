@@ -1,3 +1,5 @@
+Aktueller Stand: [Validierung v0.7.0](docs/VALIDATION-v0.7.md).
+
 # Validierung v0.6.2
 
 Aktueller Bericht: [Abtauzustand und Prüfung v0.6.2](docs/VALIDATION-v0.6.2.md). Die folgenden Berichte dokumentieren frühere Ausgaben.

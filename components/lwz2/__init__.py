@@ -5,6 +5,9 @@ from esphome.core import CORE
 import zlib
 from .metadata import SELECTED_ENTITIES
 from .web_help import validate_web_help
+import json
+from pathlib import Path
+PARAMETERS = json.loads(Path(__file__).with_name("parameters.json").read_text(encoding="utf-8"))["parameters"]
 from esphome.const import (
     CONF_ID,
     DEVICE_CLASS_TEMPERATURE,
@@ -122,6 +125,7 @@ def hours_sensor_schema():
 
 
 LWZSetpointNumber = lwz2_ns.class_("LWZSetpointNumber", number.Number)
+LWZParameterNumber = lwz2_ns.class_("LWZParameterNumber", number.Number)
 LWZFanStageNumber = lwz2_ns.class_("LWZFanStageNumber", number.Number)
 LWZHeatingCurveNumber = lwz2_ns.class_("LWZHeatingCurveNumber", number.Number)
 LWZProfileSelect = lwz2_ns.class_("LWZProfileSelect", select.Select)
@@ -158,11 +162,31 @@ def selected_schema():
         result[cv.Optional(entry["key"])] = schema
     return result
 
+def parameter_schema():
+    result = {}
+    for r in PARAMETERS:
+        if r["legacy"]:
+            continue
+        options = {"entity_category": "config"}
+        if r["unit"]:
+            options["unit_of_measurement"] = r["unit"]
+        if r["writable"]:
+            schema = number.number_schema(LWZParameterNumber, **options)
+        else:
+            options["entity_category"] = ENTITY_CATEGORY_DIAGNOSTIC
+            schema = sensor.sensor_schema(accuracy_decimals=1 if r["divisor"] == 10 else 0, **options)
+        result[cv.Optional(r["key"])] = schema
+    return result
+
 CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(LWZ2Component),
             cv.Optional("web_help", default=False): cv.boolean,
+            cv.Optional("parameter_overview", default=False): cv.boolean,
+            cv.Optional("parameters_data_status"): text_sensor.text_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC),
+            cv.Optional("parameters_valid"): binary_sensor.binary_sensor_schema(entity_category=ENTITY_CATEGORY_DIAGNOSTIC),
+            **parameter_schema(),
             cv.Optional("device_model", default="unknown"): cv.one_of("i", "SOL", "unknown"),
             cv.Optional("fan_speed_source", default="sGlobal"): cv.one_of("sGlobal", "sFan"),
             cv.Optional("diagnostic_max_age", default="30s"): cv.positive_time_period_milliseconds,
@@ -284,6 +308,20 @@ FINAL_VALIDATE_SCHEMA = validate_web_help
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
+    cg.add(var.set_parameter_overview(config["parameter_overview"]))
+    if "parameters_data_status" in config:
+        cg.add(var.set_parameters_status(await text_sensor.new_text_sensor(config["parameters_data_status"])))
+    if "parameters_valid" in config:
+        cg.add(var.set_parameters_valid(await binary_sensor.new_binary_sensor(config["parameters_valid"])))
+    for r in PARAMETERS:
+        if r["legacy"] or r["key"] not in config:
+            continue
+        if r["writable"]:
+            obj = await number.new_number(config[r["key"]], min_value=r["min"], max_value=r["max"], step=r["step"])
+            cg.add(obj.set_parent(var, r["id"]))
+            cg.add(var.set_parameter_number(r["id"], obj))
+        else:
+            cg.add(var.set_parameter_sensor(r["id"], await sensor.new_sensor(config[r["key"]])))
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
     cg.add(var.set_preferences_key(zlib.crc32((CORE.name + ":lwz2-v04").encode())))

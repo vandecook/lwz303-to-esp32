@@ -7,6 +7,7 @@
 #include <map>
 #include "esphome/components/number/number.h"
 #include "selected_fields.h"
+#include "parameters.h"
 
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/sensor/sensor.h"
@@ -39,6 +40,12 @@ enum class CommState : uint8_t {
 class LWZ2Component : public Component, public uart::UARTDevice {
  public:
   void set_preferences_key(uint32_t v) { preferences_key_ = v; }
+  void set_parameter_overview(bool enabled) { parameters_enabled_ = enabled; }
+  void set_parameter_number(uint8_t id, number::Number *n) { parameter_numbers_[id] = n; }
+  void set_parameter_sensor(uint8_t id, sensor::Sensor *s) { parameter_sensors_[id] = s; }
+  void set_parameters_status(text_sensor::TextSensor *s) { parameters_status_ = s; }
+  void set_parameters_valid(binary_sensor::BinarySensor *s) { parameters_valid_ = s; }
+  bool request_parameter(uint8_t id, float value);
   void set_device_model(const std::string &v);
   void set_fan_speed_source(const std::string &v);
   void set_diagnostic_max_age(uint32_t v) { diagnostic_max_age_ms_ = v; }
@@ -80,7 +87,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void set_trigger_heating(bool v) { trigger_heating_ = v; reschedule_poll_(); }
   void set_trigger_dhw(bool v) { trigger_dhw_ = v; reschedule_poll_(); }
   uint32_t effective_interval() const;
-  void refresh_config() { config_pending_ = true; }
+  void refresh_config() { config_pending_ = true; for (auto &due : parameter_due_) due = millis(); }
   void refresh_firmware() {
     firmware_pending_ = true;
     if (firmware_version_text_sensor_) firmware_version_text_sensor_->publish_state("warte auf Abfrage");
@@ -256,6 +263,22 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void v04_number_(const std::string &key, float value);
   void v04_publish_text_(const std::string &key, const std::string &value);
   enum class WriteStage : uint8_t { NONE, READ, SET, VERIFY };
+  bool parameters_enabled_{false};
+  std::map<uint8_t, number::Number *> parameter_numbers_;
+  std::map<uint8_t, sensor::Sensor *> parameter_sensors_;
+  text_sensor::TextSensor *parameters_status_{nullptr};
+  binary_sensor::BinarySensor *parameters_valid_{nullptr};
+  uint32_t parameter_due_[7]{};
+  size_t parameter_lengths_[256]{};
+  int16_t write_parameter_{-1};
+  const ParameterRule *parameter_rule_(uint8_t id) const;
+  ParameterRule parameter_layout_(const ParameterRule &r) const;
+  bool parameter_supported_(const ParameterRule &r) const;
+  void parameters_parse_(uint8_t command, const uint8_t *data, size_t len);
+  void parameters_invalidate_();
+  void parameters_publish_();
+  bool parameters_schedule_();
+  void parameters_result_(uint8_t command);
   bool writes_enabled_{false}, sending_set_{false}, write_transaction_{false};
   FirmwareProfile hc1_layout_{FirmwareProfile::FW_206};
   WriteStage write_stage_{WriteStage::NONE};
@@ -455,6 +478,14 @@ class LWZ2Component : public Component, public uart::UARTDevice {
 }  // namespace esphome::lwz2
 
 namespace esphome::lwz2 {
+class LWZParameterNumber : public number::Number {
+ public:
+  void set_parent(LWZ2Component *p, uint8_t id) { parent_ = p; id_ = id; }
+ protected:
+  void control(float value) override { if (parent_) parent_->request_parameter(id_, value); }
+  LWZ2Component *parent_{nullptr};
+  uint8_t id_{0};
+};
 class LWZSetpointNumber : public number::Number {
  public:
   void set_parent(LWZ2Component *parent, uint8_t index) { parent_ = parent; index_ = index; }

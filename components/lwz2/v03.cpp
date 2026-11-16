@@ -116,6 +116,7 @@ bool LWZ2Component::v03_schedule_() {
 }
 
 void LWZ2Component::v03_schedule_result_(uint8_t command) {
+  parameters_result_(command);
   for (unsigned i = 0; i < 4; i++) if (command == EXTRA_COMMANDS[i])
     v03_due_[i] = millis() + 10000;
   for (unsigned i = 0; i < 2; i++) if (command == (i ? 0xF6 : 0xF2))
@@ -182,6 +183,7 @@ void LWZ2Component::finish_write_(const std::string &status) {
   }
   publish_write_status_(status);
   write_stage_ = WriteStage::NONE;
+  write_parameter_ = -1;
   sending_set_ = false;
   write_expected_.clear();
 }
@@ -232,7 +234,17 @@ void LWZ2Component::write_response_(const std::vector<uint8_t> &frame) {
   if (write_stage_ == WriteStage::READ) {
     write_expected_ = data;
     write_read_ms_ = millis();
-    if (write_command_ == 0x17) {
+    if (write_parameter_ >= 0) {
+      const auto *base = parameter_rule_(write_parameter_);
+      if (!base || !parameter_supported_(*base)) { finish_write_("rejected: parameter model changed"); return; }
+      const auto r = parameter_layout_(*base);
+      if (data.size() < r.minimum || data.size() > 128) {
+        finish_write_("rejected: incomplete parameter block"); return;
+      }
+      const uint16_t raw = static_cast<uint16_t>(std::lround(write_value_ * r.divisor));
+      if (r.length == 2) write_expected_[r.offset] = raw >> 8;
+      write_expected_[r.offset+r.length-1] = raw & 255;
+    } else if (write_command_ == 0x17) {
       if (data.size() < 20 || data.size() > 128) { finish_write_("rejected: incomplete parameter block"); return; }
       if (write_index_ < 4) {
         static const uint8_t offsets[]{0, 2, 6, 8};

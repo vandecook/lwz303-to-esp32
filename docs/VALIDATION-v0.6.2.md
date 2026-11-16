@@ -1,5 +1,7 @@
 # Validierung v0.6.2
 
+**Geräterückmeldung 16.11.2026:** Der Nutzer bestätigt: „integration abtauen funktioniert“. Damit ist die Abtau-Integration an seiner LWZ303 mit Firmware 2.16 praktisch als funktionierend bestätigt. Die folgenden Hinweise auf eine noch ausstehende physische Bestätigung beschreiben den ursprünglichen Prüfstand vom 15.11.2026 und sind für diese Funktionsbestätigung überholt. Eine Einzelprüfung sämtlicher Sonderfälle wurde nicht berichtet.
+
 Stand: 15.11.2026. Zielhardware ESP32-C3; reale LWZ 303 SOL laut Nutzer Firmware 2.16. Keine Verbindung zum tatsächlichen Gerät, kein Flashen, kein GitHub-Publish und keine Änderungen an Home Assistant durch diese Erstellung.
 
 ## Ausgeführte Prüfungen

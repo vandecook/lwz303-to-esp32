@@ -1,6 +1,6 @@
 # Verdampfer-Abtauzustand - v0.6.2
 
-Stand: 15.11.2026. Neue read-only Anzeigen; keine Änderung an LWZ-Parametern, keine zusätzlichen Abfragen. Die Zuordnung stammt aus dem FHEM-Kommentar und muss für die reale Geräte-Firmware 2.16 während eines Abtauvorgangs noch bestätigt werden.
+Stand: 16.11.2026. Neue read-only Anzeigen; keine Änderung an LWZ-Parametern, keine zusätzlichen Abfragen. Die Abtau-Integration wurde am 16.11.2026 vom Nutzer an seiner LWZ303 mit Firmware 2.16 als funktionierend bestätigt. Grundlage der Zuordnung ist der FHEM-Kommentar.
 
 ## Datenquelle
 

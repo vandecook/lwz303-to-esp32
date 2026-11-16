@@ -11,7 +11,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.6.2"
+    version: "0.7.0"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -38,6 +38,9 @@ esp32:
       
 web_server:
   sorting_groups:
+    - id: lwz_parameters
+      name: "Programmierte Parameter"
+      sorting_weight: 18
     - id: lwz_basic
       name: "Basis"
       sorting_weight: 10
@@ -113,6 +116,281 @@ uart:
 
 
 lwz2:
+  parameter_overview: true
+  parameters_data_status:
+    name: "Programmierte Parameter Datenstatus"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameters_valid:
+    name: "Programmierte Parameter gueltig"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p03:
+    name: "P03 Raum-Sollwert Bereitschaft einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p06:
+    name: "P06 Warmwasser Bereitschaft einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p09:
+    name: "P09 Luefterstufe Bereitschaft einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p10:
+    name: "P10 Heizung Manuell Sollwert"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p11:
+    name: "P11 Warmwasser Manuell Sollwert"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p12:
+    name: "P12 Luefterstufe Manuell"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p16:
+    name: "P16 Heizkurve HK2 Gradient"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p17:
+    name: "P17 Heizkurve HK2 Fusspunkt"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p18:
+    name: "P18 Heizkurve HK2 Raumeinfluss"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p19:
+    name: "P19 Vorlaufanteil HK1"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p20:
+    name: "P20 Vorlaufanteil HK2"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p21:
+    name: "P21 Hysterese Heizstufe 1"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p22:
+    name: "P22 Hysterese Heizstufe 2"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p23:
+    name: "P23 Hysterese Heizstufe 3"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p24:
+    name: "P24 Hysterese Heizstufe 4"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p25:
+    name: "P25 Hysterese Heizstufe 5 (SOL)"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p26:
+    name: "P26 Weitere Hysterese 6"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p27:
+    name: "P27 Weitere Hysterese 7"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p28:
+    name: "P28 Weitere Hysterese 8"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p29:
+    name: "P29 Hysterese Asymmetrie"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p30:
+    name: "P30 Heizungsregelung Integralanteil"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p31:
+    name: "P31 Maximale Zusatzheizstufen Heizung"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p32:
+    name: "P32 Warmwasser Hysterese"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p33:
+    name: "P33 Zusatzheizung Wartezeit Warmwasser"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p34:
+    name: "P34 Warmwasser Zusatzheizung Temperaturgrenze"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p35:
+    name: "P35 Legionellenprogramm Intervall"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p36:
+    name: "P36 Warmwasser maximale Ladedauer"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p37:
+    name: "P37 Zuluft Stufe 1 einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p38:
+    name: "P38 Zuluft Stufe 2 einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p39:
+    name: "P39 Zuluft Stufe 3 einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p40:
+    name: "P40 Abluft Stufe 1 einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p41:
+    name: "P41 Abluft Stufe 2 einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p42:
+    name: "P42 Abluft Stufe 3 einstellen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p43:
+    name: "P43 Lueftung Stufe 3 Zeitvorgabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p44:
+    name: "P44 Lueftung Stufe 2 Zeitvorgabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p45:
+    name: "P45 Lueftung Stufe 1 Zeitvorgabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p46:
+    name: "P46 Lueftung Stufe 0 Zeitvorgabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p47:
+    name: "P47 Verdichter Wiederanlaufverzoegerung"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p48:
+    name: "P48 Hauptluefter Vorgabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p49:
+    name: "P49 Sommerbetrieb Temperatur"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p50:
+    name: "P50 Sommerbetrieb Hysterese"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p54:
+    name: "P54 Pumpenzyklen Minimum"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p55:
+    name: "P55 Pumpenzyklen Maximum"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p56:
+    name: "P56 Aussentemperatur maximale Pumpenzyklen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p57:
+    name: "P57 Aussentemperatur minimale Pumpenzyklen"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p58:
+    name: "P58 Temperaturerfassung nach Pumpenstart sperren"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p59:
+    name: "P59 Wiederanlauf vor Absenkende"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p70:
+    name: "P70 Trockenheizen Startzustand"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p71:
+    name: "P71 Trockenheizen Sockeltemperatur"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p72:
+    name: "P72 Trockenheizen Maximaltemperatur"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p73:
+    name: "P73 Trockenheizen Temperaturdauer"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p74:
+    name: "P74 Trockenheizen Temperaturanstieg"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p75:
+    name: "P75 Passive Kuehlung Vorgabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p77:
+    name: "P77 Aussentemperatur Filterzeit"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p78:
+    name: "P78 Bivalenzpunkt"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p79:
+    name: "P79 Zusatzheizung Wartezeit Heizung"
+    mode: box
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p80:
+    name: "P80 Solar Freigabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p81:
+    name: "P81 Solar Ladung Temperaturdifferenz"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p82:
+    name: "P82 Solar Verdichterstart Verzoegerung"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p84:
+    name: "P84 Warmwasserpuffer Freigabe"
+    web_server:
+      sorting_group_id: lwz_parameters
+  parameter_p84_solar:
+    name: "P84 Solar Warmwassertemperatur"
+    web_server:
+      sorting_group_id: lwz_parameters
   id: lwz303
   web_help: true
   uart_id: lwz_uart
@@ -453,57 +731,57 @@ lwz2:
   heating_day_setpoint:
     name: "Heizung Raum-Sollwert Tag"
     web_server:
-      sorting_group_id: lwz_basic
+      sorting_group_id: lwz_parameters
   heating_night_setpoint:
     name: "Heizung Raum-Sollwert Nacht"
     web_server:
-      sorting_group_id: lwz_basic
+      sorting_group_id: lwz_parameters
   p01-p12_p03_room_temp_standby:
     name: "Heizung Raum-Sollwert Bereitschaft"
     disabled_by_default: true
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   dhw_day_setpoint:
     name: "Warmwasser-Sollwert Tag"
     web_server:
-      sorting_group_id: lwz_basic
+      sorting_group_id: lwz_parameters
   dhw_night_setpoint:
     name: "Warmwasser-Sollwert Nacht"
     web_server:
-      sorting_group_id: lwz_basic
+      sorting_group_id: lwz_parameters
   p01-p12_p06_d_h_wset_temp_standby:
     name: "Warmwasser-Sollwert Bereitschaft"
     disabled_by_default: true
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   fan_stage_day:
     name: "Lüfterstufe Tag"
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   fan_stage_night:
     name: "Lüfterstufe Nacht"
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   p01-p12_p09_fan_stage_standby:
     name: "Lüfterstufe Bereitschaft"
     disabled_by_default: true
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   p01-p12_p10_h_c_temp_manual:
     name: "Heizung Sollwert manuell"
     disabled_by_default: true
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   p01-p12_p11_d_h_wset_temp_manual:
     name: "Warmwasser-Sollwert manuell"
     disabled_by_default: true
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   p01-p12_p12_fan_stage_manual:
     name: "Lüfterstufe manuell"
     disabled_by_default: true
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   profile_slot:
     name: "Profil Speicherplatz"
     web_server:
@@ -551,18 +829,18 @@ lwz2:
     mode: slider
     name: "HK1 Heizkurve Gradient"
     web_server:
-      sorting_group_id: lwz_basic
+      sorting_group_id: lwz_parameters
   hc1_low_end:
     mode: slider
     name: "HK1 Heizkurve Fußpunkt"
     web_server:
-      sorting_group_id: lwz_basic
+      sorting_group_id: lwz_parameters
   hc1_room_influence:
     name: "HK1 Raumeinfluss Heizen (P15)"
     mode: slider
     entity_category: config
     web_server:
-      sorting_group_id: lwz_expert
+      sorting_group_id: lwz_parameters
   defrost_evaporator_active:
     name: "Abtauen"
   defrost_evaporator_valid:

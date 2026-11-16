@@ -73,7 +73,7 @@ def main():
     command = [args.compiler] + (['c++'] if args.zig else [])
     command += ['-std=c++17', '-I'+str(BUILD), '-I'+str(ROOT/'components/lwz2'),
                 str(ROOT/'components/lwz2/lwz2.cpp'), str(ROOT/'components/lwz2/v03.cpp'), str(ROOT/'components/lwz2/v04.cpp'), str(ROOT/'components/lwz2/profiles.cpp'),
-                str(ROOT/'tests/test_component.cpp'), '-o', str(exe)]
+                str(ROOT/'components/lwz2/parameters.cpp'), str(ROOT/'tests/test_component.cpp'), '-o', str(exe)]
     subprocess.run(command, check=True, cwd=ROOT)
     subprocess.run([str(exe)], check=True, cwd=ROOT)
 

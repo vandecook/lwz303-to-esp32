@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 - 2026-11-16 (lokales Quellpaket)
+
+- Eigener Bereich „Programmierte Parameter“; 70 nummerierte P-Felder aus den belegten 2.x-Blöcken lesen. SOL-Felder modellabhängig, P25 bei i nicht auswerten; keine Kühlungsstunden.
+- P1–P15, P19, P31, P32, P37–P42, P49, P54–P58 und P79 einstellbar. Bestehende neun Einstellfelder weiterverwenden, 22 ergänzen. P86 ist mangels belegtem 2.x-Zugriff weiterhin offen; kein Zugriff auf das neuere Register 0A05A3.
+- Bestehende Entitätsnamen, explizite IDs, Domänen und Geräteidentität erhalten. Bisherige reine Sensoren bleiben erhalten, zusätzliche Eingabefelder ergänzen die Bedienung. Eigener automatischer Kompatibilitätsvergleich mit dem 0.6.2-Bestand.
+- Vollständigen Block frisch lesen, nur Zielfeld ändern, alle übrigen Bytes erhalten und unabhängig zurücklesen; bei unklarer SET-Antwort keine automatische Wiederholung. Modell- und Decoderwechsel während eines Auftrags sperren.
+- Datenfrische der Parameter getrennt anzeigen, letzte Werte bei Kommunikationslücken behalten. Neue Blöcke gestaffelt im Konfigurationsintervall abfragen; keine doppelten Abfragen für vorhandene Quellen.
+- Abtau-Integration aus 0.6.2 am 16.11.2026 vom Nutzer als funktionierend bestätigt. Neue Parameter-Schreibwege benötigen ihre eigene Geräteprüfung. HA-Auswertungen und Wochenprogramme bleiben separat geplant.
+
 ## 0.6.2 - 2026-11-15 (lokales Quellpaket)
 
 - Anzeige vereinfacht: Binärsensor „Abtauen“, Textzustand ausschließlich „Ja“ oder „Nein“ bei bekanntem Code. Hinweise zur Datenqualität bleiben in den separaten Diagnoseanzeigen.

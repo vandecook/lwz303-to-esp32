@@ -10,7 +10,8 @@ namespace esphome::lwz2 {
 static const char *const TAG = "lwz2";
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.6.2 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.7.0 (device FW independent of decoder profile)");
+  parameters_invalidate_();
   this->frame_.reserve(128);
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05}) {
     invalidate_block_(command);
@@ -76,6 +77,7 @@ void LWZ2Component::set_firmware(const std::string &fw) {
     return;
 
   this->firmware_ = next;
+  parameters_invalidate_();
   v04_invalidate_();
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05})
     invalidate_block_(command);
@@ -139,6 +141,7 @@ void LWZ2Component::reset_schedule_() {
   this->next_09_ms_ = now + 4000;
   this->next_allowed_request_ms_ = now;
   for (unsigned i = 0; i < 4; i++) v03_due_[i] = now + 4500 + i * 500;
+  for (unsigned i = 0; i < 7; i++) parameter_due_[i] = now + 10000 + i * 1500;
 }
 
 void LWZ2Component::scheduler_() {
@@ -176,7 +179,7 @@ void LWZ2Component::scheduler_() {
     this->start_transaction_(0xE8);
     return;
   }
-  if ((this->raw_01_text_sensor_ || this->supply_stage1_airflow_sensor_ || this->supply_stage2_airflow_sensor_ || this->supply_stage3_airflow_sensor_ || this->exhaust_stage1_airflow_sensor_ || this->exhaust_stage2_airflow_sensor_ || this->exhaust_stage3_airflow_sensor_) && this->time_reached_(now, this->next_01_ms_)) {
+  if ((parameters_enabled_ || this->raw_01_text_sensor_ || this->supply_stage1_airflow_sensor_ || this->supply_stage2_airflow_sensor_ || this->supply_stage3_airflow_sensor_ || this->exhaust_stage1_airflow_sensor_ || this->exhaust_stage2_airflow_sensor_ || this->exhaust_stage3_airflow_sensor_) && this->time_reached_(now, this->next_01_ms_)) {
     this->start_transaction_(0x01);
     return;
   }
@@ -184,6 +187,7 @@ void LWZ2Component::scheduler_() {
     this->start_transaction_(0x09);
     return;
   }
+  parameters_schedule_();
 }
 
 void LWZ2Component::start_transaction_(uint8_t command) {
@@ -562,6 +566,13 @@ bool LWZ2Component::validate_frame_(const std::vector<uint8_t> &frame, std::stri
     case 0xEE: minimum = 19; break;
     case 0xFC: minimum = 9; break;
     case 0x17: minimum = 20; break;
+    case 0x03: minimum = 10; break;
+    case 0x06: minimum = 23; break;
+    case 0x07: minimum = 10; break;
+    case 0x08: minimum = 10; break;
+    case 0x0A: minimum = 9; break;
+    case 0x0E: minimum = 2; break;
+    case 0x10: minimum = 9; break;
     case 0xF4: minimum = this->hc1_layout_ == FirmwareProfile::FW_214J ? 37 : 34; break;
     case 0xE8: minimum = 22; break;
     case 0x01: minimum = this->uses_206_layout_() ? 12 : 6; break;
@@ -607,6 +618,7 @@ void LWZ2Component::parse_frame_(uint8_t command, const std::vector<uint8_t> &fr
   block_success_[command] = millis();
   block_seen_[command] = true;
   block_stale_[command] = false;
+  parameters_parse_(command, data, len);
   parse_selected_(command, data, len);
   v04_parse_(command, data, len);
   if (command == 0x17) {
@@ -802,6 +814,10 @@ void LWZ2Component::publish_stale_numeric_states_() {
 }
 
 uint32_t LWZ2Component::block_max_age_(uint8_t command) const {
+  if (command == 0x03 || command == 0x06 || command == 0x07 || command == 0x08 ||
+      command == 0x0A || command == 0x0E || command == 0x10)
+    return std::max(stale_after_ms_, config_interval_ms_ * 3);
+  if (command == 0x01) return std::max(stale_after_ms_, fan_config_interval_ms_ * 3);
   const uint32_t interval = command == 5 ? config_interval_ms_ : command == 9 ? history_interval_ms_ :
       command == 0x17 ? 60000 : command == 0xF4 ? heating_interval_ms_ :
       command == 0xE8 ? fan_interval_ms_ :
@@ -816,6 +832,7 @@ bool LWZ2Component::block_fresh_(uint8_t command) const {
 }
 
 void LWZ2Component::v06_publish_() {
+  parameters_publish_();
   const uint32_t now = millis();
   auto binary = [&](const char *key, bool value) {
     auto it = v04_binary_.find(key);

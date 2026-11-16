@@ -41,7 +41,23 @@ void LWZ2Component::v04_setup_() {
 }
 void LWZ2Component::set_device_model(const std::string &v) {
   if (v != "i" && v != "SOL" && v != "unknown") return;
+  if (v == device_model_) return;
+  if (write_stage_ != WriteStage::NONE) {
+    publish_write_status_("rejected: model change during write transaction"); return;
+  }
   device_model_ = v;
+  // Only model-dependent parameter observations are invalidated; common values keep their display.
+  for (const auto &r : PARAMETER_RULES) if (r.sol_only) {
+    auto n = parameter_numbers_.find(r.id);
+    if (n != parameter_numbers_.end()) n->second->publish_state(NAN);
+    auto s = parameter_sensors_.find(r.id);
+    if (s != parameter_sensors_.end()) s->second->publish_state(NAN);
+  }
+  block_seen_[0x08] = false;
+  parameter_lengths_[0x06] = 0;
+  parameter_due_[1] = millis();
+  parameter_lengths_[0x08] = 0;
+  parameter_due_[3] = millis();
   // Invalidate translated stages; raw codes remain observable.
   v04_publish_text_("hc_stage_text", "warte auf F2");
   v04_publish_text_("dhw_stage_text", "warte auf F2");

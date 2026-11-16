@@ -1,0 +1,1352 @@
+{
+  "lwz303.yaml": {
+    "entities": {
+      "esphome": {
+        "name": "${device_name}"
+      },
+      "esphome.project": {
+        "name": "vandecook.lwz303-to-esp32"
+      },
+      "lwz2.outside_temperature": {
+        "name": "Außentemperatur"
+      },
+      "lwz2.flow_temperature": {
+        "name": "Vorlauftemperatur"
+      },
+      "lwz2.return_temperature": {
+        "name": "Rücklauftemperatur"
+      },
+      "lwz2.hot_gas_temperature": {
+        "name": "Heißgastemperatur",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_temperature": {
+        "name": "Warmwasser-Isttemperatur"
+      },
+      "lwz2.evaporator_temperature": {
+        "name": "Verdampfertemperatur",
+        "disabled_by_default": true
+      },
+      "lwz2.condenser_temperature": {
+        "name": "Verflüssigertemperatur",
+        "disabled_by_default": true
+      },
+      "lwz2.s_global_mixer_open": {
+        "name": "Mischer fährt auf (Statusbit)",
+        "disabled_by_default": true
+      },
+      "lwz2.s_global_mixer_closed": {
+        "name": "Mischer fährt zu (Statusbit)",
+        "disabled_by_default": true
+      },
+      "lwz2.heat_pipe_valve": {
+        "name": "Heat-Pipe-Ventil",
+        "disabled_by_default": true
+      },
+      "lwz2.diverter_valve": {
+        "name": "Umschaltventil",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_pump": {
+        "name": "Warmwasserpumpe"
+      },
+      "lwz2.heating_circuit_pump": {
+        "name": "Heizkreispumpe"
+      },
+      "lwz2.compressor": {
+        "name": "Verdichter"
+      },
+      "lwz2.s_global_booster_stage3": {
+        "name": "Zusatzheizung Stufe 3 (nur 2.06-Layout)",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.booster_stage2": {
+        "name": "Zusatzheizung Stufe 2",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.booster_stage1": {
+        "name": "Zusatzheizung Stufe 1",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_high_pressure_sensor": {
+        "name": "Signal Hochdruck",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_low_pressure_sensor": {
+        "name": "Signal Niederdruck",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_evaporator_ice_monitor": {
+        "name": "Signal Vereisungsüberwachung",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_signal_anode": {
+        "name": "Signal Anode",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_oven_fireplace": {
+        "name": "Ofen- und Kamin-Signal",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.exhaust_fan_speed_percent": {
+        "name": "Relative Drehzahl Abluft"
+      },
+      "lwz2.supply_fan_speed_percent": {
+        "name": "Relative Drehzahl Zuluft"
+      },
+      "lwz2.main_fan_speed_percent": {
+        "name": "Relative Drehzahl Hauptlüfter",
+        "disabled_by_default": true
+      },
+      "lwz2.s_global_outside_temp_filtered": {
+        "name": "Außentemperatur gefiltert",
+        "disabled_by_default": true
+      },
+      "lwz2.inside_temperature": {
+        "name": "Innentemperatur sGlobal",
+        "disabled_by_default": true
+      },
+      "lwz2.s_d_h_w_dhw_set_temp": {
+        "name": "Warmwasser-Sollwert aktuell"
+      },
+      "lwz2.s_d_h_w_dhw_booster_stage": {
+        "name": "Stufenwert Zusatzheizung Warmwasser",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_d_h_w_pasteurisation_mode": {
+        "name": "Pasteurisierungsmodus",
+        "disabled_by_default": true
+      },
+      "lwz2.s_d_h_w_dhw_op_mode": {
+        "name": "Warmwasser-Betriebszustand aus sDHW"
+      },
+      "lwz2.supply_fan_speed": {
+        "name": "Ist-Drehzahl Zuluftventilator",
+        "disabled_by_default": true
+      },
+      "lwz2.exhaust_fan_speed": {
+        "name": "Ist-Drehzahl Abluftventilator",
+        "disabled_by_default": true
+      },
+      "lwz2.supply_fan_speed_target": {
+        "name": "Zuluft-Drehzahl-Sollwert, % laut Decoderkommentar",
+        "disabled_by_default": true
+      },
+      "lwz2.exhaust_fan_speed_target": {
+        "name": "Abluft-Drehzahl-Sollwert",
+        "disabled_by_default": true
+      },
+      "lwz2.s_fan_supply_fan_speed200": {
+        "name": "Zuluft Speed200-Kalibrierkennwert",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_fan_exhaust_fan_speed200": {
+        "name": "Abluft Speed200-Kalibrierkennwert",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_integral_heat": {
+        "name": "Heizungs-Integral",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_heat_set_temp": {
+        "name": "Heizungs-Regeltemperatur Soll"
+      },
+      "lwz2.s_h_c1_heat_temp": {
+        "name": "Heizungs-Regeltemperatur Ist"
+      },
+      "lwz2.s_h_c1_season_mode": {
+        "name": "Heizbetrieb Sommer oder Winter"
+      },
+      "lwz2.s_h_c1_integral_switch": {
+        "name": "HK1 Integralschalter",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_hc_op_mode": {
+        "name": "Heizkreis-Betriebszustand aus sHC1"
+      },
+      "lwz2.s_h_c1_room_set_temp": {
+        "name": "Raum-Sollwert aktuell",
+        "disabled_by_default": true
+      },
+      "lwz2.s_h_c1_on_hysteresis_no": {
+        "name": "Nummer der Einschalthysterese",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_off_hysteresis_no": {
+        "name": "Nummer der Ausschalthysterese",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_hc_booster_stage": {
+        "name": "HK1 Zusatzheizungsstufe",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_hc_stage": {
+        "name": "HK1 Heizstufe (2.14j-Layout)",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_inside_temp": {
+        "name": "Innentemperatur sHC1 (2.14j-Layout)",
+        "disabled_by_default": true
+      },
+      "lwz2.operating_hours_1": {
+        "name": "Betriebsstunden-Zähler 1",
+        "disabled_by_default": true
+      },
+      "lwz2.operating_hours_2": {
+        "name": "Betriebsstunden-Zähler 2",
+        "disabled_by_default": true
+      },
+      "lwz2.heating_hours": {
+        "name": "Heizungsstunden",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_hours": {
+        "name": "Warmwasserstunden",
+        "disabled_by_default": true
+      },
+      "lwz2.s_program_op_mode": {
+        "name": "Programmbetriebsart"
+      },
+      "lwz2.s_program_prog_state_h_c": {
+        "name": "Programmzustand Heizung"
+      },
+      "lwz2.s_program_prog_state_d_h_w": {
+        "name": "Programmzustand Warmwasser",
+        "disabled_by_default": true
+      },
+      "lwz2.s_program_prog_state_f_a_n": {
+        "name": "Programmzustand Lüftung",
+        "disabled_by_default": true
+      },
+      "lwz2.s_timedate_weekday": {
+        "name": "Geräteuhr Wochentag",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_hour": {
+        "name": "Geräteuhr Stunde",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_minutes": {
+        "name": "Geräteuhr Minute",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_sec": {
+        "name": "Geräteuhr Sekunde",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_year": {
+        "name": "Geräteuhr Jahr (Rohwert)",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_month": {
+        "name": "Geräteuhr Monat",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_day": {
+        "name": "Geräteuhr Tag",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.heating_day_setpoint": {
+        "name": "Heizung Raum-Sollwert Tag"
+      },
+      "lwz2.heating_night_setpoint": {
+        "name": "Heizung Raum-Sollwert Nacht"
+      },
+      "lwz2.p01-p12_p03_room_temp_standby": {
+        "name": "Heizung Raum-Sollwert Bereitschaft",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_day_setpoint": {
+        "name": "Warmwasser-Sollwert Tag"
+      },
+      "lwz2.dhw_night_setpoint": {
+        "name": "Warmwasser-Sollwert Nacht"
+      },
+      "lwz2.p01-p12_p06_d_h_wset_temp_standby": {
+        "name": "Warmwasser-Sollwert Bereitschaft",
+        "disabled_by_default": true
+      },
+      "lwz2.fan_stage_day": {
+        "name": "Lüfterstufe Tag"
+      },
+      "lwz2.fan_stage_night": {
+        "name": "Lüfterstufe Nacht"
+      },
+      "lwz2.p01-p12_p09_fan_stage_standby": {
+        "name": "Lüfterstufe Bereitschaft",
+        "disabled_by_default": true
+      },
+      "lwz2.p01-p12_p10_h_c_temp_manual": {
+        "name": "Heizung Sollwert manuell",
+        "disabled_by_default": true
+      },
+      "lwz2.p01-p12_p11_d_h_wset_temp_manual": {
+        "name": "Warmwasser-Sollwert manuell",
+        "disabled_by_default": true
+      },
+      "lwz2.p01-p12_p12_fan_stage_manual": {
+        "name": "Lüfterstufe manuell",
+        "disabled_by_default": true
+      },
+      "lwz2.profile_slot": {
+        "name": "Profil Speicherplatz"
+      },
+      "lwz2.profile_name": {
+        "name": "Profil Name (Entwurf)"
+      },
+      "lwz2.profile_gradient": {
+        "name": "Profil Gradient (Entwurf)"
+      },
+      "lwz2.profile_low_end": {
+        "name": "Profil Fusspunkt (Entwurf)"
+      },
+      "lwz2.profile_room_influence": {
+        "name": "Profil Raumeinfluss (Entwurf)"
+      },
+      "lwz2.profile_selected": {
+        "name": "Gespeichertes Profil und Editorstatus"
+      },
+      "lwz2.profile_recognized": {
+        "name": "Erkanntes Heizkurvenprofil"
+      },
+      "lwz2.profile_last_applied": {
+        "name": "Profil zuletzt angewendet"
+      },
+      "lwz2.profile_action_status": {
+        "name": "Profil Aktionsstatus"
+      },
+      "lwz2.profile_data_status": {
+        "name": "Profil Datenstatus"
+      },
+      "lwz2.hc1_gradient": {
+        "name": "HK1 Heizkurve Gradient"
+      },
+      "lwz2.hc1_low_end": {
+        "name": "HK1 Heizkurve Fußpunkt"
+      },
+      "lwz2.hc1_room_influence": {
+        "name": "HK1 Raumeinfluss Heizen (P15)",
+        "entity_category": "config"
+      },
+      "lwz2.defrost_evaporator_active": {
+        "name": "Abtauen"
+      },
+      "lwz2.defrost_evaporator_valid": {
+        "name": "Abtauzustand gueltig"
+      },
+      "lwz2.defrost_evaporator_raw": {
+        "name": "Abtauen F2 Rohcode"
+      },
+      "lwz2.defrost_evaporator_status": {
+        "name": "Abtauzustand"
+      },
+      "lwz2.defrost_evaporator_data_status": {
+        "name": "Abtauen Datenstatus"
+      },
+      "lwz2.defrost_request_comparison": {
+        "name": "Abtauen Abgleich Betriebsanforderung"
+      },
+      "lwz2.data_quality": {
+        "name": "Datenqualitaet je Statusblock"
+      },
+      "lwz2.compressor_purpose": {
+        "name": "Verdichter Betriebszweck vorlaeufig"
+      },
+      "lwz2.compressor_purpose_data_status": {
+        "name": "Verdichter Betriebszweck Datenstatus"
+      },
+      "lwz2.compressor_purpose_valid": {
+        "name": "Verdichter Betriebszweck gueltig"
+      },
+      "lwz2.simultaneous_demand": {
+        "name": "Gleichzeitiger Bedarf laut F2"
+      },
+      "lwz2.heat_request": {
+        "name": "Betriebsanforderung F2 Rohcode"
+      },
+      "lwz2.heat_request2": {
+        "name": "Betriebsanforderung F2 Vergleichscode"
+      },
+      "lwz2.block_FB_fresh": {
+        "name": "Datenblock FB frisch"
+      },
+      "lwz2.block_F3_fresh": {
+        "name": "Datenblock F3 frisch"
+      },
+      "lwz2.block_F4_fresh": {
+        "name": "Datenblock F4 frisch"
+      },
+      "lwz2.block_E8_fresh": {
+        "name": "Datenblock E8 frisch"
+      },
+      "lwz2.block_09_fresh": {
+        "name": "Datenblock 09 frisch"
+      },
+      "lwz2.block_EE_fresh": {
+        "name": "Datenblock EE frisch"
+      },
+      "lwz2.block_FC_fresh": {
+        "name": "Datenblock FC frisch"
+      },
+      "lwz2.block_17_fresh": {
+        "name": "Datenblock 17 frisch"
+      },
+      "lwz2.block_05_fresh": {
+        "name": "Datenblock 05 frisch"
+      },
+      "lwz2.block_F2_fresh": {
+        "name": "Datenblock F2 frisch"
+      },
+      "lwz2.block_F6_fresh": {
+        "name": "Datenblock F6 frisch"
+      },
+      "lwz2.communication_ok": {
+        "name": "Kommunikation OK"
+      },
+      "lwz2.communication_status": {
+        "name": "Kommunikationszustand"
+      },
+      "lwz2.last_error": {
+        "name": "Letzter Kommunikationsfehler"
+      },
+      "lwz2.successful_queries": {
+        "name": "Erfolgreiche Abfragen"
+      },
+      "lwz2.failed_queries": {
+        "name": "Fehlgeschlagene Abfragen"
+      },
+      "lwz2.timeouts": {
+        "name": "Timeouts"
+      },
+      "lwz2.retries": {
+        "name": "Retries"
+      },
+      "lwz2.last_success": {
+        "name": "Letzter Erfolg seit Boot"
+      },
+      "lwz2.config_updated": {
+        "name": "HK1 aktualisiert seit Boot"
+      },
+      "lwz2.firmware_version": {
+        "name": "Abgefragte Firmware"
+      },
+      "lwz2.write_status": {
+        "name": "Schreibstatus",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.hc_stage": {
+        "name": "Heizungsanforderung Rohcode"
+      },
+      "lwz2.dhw_stage": {
+        "name": "Warmwasseranforderung Rohcode"
+      },
+      "lwz2.hc_stage_text": {
+        "name": "Heizungsanforderung"
+      },
+      "lwz2.dhw_stage_text": {
+        "name": "Warmwasseranforderung"
+      },
+      "lwz2.fan_stage_diagnostics": {
+        "name": "Luefterstufe Datenbasis",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.current_fan_stage": {
+        "name": "Aktuelle Luefterstufe"
+      },
+      "lwz2.exhaust_fault": {
+        "name": "F5 Abluft lokal erkannt"
+      },
+      "lwz2.supply_fault": {
+        "name": "F6 Zuluft lokal erkannt"
+      },
+      "lwz2.exhaust_status": {
+        "name": "Abluft Zustand"
+      },
+      "lwz2.supply_status": {
+        "name": "Zuluft Zustand"
+      },
+      "lwz2.exhaust_data_status": {
+        "name": "Abluft aktuelle Datenbewertung"
+      },
+      "lwz2.supply_data_status": {
+        "name": "Zuluft aktuelle Datenbewertung"
+      },
+      "lwz2.exhaust_fault_count": {
+        "name": "Abluft Fehleranzahl"
+      },
+      "lwz2.supply_fault_count": {
+        "name": "Zuluft Fehleranzahl"
+      },
+      "lwz2.exhaust_fault_begin": {
+        "name": "Abluft letzter Fehlerbeginn"
+      },
+      "lwz2.exhaust_fault_end": {
+        "name": "Abluft letztes Fehlerende"
+      },
+      "lwz2.supply_fault_begin": {
+        "name": "Zuluft letzter Fehlerbeginn"
+      },
+      "lwz2.supply_fault_end": {
+        "name": "Zuluft letztes Fehlerende"
+      },
+      "lwz2.fault_reset_reason": {
+        "name": "Letzte Luefterfehler-Ruecksetzung"
+      },
+      "lwz2.persistence_status": {
+        "name": "Diagnose Speicherstatus"
+      },
+      "lwz2.lwz_error_memory": {
+        "name": "Fehlerhistorie Rohwerte"
+      },
+      "lwz2.clock_mode": {
+        "name": "Uhr Winterzeit Sommerzeit"
+      },
+      "select[0]": {
+        "name": "Geraetemodell",
+        "id": "lwz_device_model",
+        "entity_category": "config"
+      },
+      "select[1]": {
+        "name": "Luefterdiagnose Drehzahlquelle",
+        "id": "lwz_speed_source",
+        "entity_category": "config"
+      },
+      "select[2]": {
+        "name": "HK1 Decoderlayout",
+        "id": "hc1_decoder_layout",
+        "entity_category": "config"
+      },
+      "select[3]": {
+        "name": "Firmwareprofil",
+        "id": "lwz_firmware",
+        "entity_category": "config"
+      },
+      "number[0]": {
+        "name": "Statusabfrage Standardintervall",
+        "id": "normal_interval",
+        "entity_category": "config"
+      },
+      "number[1]": {
+        "name": "Statusabfrage Schnellintervall",
+        "id": "dynamic_interval",
+        "entity_category": "config"
+      },
+      "number[2]": {
+        "name": "Heizkurven-Abfrageintervall HK1",
+        "id": "config_interval",
+        "entity_category": "config"
+      },
+      "switch[0]": {
+        "name": "Schreibfreigabe",
+        "id": "lwz_write_permission",
+        "entity_category": "config"
+      },
+      "switch[1]": {
+        "name": "Beschleunigte Statusabfrage",
+        "id": "dynamic_enabled",
+        "entity_category": "config"
+      },
+      "switch[2]": {
+        "name": "Schnellabfrage bei Verdichterbetrieb",
+        "id": "trigger_compressor",
+        "entity_category": "config"
+      },
+      "switch[3]": {
+        "name": "Schnellabfrage bei Heizbetrieb",
+        "id": "trigger_heating",
+        "entity_category": "config"
+      },
+      "switch[4]": {
+        "name": "Schnellabfrage bei Warmwasserbereitung",
+        "id": "trigger_dhw",
+        "entity_category": "config"
+      },
+      "switch[5]": {
+        "name": "ESP32 Neustart bestätigen (30s)",
+        "id": "restart_confirm",
+        "entity_category": "config"
+      },
+      "button[0]": {
+        "name": "Profil Entwurf speichern",
+        "id": "lwz_profile_save",
+        "entity_category": "config"
+      },
+      "button[1]": {
+        "name": "Profil Entwurf verwerfen",
+        "id": "lwz_profile_discard",
+        "entity_category": "config"
+      },
+      "button[2]": {
+        "name": "Profil Anlagenwerte in Entwurf",
+        "id": "lwz_profile_copy",
+        "entity_category": "config"
+      },
+      "button[3]": {
+        "name": "Profil jetzt anwenden",
+        "id": "lwz_profile_apply",
+        "entity_category": "config"
+      },
+      "button[4]": {
+        "name": "Profil Anlagenwerte jetzt lesen",
+        "id": "lwz_profile_refresh",
+        "entity_category": "config"
+      },
+      "button[5]": {
+        "name": "Firmware jetzt abfragen",
+        "id": "lwz_query_firmware",
+        "entity_category": "diagnostic"
+      },
+      "button[6]": {
+        "name": "Luefterfehler nach LWZ-Neustart zuruecksetzen",
+        "id": "lwz_reset_fan_faults",
+        "entity_category": "diagnostic"
+      },
+      "button[7]": {
+        "name": "Unklare Uhrzeit als Winterzeit bestaetigen",
+        "entity_category": "config"
+      },
+      "button[8]": {
+        "name": "Unklare Uhrzeit als Sommerzeit bestaetigen",
+        "entity_category": "config"
+      },
+      "button[9]": {
+        "name": "Uhr Stunde +1 korrigieren",
+        "entity_category": "config"
+      },
+      "button[10]": {
+        "name": "Uhr Stunde -1 korrigieren",
+        "entity_category": "config"
+      },
+      "button[11]": {
+        "name": "HK1 jetzt aktualisieren"
+      },
+      "button[12]": {
+        "name": "Kommunikationszähler zurücksetzen",
+        "entity_category": "diagnostic"
+      },
+      "button[13]": {
+        "name": "RS232 neu initialisieren",
+        "entity_category": "diagnostic"
+      },
+      "button[14]": {
+        "name": "ESP32 neu starten",
+        "entity_category": "diagnostic"
+      },
+      "sensor[0]": {
+        "name": "Uptime",
+        "id": "lwz_uptime_seconds",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "sensor[1]": {
+        "name": "Aktives Status-Abfrageintervall"
+      },
+      "text_sensor[0]": {
+        "name": "ESP32 Laufzeit",
+        "id": "lwz_uptime_readable",
+        "entity_category": "diagnostic"
+      },
+      "text_sensor[1]": {
+        "name": "ESP32 Uhrzeit"
+      }
+    },
+    "device": {
+      "name": "${device_name}",
+      "friendly_name": "${device_name}"
+    }
+  },
+  "lwz303-sol-example.yaml": {
+    "entities": {
+      "esphome": {
+        "name": "${device_name}"
+      },
+      "esphome.project": {
+        "name": "vandecook.lwz303-to-esp32"
+      },
+      "lwz2.outside_temperature": {
+        "name": "Außentemperatur"
+      },
+      "lwz2.flow_temperature": {
+        "name": "Vorlauftemperatur"
+      },
+      "lwz2.return_temperature": {
+        "name": "Rücklauftemperatur"
+      },
+      "lwz2.hot_gas_temperature": {
+        "name": "Heißgastemperatur",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_temperature": {
+        "name": "Warmwasser-Isttemperatur"
+      },
+      "lwz2.evaporator_temperature": {
+        "name": "Verdampfertemperatur",
+        "disabled_by_default": true
+      },
+      "lwz2.condenser_temperature": {
+        "name": "Verflüssigertemperatur",
+        "disabled_by_default": true
+      },
+      "lwz2.s_global_mixer_open": {
+        "name": "Mischer fährt auf (Statusbit)",
+        "disabled_by_default": true
+      },
+      "lwz2.s_global_mixer_closed": {
+        "name": "Mischer fährt zu (Statusbit)",
+        "disabled_by_default": true
+      },
+      "lwz2.heat_pipe_valve": {
+        "name": "Heat-Pipe-Ventil",
+        "disabled_by_default": true
+      },
+      "lwz2.diverter_valve": {
+        "name": "Umschaltventil",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_pump": {
+        "name": "Warmwasserpumpe"
+      },
+      "lwz2.heating_circuit_pump": {
+        "name": "Heizkreispumpe"
+      },
+      "lwz2.compressor": {
+        "name": "Verdichter"
+      },
+      "lwz2.s_global_booster_stage3": {
+        "name": "Zusatzheizung Stufe 3 (nur 2.06-Layout)",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.booster_stage2": {
+        "name": "Zusatzheizung Stufe 2",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.booster_stage1": {
+        "name": "Zusatzheizung Stufe 1",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_high_pressure_sensor": {
+        "name": "Signal Hochdruck",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_low_pressure_sensor": {
+        "name": "Signal Niederdruck",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_evaporator_ice_monitor": {
+        "name": "Signal Vereisungsüberwachung",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_signal_anode": {
+        "name": "Signal Anode",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_global_oven_fireplace": {
+        "name": "Ofen- und Kamin-Signal",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.exhaust_fan_speed_percent": {
+        "name": "Relative Drehzahl Abluft"
+      },
+      "lwz2.supply_fan_speed_percent": {
+        "name": "Relative Drehzahl Zuluft"
+      },
+      "lwz2.main_fan_speed_percent": {
+        "name": "Relative Drehzahl Hauptlüfter",
+        "disabled_by_default": true
+      },
+      "lwz2.s_global_outside_temp_filtered": {
+        "name": "Außentemperatur gefiltert",
+        "disabled_by_default": true
+      },
+      "lwz2.inside_temperature": {
+        "name": "Innentemperatur sGlobal",
+        "disabled_by_default": true
+      },
+      "lwz2.s_d_h_w_dhw_set_temp": {
+        "name": "Warmwasser-Sollwert aktuell"
+      },
+      "lwz2.s_d_h_w_dhw_booster_stage": {
+        "name": "Stufenwert Zusatzheizung Warmwasser",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_d_h_w_pasteurisation_mode": {
+        "name": "Pasteurisierungsmodus",
+        "disabled_by_default": true
+      },
+      "lwz2.s_d_h_w_dhw_op_mode": {
+        "name": "Warmwasser-Betriebszustand aus sDHW"
+      },
+      "lwz2.supply_fan_speed": {
+        "name": "Ist-Drehzahl Zuluftventilator",
+        "disabled_by_default": true
+      },
+      "lwz2.exhaust_fan_speed": {
+        "name": "Ist-Drehzahl Abluftventilator",
+        "disabled_by_default": true
+      },
+      "lwz2.supply_fan_speed_target": {
+        "name": "Zuluft-Drehzahl-Sollwert, % laut Decoderkommentar",
+        "disabled_by_default": true
+      },
+      "lwz2.exhaust_fan_speed_target": {
+        "name": "Abluft-Drehzahl-Sollwert",
+        "disabled_by_default": true
+      },
+      "lwz2.s_fan_supply_fan_speed200": {
+        "name": "Zuluft Speed200-Kalibrierkennwert",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_fan_exhaust_fan_speed200": {
+        "name": "Abluft Speed200-Kalibrierkennwert",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_integral_heat": {
+        "name": "Heizungs-Integral",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_heat_set_temp": {
+        "name": "Heizungs-Regeltemperatur Soll"
+      },
+      "lwz2.s_h_c1_heat_temp": {
+        "name": "Heizungs-Regeltemperatur Ist"
+      },
+      "lwz2.s_h_c1_season_mode": {
+        "name": "Heizbetrieb Sommer oder Winter"
+      },
+      "lwz2.s_h_c1_integral_switch": {
+        "name": "HK1 Integralschalter",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_hc_op_mode": {
+        "name": "Heizkreis-Betriebszustand aus sHC1"
+      },
+      "lwz2.s_h_c1_room_set_temp": {
+        "name": "Raum-Sollwert aktuell",
+        "disabled_by_default": true
+      },
+      "lwz2.s_h_c1_on_hysteresis_no": {
+        "name": "Nummer der Einschalthysterese",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_off_hysteresis_no": {
+        "name": "Nummer der Ausschalthysterese",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_hc_booster_stage": {
+        "name": "HK1 Zusatzheizungsstufe",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_hc_stage": {
+        "name": "HK1 Heizstufe (2.14j-Layout)",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_h_c1_inside_temp": {
+        "name": "Innentemperatur sHC1 (2.14j-Layout)",
+        "disabled_by_default": true
+      },
+      "lwz2.operating_hours_1": {
+        "name": "Betriebsstunden-Zähler 1",
+        "disabled_by_default": true
+      },
+      "lwz2.operating_hours_2": {
+        "name": "Betriebsstunden-Zähler 2",
+        "disabled_by_default": true
+      },
+      "lwz2.heating_hours": {
+        "name": "Heizungsstunden",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_hours": {
+        "name": "Warmwasserstunden",
+        "disabled_by_default": true
+      },
+      "lwz2.s_program_op_mode": {
+        "name": "Programmbetriebsart"
+      },
+      "lwz2.s_program_prog_state_h_c": {
+        "name": "Programmzustand Heizung"
+      },
+      "lwz2.s_program_prog_state_d_h_w": {
+        "name": "Programmzustand Warmwasser",
+        "disabled_by_default": true
+      },
+      "lwz2.s_program_prog_state_f_a_n": {
+        "name": "Programmzustand Lüftung",
+        "disabled_by_default": true
+      },
+      "lwz2.s_timedate_weekday": {
+        "name": "Geräteuhr Wochentag",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_hour": {
+        "name": "Geräteuhr Stunde",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_minutes": {
+        "name": "Geräteuhr Minute",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_sec": {
+        "name": "Geräteuhr Sekunde",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_year": {
+        "name": "Geräteuhr Jahr (Rohwert)",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_month": {
+        "name": "Geräteuhr Monat",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.s_timedate_p_clock_day": {
+        "name": "Geräteuhr Tag",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "lwz2.heating_day_setpoint": {
+        "name": "Heizung Raum-Sollwert Tag"
+      },
+      "lwz2.heating_night_setpoint": {
+        "name": "Heizung Raum-Sollwert Nacht"
+      },
+      "lwz2.p01-p12_p03_room_temp_standby": {
+        "name": "Heizung Raum-Sollwert Bereitschaft",
+        "disabled_by_default": true
+      },
+      "lwz2.dhw_day_setpoint": {
+        "name": "Warmwasser-Sollwert Tag"
+      },
+      "lwz2.dhw_night_setpoint": {
+        "name": "Warmwasser-Sollwert Nacht"
+      },
+      "lwz2.p01-p12_p06_d_h_wset_temp_standby": {
+        "name": "Warmwasser-Sollwert Bereitschaft",
+        "disabled_by_default": true
+      },
+      "lwz2.fan_stage_day": {
+        "name": "Lüfterstufe Tag"
+      },
+      "lwz2.fan_stage_night": {
+        "name": "Lüfterstufe Nacht"
+      },
+      "lwz2.p01-p12_p09_fan_stage_standby": {
+        "name": "Lüfterstufe Bereitschaft",
+        "disabled_by_default": true
+      },
+      "lwz2.p01-p12_p10_h_c_temp_manual": {
+        "name": "Heizung Sollwert manuell",
+        "disabled_by_default": true
+      },
+      "lwz2.p01-p12_p11_d_h_wset_temp_manual": {
+        "name": "Warmwasser-Sollwert manuell",
+        "disabled_by_default": true
+      },
+      "lwz2.p01-p12_p12_fan_stage_manual": {
+        "name": "Lüfterstufe manuell",
+        "disabled_by_default": true
+      },
+      "lwz2.profile_slot": {
+        "name": "Profil Speicherplatz"
+      },
+      "lwz2.profile_name": {
+        "name": "Profil Name (Entwurf)"
+      },
+      "lwz2.profile_gradient": {
+        "name": "Profil Gradient (Entwurf)"
+      },
+      "lwz2.profile_low_end": {
+        "name": "Profil Fusspunkt (Entwurf)"
+      },
+      "lwz2.profile_room_influence": {
+        "name": "Profil Raumeinfluss (Entwurf)"
+      },
+      "lwz2.profile_selected": {
+        "name": "Gespeichertes Profil und Editorstatus"
+      },
+      "lwz2.profile_recognized": {
+        "name": "Erkanntes Heizkurvenprofil"
+      },
+      "lwz2.profile_last_applied": {
+        "name": "Profil zuletzt angewendet"
+      },
+      "lwz2.profile_action_status": {
+        "name": "Profil Aktionsstatus"
+      },
+      "lwz2.profile_data_status": {
+        "name": "Profil Datenstatus"
+      },
+      "lwz2.hc1_gradient": {
+        "name": "HK1 Heizkurve Gradient"
+      },
+      "lwz2.hc1_low_end": {
+        "name": "HK1 Heizkurve Fußpunkt"
+      },
+      "lwz2.hc1_room_influence": {
+        "name": "HK1 Raumeinfluss Heizen (P15)",
+        "entity_category": "config"
+      },
+      "lwz2.defrost_evaporator_active": {
+        "name": "Abtauen"
+      },
+      "lwz2.defrost_evaporator_valid": {
+        "name": "Abtauzustand gueltig"
+      },
+      "lwz2.defrost_evaporator_raw": {
+        "name": "Abtauen F2 Rohcode"
+      },
+      "lwz2.defrost_evaporator_status": {
+        "name": "Abtauzustand"
+      },
+      "lwz2.defrost_evaporator_data_status": {
+        "name": "Abtauen Datenstatus"
+      },
+      "lwz2.defrost_request_comparison": {
+        "name": "Abtauen Abgleich Betriebsanforderung"
+      },
+      "lwz2.data_quality": {
+        "name": "Datenqualitaet je Statusblock"
+      },
+      "lwz2.compressor_purpose": {
+        "name": "Verdichter Betriebszweck vorlaeufig"
+      },
+      "lwz2.compressor_purpose_data_status": {
+        "name": "Verdichter Betriebszweck Datenstatus"
+      },
+      "lwz2.compressor_purpose_valid": {
+        "name": "Verdichter Betriebszweck gueltig"
+      },
+      "lwz2.simultaneous_demand": {
+        "name": "Gleichzeitiger Bedarf laut F2"
+      },
+      "lwz2.heat_request": {
+        "name": "Betriebsanforderung F2 Rohcode"
+      },
+      "lwz2.heat_request2": {
+        "name": "Betriebsanforderung F2 Vergleichscode"
+      },
+      "lwz2.block_FB_fresh": {
+        "name": "Datenblock FB frisch"
+      },
+      "lwz2.block_F3_fresh": {
+        "name": "Datenblock F3 frisch"
+      },
+      "lwz2.block_F4_fresh": {
+        "name": "Datenblock F4 frisch"
+      },
+      "lwz2.block_E8_fresh": {
+        "name": "Datenblock E8 frisch"
+      },
+      "lwz2.block_09_fresh": {
+        "name": "Datenblock 09 frisch"
+      },
+      "lwz2.block_EE_fresh": {
+        "name": "Datenblock EE frisch"
+      },
+      "lwz2.block_FC_fresh": {
+        "name": "Datenblock FC frisch"
+      },
+      "lwz2.block_17_fresh": {
+        "name": "Datenblock 17 frisch"
+      },
+      "lwz2.block_05_fresh": {
+        "name": "Datenblock 05 frisch"
+      },
+      "lwz2.block_F2_fresh": {
+        "name": "Datenblock F2 frisch"
+      },
+      "lwz2.block_F6_fresh": {
+        "name": "Datenblock F6 frisch"
+      },
+      "lwz2.communication_ok": {
+        "name": "Kommunikation OK"
+      },
+      "lwz2.communication_status": {
+        "name": "Kommunikationszustand"
+      },
+      "lwz2.last_error": {
+        "name": "Letzter Kommunikationsfehler"
+      },
+      "lwz2.successful_queries": {
+        "name": "Erfolgreiche Abfragen"
+      },
+      "lwz2.failed_queries": {
+        "name": "Fehlgeschlagene Abfragen"
+      },
+      "lwz2.timeouts": {
+        "name": "Timeouts"
+      },
+      "lwz2.retries": {
+        "name": "Retries"
+      },
+      "lwz2.last_success": {
+        "name": "Letzter Erfolg seit Boot"
+      },
+      "lwz2.config_updated": {
+        "name": "HK1 aktualisiert seit Boot"
+      },
+      "lwz2.firmware_version": {
+        "name": "Abgefragte Firmware"
+      },
+      "lwz2.write_status": {
+        "name": "Schreibstatus",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.hc_stage": {
+        "name": "Heizungsanforderung Rohcode"
+      },
+      "lwz2.dhw_stage": {
+        "name": "Warmwasseranforderung Rohcode"
+      },
+      "lwz2.hc_stage_text": {
+        "name": "Heizungsanforderung"
+      },
+      "lwz2.dhw_stage_text": {
+        "name": "Warmwasseranforderung"
+      },
+      "lwz2.fan_stage_diagnostics": {
+        "name": "Luefterstufe Datenbasis",
+        "entity_category": "diagnostic"
+      },
+      "lwz2.current_fan_stage": {
+        "name": "Aktuelle Luefterstufe"
+      },
+      "lwz2.exhaust_fault": {
+        "name": "F5 Abluft lokal erkannt"
+      },
+      "lwz2.supply_fault": {
+        "name": "F6 Zuluft lokal erkannt"
+      },
+      "lwz2.exhaust_status": {
+        "name": "Abluft Zustand"
+      },
+      "lwz2.supply_status": {
+        "name": "Zuluft Zustand"
+      },
+      "lwz2.exhaust_data_status": {
+        "name": "Abluft aktuelle Datenbewertung"
+      },
+      "lwz2.supply_data_status": {
+        "name": "Zuluft aktuelle Datenbewertung"
+      },
+      "lwz2.exhaust_fault_count": {
+        "name": "Abluft Fehleranzahl"
+      },
+      "lwz2.supply_fault_count": {
+        "name": "Zuluft Fehleranzahl"
+      },
+      "lwz2.exhaust_fault_begin": {
+        "name": "Abluft letzter Fehlerbeginn"
+      },
+      "lwz2.exhaust_fault_end": {
+        "name": "Abluft letztes Fehlerende"
+      },
+      "lwz2.supply_fault_begin": {
+        "name": "Zuluft letzter Fehlerbeginn"
+      },
+      "lwz2.supply_fault_end": {
+        "name": "Zuluft letztes Fehlerende"
+      },
+      "lwz2.fault_reset_reason": {
+        "name": "Letzte Luefterfehler-Ruecksetzung"
+      },
+      "lwz2.persistence_status": {
+        "name": "Diagnose Speicherstatus"
+      },
+      "lwz2.lwz_error_memory": {
+        "name": "Fehlerhistorie Rohwerte"
+      },
+      "lwz2.clock_mode": {
+        "name": "Uhr Winterzeit Sommerzeit"
+      },
+      "select[0]": {
+        "name": "Geraetemodell",
+        "id": "lwz_device_model",
+        "entity_category": "config"
+      },
+      "select[1]": {
+        "name": "Luefterdiagnose Drehzahlquelle",
+        "id": "lwz_speed_source",
+        "entity_category": "config"
+      },
+      "select[2]": {
+        "name": "HK1 Decoderlayout",
+        "id": "hc1_decoder_layout",
+        "entity_category": "config"
+      },
+      "select[3]": {
+        "name": "Firmwareprofil",
+        "id": "lwz_firmware",
+        "entity_category": "config"
+      },
+      "number[0]": {
+        "name": "Statusabfrage Standardintervall",
+        "id": "normal_interval",
+        "entity_category": "config"
+      },
+      "number[1]": {
+        "name": "Statusabfrage Schnellintervall",
+        "id": "dynamic_interval",
+        "entity_category": "config"
+      },
+      "number[2]": {
+        "name": "Heizkurven-Abfrageintervall HK1",
+        "id": "config_interval",
+        "entity_category": "config"
+      },
+      "switch[0]": {
+        "name": "Schreibfreigabe",
+        "id": "lwz_write_permission",
+        "entity_category": "config"
+      },
+      "switch[1]": {
+        "name": "Beschleunigte Statusabfrage",
+        "id": "dynamic_enabled",
+        "entity_category": "config"
+      },
+      "switch[2]": {
+        "name": "Schnellabfrage bei Verdichterbetrieb",
+        "id": "trigger_compressor",
+        "entity_category": "config"
+      },
+      "switch[3]": {
+        "name": "Schnellabfrage bei Heizbetrieb",
+        "id": "trigger_heating",
+        "entity_category": "config"
+      },
+      "switch[4]": {
+        "name": "Schnellabfrage bei Warmwasserbereitung",
+        "id": "trigger_dhw",
+        "entity_category": "config"
+      },
+      "switch[5]": {
+        "name": "ESP32 Neustart bestätigen (30s)",
+        "id": "restart_confirm",
+        "entity_category": "config"
+      },
+      "button[0]": {
+        "name": "Profil Entwurf speichern",
+        "id": "lwz_profile_save",
+        "entity_category": "config"
+      },
+      "button[1]": {
+        "name": "Profil Entwurf verwerfen",
+        "id": "lwz_profile_discard",
+        "entity_category": "config"
+      },
+      "button[2]": {
+        "name": "Profil Anlagenwerte in Entwurf",
+        "id": "lwz_profile_copy",
+        "entity_category": "config"
+      },
+      "button[3]": {
+        "name": "Profil jetzt anwenden",
+        "id": "lwz_profile_apply",
+        "entity_category": "config"
+      },
+      "button[4]": {
+        "name": "Profil Anlagenwerte jetzt lesen",
+        "id": "lwz_profile_refresh",
+        "entity_category": "config"
+      },
+      "button[5]": {
+        "name": "Firmware jetzt abfragen",
+        "id": "lwz_query_firmware",
+        "entity_category": "diagnostic"
+      },
+      "button[6]": {
+        "name": "Luefterfehler nach LWZ-Neustart zuruecksetzen",
+        "id": "lwz_reset_fan_faults",
+        "entity_category": "diagnostic"
+      },
+      "button[7]": {
+        "name": "Unklare Uhrzeit als Winterzeit bestaetigen",
+        "entity_category": "config"
+      },
+      "button[8]": {
+        "name": "Unklare Uhrzeit als Sommerzeit bestaetigen",
+        "entity_category": "config"
+      },
+      "button[9]": {
+        "name": "Uhr Stunde +1 korrigieren",
+        "entity_category": "config"
+      },
+      "button[10]": {
+        "name": "Uhr Stunde -1 korrigieren",
+        "entity_category": "config"
+      },
+      "button[11]": {
+        "name": "HK1 jetzt aktualisieren"
+      },
+      "button[12]": {
+        "name": "Kommunikationszähler zurücksetzen",
+        "entity_category": "diagnostic"
+      },
+      "button[13]": {
+        "name": "RS232 neu initialisieren",
+        "entity_category": "diagnostic"
+      },
+      "button[14]": {
+        "name": "ESP32 neu starten",
+        "entity_category": "diagnostic"
+      },
+      "sensor[0]": {
+        "name": "Uptime",
+        "id": "lwz_uptime_seconds",
+        "disabled_by_default": true,
+        "entity_category": "diagnostic"
+      },
+      "sensor[1]": {
+        "name": "Aktives Status-Abfrageintervall"
+      },
+      "text_sensor[0]": {
+        "name": "ESP32 Laufzeit",
+        "id": "lwz_uptime_readable",
+        "entity_category": "diagnostic"
+      },
+      "text_sensor[1]": {
+        "name": "ESP32 Uhrzeit"
+      }
+    },
+    "device": {
+      "name": "${device_name}",
+      "friendly_name": "${device_name}"
+    }
+  }
+}

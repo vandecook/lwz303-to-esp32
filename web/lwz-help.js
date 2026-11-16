@@ -48,10 +48,23 @@
           <tr><th scope="row"><code>F6</code></th><td><strong>Zeitweise Lüftungsübersteuerung:</strong> vorübergehende Lüfterstufe und verbleibende Dauer.</td></tr>
           <tr><th scope="row"><code>01</code></th><td><strong>Lüftereinstellungen:</strong> konfigurierte Lüfterwerte, abhängig vom Decoderprofil.</td></tr>
           <tr><th scope="row"><code>FD</code></th><td><strong>Firmwareabfrage:</strong> Versionsnummer der LWZ. Sie ändert nicht automatisch das Decoderprofil.</td></tr>
+          <tr><th scope="row"><code>03</code></th><td><strong>Abtau-Einstellungen:</strong> unter anderem Verdichter-Wiederanlaufzeit P47 und Hauptlüfter P48. Nur lesen.</td></tr>
+          <tr><th scope="row"><code>06</code></th><td><strong>Heizungsparameter:</strong> Hysteresen, maximale Zusatzheizstufen P31, Sommerbetrieb P49 und Zusatzheizungs-Wartezeit P79.</td></tr>
+          <tr><th scope="row"><code>07</code></th><td><strong>Warmwasserparameter:</strong> unter anderem Warmwasser-Hysterese P32 und weitere gespeicherte Einstellungen.</td></tr>
+          <tr><th scope="row"><code>08</code></th><td><strong>Solarparameter:</strong> nur beim gewählten SOL-Modell abfragen und anzeigen.</td></tr>
+          <tr><th scope="row"><code>0A</code></th><td><strong>Umwälzpumpe:</strong> Pumpenzyklen und Temperaturgrenzen P54-P58.</td></tr>
+          <tr><th scope="row"><code>0E</code></th><td><strong>Wiederanlauf:</strong> gespeicherter Parameter P59. Nur lesen.</td></tr>
+          <tr><th scope="row"><code>10</code></th><td><strong>Trockenheizprogramm:</strong> Parameter P70-P74. Nur lesen, kein Start durch diese Integration.</td></tr>
         </tbody>
       </table>
       <p>Die einzelnen Frische-Anzeigen gibt es für FB, F3, F4, E8, 09, EE, FC, 17,
       05, F2 und F6. 01 und FD sind ergänzende Abfragen.</p>
+      <p><strong>Programmierte Parameter:</strong> Der eigene Bereich zeigt gespeicherte Einstellungen.
+      Bestehende Entitätsnamen bleiben erhalten. Einstellfelder schreiben erst bei manueller Bedienung
+      mit eingeschalteter Schreibfreigabe. Erfolg wird durch erneutes Lesen geprüft.
+      Vorhandene reine Sensoren bleiben für bestehende Dashboards erhalten; neue Eingabefelder sind zusätzlich vorhanden.
+      Die Anzeige „Programmierte Parameter gueltig“ bewertet die Datenfrische der unterstützten Parameter.
+      Bei Kommunikationslücken bleiben die letzten Werte sichtbar. P86 ist für das 2.x-Protokoll noch nicht belegt und nicht einstellbar.</p>
     `;
     const app = document.querySelector("esp-app");
     document.body.insertBefore(help, app);

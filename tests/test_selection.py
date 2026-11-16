@@ -67,7 +67,7 @@ class SelectionTest(unittest.TestCase):
             self.assertIn('lwz_uptime_seconds',readable['lambda'])
             for key,group in (('hc1_gradient','lwz_basic'),('hc1_low_end','lwz_basic'),('hc1_room_influence','lwz_expert')):
                 self.assertEqual(lwz[key]['mode'],'slider')
-                self.assertEqual(lwz[key]['web_server']['sorting_group_id'],group)
+                self.assertEqual(lwz[key]['web_server']['sorting_group_id'],'lwz_parameters')
             for key in ('hc_stage','dhw_stage','hc_stage_text','dhw_stage_text'):
                 self.assertEqual(lwz[key]['web_server']['sorting_group_id'],'lwz_basic')
                 self.assertNotIn('entity_category',lwz[key])
@@ -78,7 +78,7 @@ class SelectionTest(unittest.TestCase):
             self.assertEqual(lwz['fan_interval'],'10s')
             profile=next(e for e in config['select'] if e.get('id')=='lwz_firmware')
             self.assertIn('2.16',profile['options'])
-            self.assertEqual(config['esphome']['project']['version'],'0.6.2')
+            self.assertEqual(config['esphome']['project']['version'],'0.7.0')
             self.assertEqual(config['external_components'][0]['source'],'github://vandecook/lwz303-to-esp32')
             for key in ('exhaust_fault','supply_fault','hc_stage','dhw_stage','clock_mode','fan_stage_day','fan_stage_night'):
                 self.assertIn(key,lwz)
