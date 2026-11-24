@@ -124,7 +124,7 @@ void LWZ2Component::v03_schedule_result_(uint8_t command) {
 }
 
 void LWZ2Component::v03_stale_() {
-  const uint8_t commands[]{0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05};
+  const uint8_t commands[]{0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05, 0x0B, 0x0C, 0x0D};
   for (auto command : commands) {
     if (!block_stale_[command] && millis() - block_success_[command] > block_max_age_(command)) {
       block_stale_[command] = true;
@@ -162,6 +162,8 @@ void LWZ2Component::invalidate_block_(uint8_t command) {
   } else if (command == 0x17) {
     for (auto *n : setpoints_) if (n) n->publish_state(NAN);
     for (auto *n : fan_stages_) if (n) n->publish_state(NAN);
+  } else if (command >= 0x0B && command <= 0x0D) {
+    publish_weekly_program_(command, nullptr, 0);
   }
 #undef INVALIDATE_SENSOR
 #undef INVALIDATE_BINARY

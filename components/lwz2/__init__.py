@@ -140,7 +140,10 @@ V04_TEXT = ("hc_stage_text", "dhw_stage_text", "fan_stage_diagnostics", "exhaust
 V06_TEXT = ("data_quality", "compressor_purpose", "compressor_purpose_data_status", "simultaneous_demand",
             "defrost_evaporator_status", "defrost_evaporator_data_status", "defrost_request_comparison")
 V04_TEXT += V06_TEXT
-V06_BINARY = tuple(f"block_{cmd}_fresh" for cmd in ("FB", "F3", "F4", "E8", "09", "EE", "FC", "17", "05", "F2", "F6")) + ("compressor_purpose_valid", "defrost_evaporator_active", "defrost_evaporator_valid")
+WEEKLY_PROGRAM_TEXT = ("heating_weekly_program_hc1", "heating_weekly_program_hc2", "dhw_weekly_program",
+                       "fan_weekly_program_1", "fan_weekly_program_2")
+V04_TEXT += WEEKLY_PROGRAM_TEXT
+V06_BINARY = tuple(f"block_{cmd}_fresh" for cmd in ("FB", "F3", "F4", "E8", "09", "EE", "FC", "17", "05", "F2", "F6", "0B", "0C", "0D")) + ("compressor_purpose_valid", "defrost_evaporator_active", "defrost_evaporator_valid")
 V04_BINARY = ("exhaust_fault", "supply_fault") + V06_BINARY
 
 def selected_schema():
@@ -191,7 +194,7 @@ CONFIG_SCHEMA = (
             cv.Optional("fan_speed_source", default="sGlobal"): cv.one_of("sGlobal", "sFan"),
             cv.Optional("diagnostic_max_age", default="30s"): cv.positive_time_period_milliseconds,
             **{cv.Optional(k): sensor.sensor_schema(accuracy_decimals=0, **({} if k in ("hc_stage", "dhw_stage") else {"entity_category": ENTITY_CATEGORY_DIAGNOSTIC})) for k in V04_SENSORS},
-            **{cv.Optional(k): text_sensor.text_sensor_schema(**({} if k in ("hc_stage_text", "dhw_stage_text", "profile_recognized") else {"entity_category": ENTITY_CATEGORY_DIAGNOSTIC})) for k in V04_TEXT},
+            **{cv.Optional(k): text_sensor.text_sensor_schema(**({} if k in ("hc_stage_text", "dhw_stage_text", "profile_recognized") + WEEKLY_PROGRAM_TEXT else {"entity_category": ENTITY_CATEGORY_DIAGNOSTIC})) for k in V04_TEXT},
             **{cv.Optional(k): binary_sensor.binary_sensor_schema(**({"entity_category": ENTITY_CATEGORY_DIAGNOSTIC} if k in V06_BINARY else {"device_class": "problem"})) for k in V04_BINARY},
             cv.Optional("fan_stage_day"): number.number_schema(LWZFanStageNumber, entity_category="config"),
             cv.Optional("fan_stage_night"): number.number_schema(LWZFanStageNumber, entity_category="config"),

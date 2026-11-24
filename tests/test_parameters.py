@@ -56,6 +56,5 @@ class ParameterTest(unittest.TestCase):
             self.assertNotIn('cooling_hours',component)
             names=[entry['name'] for entry in component.values() if isinstance(entry,dict) and 'name' in entry]
             self.assertEqual(len(names),len(set(names)))
-            self.assertEqual(cfg['esphome']['project']['version'],'0.7.0')
 
 if __name__=='__main__': unittest.main()

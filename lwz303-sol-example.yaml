@@ -7,7 +7,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.7.0"
+    version: "0.8.0"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -46,6 +46,9 @@ preferences:
 
 web_server:
   sorting_groups:
+    - id: lwz_weekly_programs
+      name: "Wochenprogramme"
+      sorting_weight: 17
     - id: lwz_parameters
       name: "Programmierte Parameter"
       sorting_weight: 18
@@ -654,6 +657,34 @@ lwz2:
     disabled_by_default: true
     web_server:
       sorting_group_id: lwz_expert
+  heating_weekly_program_hc1:
+    name: "Wochenprogramm Heizkreis 1"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
+  dhw_weekly_program:
+    name: "Wochenprogramm Warmwasser"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
+  fan_weekly_program_1:
+    name: "Wochenprogramm Lüftung 1"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
+  fan_weekly_program_2:
+    name: "Wochenprogramm Lüftung 2"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
+  block_0B_fresh:
+    name: "Wochenprogramm Heizung frisch"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
+  block_0C_fresh:
+    name: "Wochenprogramm Warmwasser frisch"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
+  block_0D_fresh:
+    name: "Wochenprogramm Lüftung frisch"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
   s_timedate_weekday:
     name: "Geräteuhr Wochentag"
     disabled_by_default: true

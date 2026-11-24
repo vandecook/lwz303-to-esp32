@@ -47,7 +47,72 @@ std::vector<uint8_t> frame(uint8_t command, std::vector<uint8_t> data) {
 #include "test_v062.h"
 #include "test_v07.h"
 
+static void weekly_program_tests() {
+  constexpr uint8_t HEAT = 0x0B, DHW = 0x0C, FAN = 0x0D;
+  const std::vector<uint8_t> first{0x02, 0x8A, 0x08, 0xA2, 0x15, 1};  // 06:50–22:10, Mo/Mi/Fr
+  const std::vector<uint8_t> second{0x09, 0x37, 0x00, 0x0F, 0x6A, 0};  // 23:59–00:15, Di/Do/Sa/So
+  auto two_slots = first;
+  two_slots.insert(two_slots.end(), second.begin(), second.end());
+  const std::string first_text = "Aktiviert | 06:50–22:10 | Mo, Mi, Fr";
+  const std::string second_text = "Deaktiviert | 23:59–00:15 | Di, Do, Sa, So";
+
+  Test t;
+  text_sensor::TextSensor hc1, hc2, dhw, fan1, fan2;
+  binary_sensor::BinarySensor heat_fresh, dhw_fresh, fan_fresh;
+  t.set_v04_text("heating_weekly_program_hc1", &hc1);
+  t.set_v04_text("heating_weekly_program_hc2", &hc2);
+  t.set_v04_text("dhw_weekly_program", &dhw);
+  t.set_v04_text("fan_weekly_program_1", &fan1);
+  t.set_v04_text("fan_weekly_program_2", &fan2);
+  t.set_v04_binary("block_0B_fresh", &heat_fresh);
+  t.set_v04_binary("block_0C_fresh", &dhw_fresh);
+  t.set_v04_binary("block_0D_fresh", &fan_fresh);
+  t.setup();
+  assert(hc1.state == "Nicht verfügbar" && !heat_fresh.state);
+  for (uint8_t command : {HEAT, DHW, FAN}) {
+    t.current_command_ = command;
+    auto payload = command == DHW ? first : two_slots;
+    const auto response = frame(command, payload);
+    std::string reason;
+    assert(t.validate_frame_(response, reason));
+    payload.pop_back();
+    assert(!t.validate_frame_(frame(command, payload), reason));
+    t.parse_frame_(command, response);
+  }
+  assert(hc1.state == first_text && hc2.state == second_text && heat_fresh.state);
+  assert(dhw.state == first_text && dhw_fresh.state);
+  assert(fan1.state == first_text && fan2.state == second_text && fan_fresh.state);
+  t.parse_frame_(DHW, frame(DHW, {0xff, 0xff, 0, 60, 0, 2}));
+  assert(dhw.state == "Aktivierung unbekannt | unbekannt–unbekannt | Keine Wochentage");
+  fake_millis += 900001;
+  t.loop();
+  assert(!heat_fresh.state && !dhw_fresh.state && !fan_fresh.state);
+  assert(hc1.state == first_text && fan2.state == second_text);
+  t.parse_frame_(FAN, frame(FAN, two_slots));
+  assert(fan_fresh.state && !heat_fresh.state);
+  t.set_firmware("2.16");
+  assert(fan1.state == "Nicht verfügbar" && !fan_fresh.state);
+
+  // A configured warm-water program polls even when the other program blocks are unused.
+  Test scheduler;
+  scheduler.set_v04_text("dhw_weekly_program", &dhw);
+  scheduler.setup();
+  scheduler.config_pending_ = scheduler.firmware_pending_ = false;
+  scheduler.next_config_ms_ = scheduler.next_fb_ms_ = fake_millis + 100000;
+  fake_millis += 12000;
+  scheduler.loop();
+  assert(scheduler.current_command_ == DHW);
+  scheduler.inject({0x10});
+  assert(scheduler.tx == std::vector<uint8_t>({2, 1, 0, 0x0D, DHW, 0x10, 3}));
+  scheduler.inject({0x10, 2});
+  for (uint8_t byte : frame(DHW, first)) scheduler.rx.push_back(byte);
+  scheduler.inject({0x10, 3});
+  assert(scheduler.successes_ == 1 && dhw.state == first_text);
+  fake_millis = 0;
+}
+
 int main() {
+  weekly_program_tests();
   v06_tests();
   v062_tests();
   v07_tests();

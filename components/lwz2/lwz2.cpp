@@ -8,12 +8,24 @@
 namespace esphome::lwz2 {
 
 static const char *const TAG = "lwz2";
+static constexpr uint32_t WEEKLY_PROGRAM_INTERVAL_MS = 300000;
+static constexpr uint8_t FIRST_WEEKLY_PROGRAM_COMMAND = 0x0B;
+struct WeeklyProgramEntities {
+  const char *first;
+  const char *second;
+  const char *fresh;
+};
+static constexpr WeeklyProgramEntities WEEKLY_PROGRAMS[]{
+    {"heating_weekly_program_hc1", "heating_weekly_program_hc2", "block_0B_fresh"},
+    {"dhw_weekly_program", nullptr, "block_0C_fresh"},
+    {"fan_weekly_program_1", "fan_weekly_program_2", "block_0D_fresh"},
+};
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.7.0 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.8.0 (device FW independent of decoder profile)");
   parameters_invalidate_();
   this->frame_.reserve(128);
-  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05}) {
+  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05, 0x0B, 0x0C, 0x0D}) {
     invalidate_block_(command);
     block_stale_[command] = true;
   }
@@ -79,7 +91,7 @@ void LWZ2Component::set_firmware(const std::string &fw) {
   this->firmware_ = next;
   parameters_invalidate_();
   v04_invalidate_();
-  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05})
+  for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05, 0x0B, 0x0C, 0x0D})
     invalidate_block_(command);
   if (!this->setup_complete_)
     return;
@@ -142,6 +154,7 @@ void LWZ2Component::reset_schedule_() {
   this->next_allowed_request_ms_ = now;
   for (unsigned i = 0; i < 4; i++) v03_due_[i] = now + 4500 + i * 500;
   for (unsigned i = 0; i < 7; i++) parameter_due_[i] = now + 10000 + i * 1500;
+  for (unsigned i = 0; i < 3; i++) weekly_program_due_[i] = now + 8000 + i * 2000;
 }
 
 void LWZ2Component::scheduler_() {
@@ -169,6 +182,17 @@ void LWZ2Component::scheduler_() {
   if (this->time_reached_(now, this->next_fb_ms_)) {
     this->start_transaction_(0xFB);
     return;
+  }
+  for (unsigned i = 0; i < 3; i++) {
+    const auto &entities = WEEKLY_PROGRAMS[i];
+    if (time_reached_(now, weekly_program_due_[i]) &&
+        (v04_text_.count(entities.first) || (entities.second && v04_text_.count(entities.second)) ||
+         v04_binary_.count(entities.fresh))) {
+      // Schedule on dispatch so even an unsupported block is only polled once per interval.
+      weekly_program_due_[i] = now + WEEKLY_PROGRAM_INTERVAL_MS;
+      start_transaction_(FIRST_WEEKLY_PROGRAM_COMMAND + i);
+      return;
+    }
   }
   if (v03_schedule_()) return;
   if (this->time_reached_(now, this->next_f4_ms_)) {
@@ -571,6 +595,9 @@ bool LWZ2Component::validate_frame_(const std::vector<uint8_t> &frame, std::stri
     case 0x07: minimum = 10; break;
     case 0x08: minimum = 10; break;
     case 0x0A: minimum = 9; break;
+    case 0x0B:
+    case 0x0D: minimum = 12; break;
+    case 0x0C: minimum = 6; break;
     case 0x0E: minimum = 2; break;
     case 0x10: minimum = 9; break;
     case 0xF4: minimum = this->hc1_layout_ == FirmwareProfile::FW_214J ? 37 : 34; break;
@@ -657,7 +684,40 @@ void LWZ2Component::parse_frame_(uint8_t command, const std::vector<uint8_t> &fr
   else if (command == 0xE8) this->parse_e8_(data, len);
   else if (command == 0x01) this->parse_01_(data, len);
   else if (command == 0x09) this->parse_09_(data, len);
+  else if (command >= 0x0B && command <= 0x0D) publish_weekly_program_(command, data, len);
   v06_publish_();
+}
+
+void LWZ2Component::publish_weekly_program_(uint8_t command, const uint8_t *data, size_t len) {
+  const auto &entities = WEEKLY_PROGRAMS[command - FIRST_WEEKLY_PROGRAM_COMMAND];
+  static constexpr const char *DAYS[]{"Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"};
+  auto format_time = [](unsigned value) -> std::string {
+    // FHEM hex2time decodes a big-endian integer containing decimal HHMM.
+    const unsigned hour = value / 100;
+    const unsigned minute = value % 100;
+    if (hour >= 24 || minute >= 60) return "unbekannt";
+    char time[6];
+    std::snprintf(time, sizeof(time), "%02u:%02u", hour, minute);
+    return time;
+  };
+  const char *keys[]{entities.first, entities.second};
+  for (size_t slot = 0; slot < 2 && keys[slot]; slot++) {
+    const size_t offset = slot * 6;
+    if (len < offset + 6) {
+      v04_publish_text_(keys[slot], "Nicht verfügbar");
+      continue;
+    }
+    const uint8_t *entry = data + offset;
+    const char *enabled = entry[5] == 1 ? "Aktiviert" : entry[5] == 0 ? "Deaktiviert" : "Aktivierung unbekannt";
+    std::string days;
+    for (size_t day = 0; day < 7; day++) {
+      if ((entry[4] & (1u << day)) == 0) continue;
+      if (!days.empty()) days += ", ";
+      days += DAYS[day];
+    }
+    v04_publish_text_(keys[slot], std::string(enabled) + " | " + format_time(be16u_(entry)) + "–" +
+        format_time(be16u_(entry + 2)) + " | " + (days.empty() ? "Keine Wochentage" : days));
+  }
 }
 
 void LWZ2Component::parse_fb_(const uint8_t *d, size_t len) {
@@ -814,6 +874,7 @@ void LWZ2Component::publish_stale_numeric_states_() {
 }
 
 uint32_t LWZ2Component::block_max_age_(uint8_t command) const {
+  if (command >= 0x0B && command <= 0x0D) return WEEKLY_PROGRAM_INTERVAL_MS * 3;
   if (command == 0x03 || command == 0x06 || command == 0x07 || command == 0x08 ||
       command == 0x0A || command == 0x0E || command == 0x10)
     return std::max(stale_after_ms_, config_interval_ms_ * 3);
@@ -848,6 +909,8 @@ void LWZ2Component::v06_publish_() {
     if (block_seen_[c]) quality += std::to_string((now - block_success_[c]) / 1000) + "s";
     binary((std::string("block_") + code + "_fresh").c_str(), block_fresh_(c));
   }
+  for (unsigned i = 0; i < 3; i++)
+    binary(WEEKLY_PROGRAMS[i].fresh, block_fresh_(FIRST_WEEKLY_PROGRAM_COMMAND + i));
   v04_publish_text_("data_quality", quality);
   // Require a recent FB observation as well as F2. Held compressor state is display-only.
   const bool live = block_fresh_(0xFB) && now - block_success_[0xFB] <= diagnostic_max_age_ms_;

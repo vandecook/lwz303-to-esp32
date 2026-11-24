@@ -1,4 +1,4 @@
-Aktueller Stand: [Validierung v0.7.0](docs/VALIDATION-v0.7.md).
+Aktueller Stand: [Validierung v0.8.0](docs/VALIDATION-v0.8.md).
 
 # Validierung v0.6.2
 

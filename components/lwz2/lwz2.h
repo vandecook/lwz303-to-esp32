@@ -351,6 +351,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   uint32_t next_e8_ms_{0};
   uint32_t next_01_ms_{0};
   uint32_t next_09_ms_{0};
+  uint32_t weekly_program_due_[3]{};
   uint32_t state_deadline_ms_{0};
   uint32_t retry_at_ms_{0};
   uint32_t next_allowed_request_ms_{0};
@@ -396,6 +397,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void parse_e8_(const uint8_t *data, size_t len);
   void parse_01_(const uint8_t *data, size_t len);
   void parse_09_(const uint8_t *data, size_t len);
+  void publish_weekly_program_(uint8_t command, const uint8_t *data, size_t len);
   void publish_status_bits_(bool compressor, bool heating_pump, bool dhw_pump, bool solar_pump,
                             bool booster1, bool booster2, bool diverter, bool heat_pipe);
   void update_communication_state_();

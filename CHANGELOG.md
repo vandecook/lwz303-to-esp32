@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 - 2026-11-24 (lokales Quellpaket)
+
+- Gespeicherte Wochenprogramme für Heizkreis 1, Warmwasser und zwei Lüftungszeitfenster aus der LWZ lesen. Home Assistant und Webinterface zeigen Start, Ende, Wochentage und Aktivierung.
+- Drei getrennte Frischesensoren kennzeichnen den Stand der Abfragen. Heizkreis 2 ist optional und in den mitgelieferten Standardkonfigurationen ausgeblendet.
+- Die Wochenprogramme sind in dieser Version lesbar. Bearbeitung und Rückschreiben bleiben auf der Roadmap.
+
 ## 0.7.0 - 2026-11-16 (lokales Quellpaket)
 
 - Eigener Bereich „Programmierte Parameter“; 70 nummerierte P-Felder aus den belegten 2.x-Blöcken lesen. SOL-Felder modellabhängig, P25 bei i nicht auswerten; keine Kühlungsstunden.

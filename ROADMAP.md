@@ -4,13 +4,13 @@ Festlegung 08.11.2026 umgesetzt: F2ctrl-Heizungs-/Warmwasseranforderung als Basi
 
 **Decoder FW 2.16 vorbereitet:** eigenes Profil auf 2.06-Basis; sHC1-Innentemperatur und vier sFan-Ist-/Soll-Drehzahlen vorläufig nicht verfügbar. Relative sGlobal-Istwerte bleiben F5/F6-Quelle. [Details und Verifikation](docs/DECODER-FW2.16.md).
 
-Stand: **16.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
+Stand: **24.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
 
 **Praxisstand 13.11.2026:** Laut Nutzer sind die bisherigen Funktionen soweit getestet; das System läuft. Ältere Hinweise auf offene Geräteprüfungen unten dokumentieren den damaligen Prüfstand und sind keine neue pauschale Testsperre. Die Rückmeldung bestätigt keine Einzelprüfung aller Modelle und Sonderfälle.
 
-**Aktueller Stand:** v0.7.0 als lokales Quellpaket erstellt: eigener Bereich „Programmierte Parameter“, 70 belegte P-Felder lesen und 31 der 32 gewünschten Parameter einstellen. **P86 bleibt mangels belegtem 2.x-Zugriff offen.** Bestehende Entitätsnamen und IDs bleiben unverändert. Neue Parameterzugriffe am Gerät prüfen; Veröffentlichung offen. Die Abtau-Integration aus 0.6.2 ist vom Nutzer am 16.11.2026 als funktionierend bestätigt. [Bedienung und Katalog](docs/PARAMETER-v0.7.md), [Prüfbericht](docs/VALIDATION-v0.7.md).
+**Aktueller Stand:** v0.8.0 ergänzt lesbare Wochenprogramme für Heizkreis 1, Warmwasser und Lüftung. Dazu kommen die programmierten Parameter aus v0.7.0. **P86 bleibt mangels belegtem 2.x-Zugriff offen.** Der Abgleich der Wochenprogramme mit der Geräteanzeige steht aus. Die Abtau-Integration aus 0.6.2 ist vom Nutzer am 16.11.2026 als funktionierend bestätigt. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md), [Parameterkatalog](docs/PARAMETER-v0.7.md)
 
-**Priorität 15.11.2026:** v0.7 „Programmierte Parameter“ wird als nächstes Umsetzungsvorhaben vorgezogen. Noch offene Erweiterungen für spätere 0.6.x, die Wochenprogramme in 0.xx und HA 0.1.0 folgen nachrangig. Die Abtau-Integration aus 0.6.2 ist seit 16.11.2026 vom Nutzer am Gerät bestätigt.
+Die Bearbeitung der Wochenprogramme und die HA-Auswertungen bleiben geplant.
 
 **Verbindliche Bestandssicherung 15.11.2026:** Bestehende ESPHome-Entitätsbezeichnungen nicht mehr verändern. Namen, explizite IDs, Konfigurationsschlüssel sowie die für Home Assistant maßgebliche Geräte- und Entitätsidentität erhalten, damit vorhandene Dashboards, Automationen und Historien weiter zugeordnet bleiben. Bestehende Entitäten wiederverwenden; neue Parameter nur ergänzen. Auch die Einführung des Bereichs „Programmierte Parameter“ darf keine Umbenennung oder Neuanlage bereits vorhandener Entitäten auslösen.
 
@@ -33,9 +33,8 @@ Stand: **16.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen
 | **0.6.1** | **FHEM-Betriebsstunden ohne Kühlung, Anzeige letzter gültiger Werte, getrennte blockweise Datenfrische und vorläufiger Verdichter-Betriebszweck** | Lokal umgesetzt; neue Geräteprüfung und Veröffentlichung offen. Weitere unbelegte Zähler und noch zu definierende Plausibilitätsgrenzen bleiben für spätere 0.6.x |
 | **0.6.2** | **Verdampfer-Abtauzustand aus F2: Rohbyte, eigene Zustandsanzeige und Datenfrische; Abgleich mit Betriebsanforderung** | Umgesetzt; Abtau-Integration am 16.11.2026 vom Nutzer am Gerät als funktionierend bestätigt. Veröffentlichung offen |
 | **0.7.0** | Programmierte Parameter: 70 belegte P-Felder lesen; P1–P15, P19, P31, P32, P37–P42, P49, P54–P58 und P79 einstellbar; bestehende Entitäten erhalten | Lokal umgesetzt; P86 weiterhin offen (kein belegter 2.x-Zugriff). Neue Geräteprüfung und Veröffentlichung offen |
-| **0.xx** | **Alle Wochenprogramme für Heizung, Warmwasser und Lüftung lesen, in Home Assistant bearbeiten und dauerhaft in die LWZ schreiben; validieren und zurücklesen** | Geplant; Versionsnummer noch offen. Am 13.11.2026 aus den bisherigen v0.8/v0.9/v0.10 und dem vorgemerkten Lüftungszeitprogramm zusammengeführt |
-
-Die bisherigen Einzelvorhaben für Wochenprogramme in v0.8, v0.9 und v0.10 entfallen als getrennte Versionsziele. Ihre Inhalte gehören vollständig zu v0.xx; die frei gewordenen Nummern sind vorerst nicht neu belegt.
+| **0.8.0** | Wochenprogramme für Heizung, Warmwasser und Lüftung auslesen und in Home Assistant sowie im Webinterface anzeigen. Heizkreis 2 optional. | Lokal umgesetzt. Abgleich mit der Anzeige an der LWZ steht aus. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md) |
+| **0.xx** | Wochenprogramme in Home Assistant bearbeiten, validieren, dauerhaft in die LWZ schreiben und zurücklesen. | Geplant. |
 
 ## v0.4 – Wohnraumlüftung, Geräteauswahl und sControl (lokal umgesetzt)
 

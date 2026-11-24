@@ -1,4 +1,4 @@
-# LWZ303 to ESP32 – v0.7.0
+# LWZ303 to ESP32 – v0.8.0
 
 ## Zweck des Projekts
 
@@ -24,6 +24,8 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 - [FHEM: 00_THZ.pm, verwendete Referenzrevision](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm) – Decoder, Datenfelder, Skalierungen und Schreibverfahren. Eine unveränderte Kopie mit Lizenz und Herkunftsnachweis ist als [Dokumentationsreferenz](docs/references/README.md) im Paket enthalten.
 
 ## Aktueller Funktionsstand
+
+**v0.8.0:** Der Bereich „Wochenprogramme“ zeigt die in der LWZ gespeicherten Zeiten für Heizkreis 1, Warmwasser und zwei Lüftungszeitfenster. In Home Assistant erscheinen dafür eigene Textsensoren. Jeder zeigt Start, Ende, Wochentage und Aktivierung. Die drei Programme werden etwa alle fünf Minuten gelesen. Frischesensoren kennzeichnen das Alter der letzten erfolgreichen Abfrage separat. Heizkreis 2 kann bei Bedarf über einen zusätzlichen Textsensor eingebunden werden. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md)
 
 **v0.7.0:** Eigener Bereich „Programmierte Parameter“ mit 70 belegten P-Feldern. 31 der 32 gewünschten Parameter sind einstellbar: P1–P15, P19, P31, P32, P37–P42, P49, P54–P58 und P79. **P86 bleibt mangels belegtem 2.x-Zugriff offen.** Bestehende Entitätsnamen, IDs und HA-Zuordnungen bleiben erhalten; vorhandene reine Sensoren erhalten bei Bedarf ein zusätzliches Einstellfeld. Schreiben mit frischem Lesen, gezielter Änderung und unabhängiger Rückleseprüfung. [Bedienung, Katalog und Grenzen](docs/PARAMETER-v0.7.md), [Prüfbericht](docs/VALIDATION-v0.7.md).
 
@@ -74,7 +76,7 @@ external_components:
     components: [lwz2]
 ```
 
-Solange v0.7.0 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den lokalen Paketstand liegt zusätzlich `lwz303-sol-local.yaml` mit `source: components` bei. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
+Solange v0.8.0 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den Paketstand sind `lwz303-local.yaml` und `lwz303-sol-local.yaml` mit `source: components` vorgesehen. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
 
 Komponenteneinstellungen: `device_model: unknown`, `fan_speed_source: sGlobal`, `diagnostic_max_age: 30s`, `fan_interval: 10s`. Die Funktionen sind ohne Versions-Aktivierungsflags integriert. Beide mitgelieferten Hauptkonfigurationen enthalten die Profilbedienung. Das gespeicherte Modell ist vor der Interpretation der F2-Texte auszuwählen; bei unbekanntem Modell werden Rohcodes angezeigt.
 

@@ -78,7 +78,11 @@ class SelectionTest(unittest.TestCase):
             self.assertEqual(lwz['fan_interval'],'10s')
             profile=next(e for e in config['select'] if e.get('id')=='lwz_firmware')
             self.assertIn('2.16',profile['options'])
-            self.assertEqual(config['esphome']['project']['version'],'0.7.0')
+            self.assertEqual(config['esphome']['project']['version'],'0.8.0')
+            for key in ('heating_weekly_program_hc1', 'dhw_weekly_program', 'fan_weekly_program_1',
+                        'fan_weekly_program_2', 'block_0B_fresh', 'block_0C_fresh', 'block_0D_fresh'):
+                self.assertEqual(lwz[key]['web_server']['sorting_group_id'], 'lwz_weekly_programs')
+            self.assertNotIn('heating_weekly_program_hc2', lwz)
             self.assertEqual(config['external_components'][0]['source'],'github://vandecook/lwz303-to-esp32')
             for key in ('exhaust_fault','supply_fault','hc_stage','dhw_stage','clock_mode','fan_stage_day','fan_stage_night'):
                 self.assertIn(key,lwz)

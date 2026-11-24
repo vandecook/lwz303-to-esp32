@@ -75,7 +75,10 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
           <tr><th scope="row"><code>F4</code></th><td><strong>Heizkreis 1:</strong> Heizkreiszustand, Raum-Sollwert und weitere Heizungswerte, abhängig vom Decoderprofil.</td></tr>
           <tr><th scope="row"><code>E8</code></th><td><strong>Lüfterdaten:</strong> Ist- und Sollwerte sowie Speed200-Analysewerte. Für Firmware 2.16 sind nicht alle Felder verfügbar.</td></tr>
           <tr><th scope="row"><code>09</code></th><td><strong>Betriebsstunden:</strong> Zähler 1 und 2 sowie Heizungs- und Warmwasserstunden. Kühlungsstunden werden bei der LWZ303 nicht angezeigt.</td></tr>
-          <tr><th scope="row"><code>EE</code></th><td><strong>Programmzustand:</strong> aktueller Betriebsmodus und Programmzustände für Heizung, Warmwasser und Lüftung. Keine vollständigen Wochenzeitprogramme.</td></tr>
+          <tr><th scope="row"><code>0B</code></th><td><strong>Wochenprogramm Heizung:</strong> gespeicherte Schaltzeiten, Wochentage und Aktivierung für Heizkreis 1 und optional Heizkreis 2.</td></tr>
+          <tr><th scope="row"><code>0C</code></th><td><strong>Wochenprogramm Warmwasser:</strong> gespeicherte Schaltzeiten, Wochentage und Aktivierung für Warmwasser.</td></tr>
+          <tr><th scope="row"><code>0D</code></th><td><strong>Wochenprogramm Lüftung:</strong> gespeicherte Schaltzeiten, Wochentage und Aktivierung für zwei Zeitfenster.</td></tr>
+          <tr><th scope="row"><code>EE</code></th><td><strong>Programmzustand:</strong> aktueller Betriebsmodus und Programmzustände für Heizung, Warmwasser und Lüftung.</td></tr>
           <tr><th scope="row"><code>FC</code></th><td><strong>Geräteuhr:</strong> Uhrzeit, Datum und Wochentag der LWZ.</td></tr>
           <tr><th scope="row"><code>17</code></th><td><strong>Grundeinstellungen P01–P12:</strong> unter anderem Raum- und Warmwasser-Solltemperaturen sowie Lüfterstufen.</td></tr>
           <tr><th scope="row"><code>05</code></th><td><strong>Heizkurveneinstellungen:</strong> unter anderem Gradient P13, Fußpunkt P14 und Raumeinfluss P15.</td></tr>
@@ -93,7 +96,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
         </tbody>
       </table>
       <p>Die einzelnen Frische-Anzeigen gibt es für FB, F3, F4, E8, 09, EE, FC, 17,
-      05, F2 und F6. 01 und FD sind ergänzende Abfragen.</p>
+      05, F2 und F6. Die Wochenprogramme haben eigene Frische-Anzeigen im gleichnamigen Bereich. 01 und FD sind ergänzende Abfragen.</p>
       <p><strong>Programmierte Parameter:</strong> Der eigene Bereich zeigt gespeicherte Einstellungen.
       Bestehende Entitätsnamen bleiben erhalten. Einstellfelder schreiben erst bei manueller Bedienung
       mit eingeschalteter Schreibfreigabe. Erfolg wird durch erneutes Lesen geprüft.
