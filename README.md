@@ -82,7 +82,7 @@ Komponenteneinstellungen: `device_model: unknown`, `fan_speed_source: sGlobal`, 
 
 Für die aktive Diagnose wird das sGlobal-Abfrageintervall auf höchstens 10 Sekunden begrenzt, auch wenn ein größeres Standardintervall eingestellt ist; eine schnellere Dynamik bleibt möglich. Die Anzeige „Aktives Status-Abfrageintervall“ zeigt das tatsächlich geplante Intervall. Die serielle Übertragung kann zusätzliche Verzögerungen verursachen.
 
-Quellen und unveränderte FHEM-/Herstellerreferenzen: [Referenzverzeichnis](docs/references/README.md). Die Stiebel-Eltron-Unterlagen sind lokal unter `docs/references/stiebel-eltron/` abgelegt und von Git ausgeschlossen; das lokale Paket enthält die Original-PDFs.
+Quellen und unveränderte FHEM-/Herstellerreferenzen: [Referenzverzeichnis](docs/references/README.md). Die Stiebel-Eltron-Unterlagen sind nicht im Repo; die Originale gibt es beim Hersteller: [Bedienung und Installation](https://www.stiebel-eltron.com/static/ste/docportal/manual/DM0000017729-nsm.pdf) und [Gebrauchs- und Montageanweisung](https://www.stiebel-eltron.com/static/ste/docportal/manual/DM0000017729-iau.pdf). Lokale Kopien gehören nach `docs/references/stiebel-eltron/` (von Git ausgeschlossen).
 
 Prüfstand: [Softwarevalidierung v0.7.0](docs/VALIDATION-v0.7.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
 
