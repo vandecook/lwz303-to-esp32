@@ -12,7 +12,7 @@ Stand: **25.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen
 
 Die Bearbeitung der Wochenprogramme und die HA-Auswertungen bleiben geplant.
 
-**Verbindliche Bestandssicherung 15.11.2026:** Bestehende ESPHome-Entitätsbezeichnungen nicht mehr verändern. Namen, explizite IDs, Konfigurationsschlüssel sowie die für Home Assistant maßgebliche Geräte- und Entitätsidentität erhalten, damit vorhandene Dashboards, Automationen und Historien weiter zugeordnet bleiben. Bestehende Entitäten wiederverwenden; neue Parameter nur ergänzen. Auch die Einführung des Bereichs „Programmierte Parameter“ darf keine Umbenennung oder Neuanlage bereits vorhandener Entitäten auslösen. **Genehmigte Ausnahme 26.11.2026:** „Heizkurven-Abfrageintervall HK1“ → „Parameter-Abfrageintervall“ (v0.9.1).
+**Verbindliche Bestandssicherung 15.11.2026:** Bestehende ESPHome-Entitätsbezeichnungen nicht mehr verändern. Namen, explizite IDs, Konfigurationsschlüssel sowie die für Home Assistant maßgebliche Geräte- und Entitätsidentität erhalten, damit vorhandene Dashboards, Automationen und Historien weiter zugeordnet bleiben. Bestehende Entitäten wiederverwenden; neue Parameter nur ergänzen. Auch die Einführung des Bereichs „Programmierte Parameter“ darf keine Umbenennung oder Neuanlage bereits vorhandener Entitäten auslösen. **Genehmigte Ausnahme 26.11.2026:** „Heizkurven-Abfrageintervall HK1“ → „Parameter-Abfrageintervall“ (v0.9.1), „HK1 jetzt aktualisieren“ → „Heizungsparameter jetzt aktualisieren“ (v0.9.2).
 
 ## Vorgemerkte Konfigurationspflege
 
@@ -38,6 +38,7 @@ Die Bearbeitung der Wochenprogramme und die HA-Auswertungen bleiben geplant.
 | **0.8.2** | Lüfterdiagnose berücksichtigt P59 „Wiederanlauf vor Absenkende“ (ProgStateFAN 4/5): kein F5/F6, eigene Zustandsanzeige und neuer Textsensor „Lueftung Laufgrund“. | Lokal umgesetzt, Host-Tests und ESP32-C3-Build erfolgreich. Gerätebeobachtung der P59-Phase steht aus. |
 | **0.9.0** | Abfrageplanung in drei Klassen: Betriebsdaten langsam/schnell ohne 10-s-Deckel, Parameter (Standard 60 min), Uhr alle 5 min. Lüfterdiagnose folgt dem Intervall. Älteste Fälligkeit zuerst. Buttons „Parameter/Messwerte jetzt aktualisieren“. | Lokal umgesetzt, Hosttests und ESP32-C3-Build erfolgreich. Gerätebeobachtung steht aus. |
 | **0.9.1** | Einstellung „Heizkurven-Abfrageintervall HK1“ heißt „Parameter-Abfrageintervall“ (genehmigte Ausnahme von der Bestandssicherung). | Lokal umgesetzt. |
+| **0.9.2** | Button „HK1 jetzt aktualisieren“ heißt „Heizungsparameter jetzt aktualisieren“ und liest nur Block `05` (genehmigte Ausnahme von der Bestandssicherung). | Lokal umgesetzt. |
 | **0.xx** | Wochenprogramme in Home Assistant bearbeiten, validieren, dauerhaft in die LWZ schreiben und zurücklesen. | Geplant. |
 
 ## Offene Punkte (ohne Versionszuordnung)

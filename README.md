@@ -1,4 +1,4 @@
-# LWZ303 to ESP32 – v0.9.1
+# LWZ303 to ESP32 – v0.9.2
 
 ## Zweck des Projekts
 
@@ -135,7 +135,7 @@ Das Beispiel lädt die lokale Komponente. Firmwareprofil passend zur LWZ im Webi
 
 Dynamik ist standardmäßig aktiv: 5 s bei Kompressor **ODER** Heizbetrieb **ODER** Warmwasser. Alle drei Trigger sind anfangs ausgewählt. Ohne ausgewählten aktiven Trigger gilt das Normalintervall. Im Webinterface konfigurierbar: Normal- und Dynamikintervall (5–300 s), HK1-Intervall (1–1440 min), Dynamik ein/aus und drei Trigger. Speicherung erfolgt durch ESPHome nach etwa einer Minute; Stromausfall davor kann letzte Änderungen verlieren. Diagnosezähler bleiben flüchtig.
 
-Intervalle laufen ab Transaktionsabschluss; Kommunikation, Retries und Backoff verlängern reale Abstände. Es läuft nur eine Transaktion gleichzeitig. Manuelle Aktualisierungen (HK1, Parameter, Messwerte) werden zwischen Transaktionen vor den Routineabfragen eingereiht; ausstehende Klicks werden zusammengefasst. Routineabfragen laufen nach ältester Fälligkeit. Nach endgültigem HK1-Fehler wartet die Automatik das Konfigurationsintervall, ein manueller Refresh bleibt möglich.
+Intervalle laufen ab Transaktionsabschluss; Kommunikation, Retries und Backoff verlängern reale Abstände. Es läuft nur eine Transaktion gleichzeitig. Manuelle Aktualisierungen (Heizungsparameter, Parameter, Messwerte) werden zwischen Transaktionen vor den Routineabfragen eingereiht; ausstehende Klicks werden zusammengefasst. Routineabfragen laufen nach ältester Fälligkeit. Nach endgültigem HK1-Fehler wartet die Automatik das Konfigurationsintervall, ein manueller Refresh bleibt möglich.
 
 Bestehende optionale F4-, E8-, 01- und 09-Entitäten bleiben verfügbar.
 
@@ -147,7 +147,7 @@ Die Optionen `heating_interval`, `fan_interval`, `fan_config_interval` und `hist
 
 Letzter Erfolg und HK1-Zeitpunkt sind ausdrücklich `boot+…s`, unabhängig von Netzzeit. Der Millisekundenzähler läuft nach etwa 49,7 Tagen um; Zeitstempel beginnen dann erneut. Die Intervallplanung berücksichtigt den Überlauf. Logs sind ein Live-Stream während der geöffneten Verbindung, kein dauerhaftes Archiv.
 
-- **HK1 jetzt aktualisieren:** lesende 05-Abfrage einreihen.
+- **Heizungsparameter jetzt aktualisieren** (bis 0.9.1 „HK1 jetzt aktualisieren“): nur Block `05` (P13–P20) einmal vorrangig lesen.
 - **Parameter jetzt aktualisieren:** alle Parameterblöcke, Wochenprogramme und Betriebsstunden einmal vorrangig lesen.
 - **Messwerte jetzt aktualisieren:** alle Betriebsdatenblöcke und die LWZ-Uhr einmal vorrangig lesen. „Manuelle Aktualisierung“ zeigt Fortschritt und fehlgeschlagene Blöcke.
 - **Kommunikationszähler zurücksetzen:** vier Zähler löschen; Backoff, Zustand und letzter Erfolg bleiben erhalten.

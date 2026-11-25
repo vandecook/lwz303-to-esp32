@@ -205,6 +205,11 @@ void v07_tests() {
     assert(t.manual_refresh_status()=="laeuft: 1/8 Bloecke gelesen");
     for(int i=0;i<7;i++) serve(t);
     assert(t.manual_refresh_status()=="fertig: 8/8 Bloecke gelesen");
+    // 0.9.2: "HK1 jetzt aktualisieren" reads block 05 only; parameter schedule stays untouched.
+    const uint32_t due03=t.parameter_due_[0];
+    t.refresh_config();assert(t.manual_refresh_status()=="laeuft: 0/1 Bloecke gelesen");
+    assert(serve(t)==0x05 && t.manual_refresh_status()=="fertig: 1/1 Bloecke gelesen");
+    assert(t.parameter_due_[0]==due03);
     fake_millis=previous;  // Later fixtures assume an early boot clock.
   }
   std::cout << "PASS v0.7: 31 parameter writers x4 layouts, retained fields, ranges, short reads, ACK loss/readback, model gates, polling and signed values\n";

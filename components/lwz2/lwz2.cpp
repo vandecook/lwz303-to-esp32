@@ -21,7 +21,7 @@ static constexpr WeeklyProgramEntities WEEKLY_PROGRAMS[]{
 };
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.9.1 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.9.2 (device FW independent of decoder profile)");
   parameters_invalidate_();
   this->frame_.reserve(128);
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05, 0x0B, 0x0C, 0x0D}) {
@@ -172,19 +172,19 @@ void LWZ2Component::scheduler_() {
     return;
 
   if (write_stage_ != WriteStage::NONE && v03_schedule_()) return;
-  // Explicit user requests first: HK1 button, firmware probe, manual refresh buttons.
+  // Explicit requests first: initial 05 after boot/reinit, refresh buttons, firmware probe.
   if (this->config_pending_) {
     this->config_pending_ = false;
     this->start_transaction_(0x05);
     return;
   }
+  if (manual_schedule_()) return;
   if (this->firmware_pending_) {
     this->firmware_pending_ = false;
     // Use the source-backed 2.06 FDfirm decoder regardless of the chosen data layout.
     this->start_transaction_(0xFD);
     return;
   }
-  if (manual_schedule_()) return;
 
   // Routine polls: earliest deadline first. When the bus cannot keep up (about 1.2 s per
   // transaction incl. the mandatory gap), every block is stretched evenly and none starves.
@@ -542,7 +542,7 @@ void LWZ2Component::reinitialize() {
   if (this->communication_ok_binary_sensor_) this->communication_ok_binary_sensor_->publish_state(false);
   if (this->communication_status_text_sensor_) this->communication_status_text_sensor_->publish_state("reinitializing");
   this->reset_schedule_();
-  this->refresh_config();
+  this->config_pending_ = true;  // Fresh 05 after reinit; other blocks follow reset_schedule_().
   this->firmware_pending_ = true;
   v06_publish_();
   ESP_LOGI(TAG, "RS232 protocol reinitialized");
@@ -930,6 +930,11 @@ void LWZ2Component::manual_add_(uint8_t command) {
   if (manual_pending_[command]) return;
   manual_pending_[command] = true;
   manual_total_++;
+}
+
+void LWZ2Component::refresh_config() {
+  if (manual_done_ >= manual_total_) { manual_total_ = manual_done_ = 0; manual_failed_.clear(); }
+  manual_add_(0x05);
 }
 
 void LWZ2Component::refresh_parameters() {

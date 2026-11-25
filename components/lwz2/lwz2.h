@@ -88,7 +88,9 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void set_trigger_dhw(bool v) { trigger_dhw_ = v; reschedule_poll_(); }
   uint32_t effective_interval() const;
   std::string effective_interval_reason() const;  // Which interval applies and why (display only).
-  void refresh_config() { config_pending_ = true; for (auto &due : parameter_due_) due = millis(); }
+  // Buttons "HK1 jetzt aktualisieren" / "Profil Anlagenwerte jetzt lesen": block 05 only, as a manual
+  // refresh with progress. All parameter blocks: refresh_parameters().
+  void refresh_config();
   void refresh_parameters();    // Button: read all parameter blocks once, before routine polls.
   void refresh_measurements();  // Button: read all live blocks and the clock once.
   std::string manual_refresh_status() const;

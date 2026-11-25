@@ -7,7 +7,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.9.1"
+    version: "0.9.2"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -1207,7 +1207,7 @@ button:
       - lambda: id(lwz303).request_clock_shift(-1);
 
   - platform: template
-    name: "HK1 jetzt aktualisieren"
+    name: "Heizungsparameter jetzt aktualisieren"
     on_press:
       - lambda: id(lwz303).refresh_config();
   - platform: template

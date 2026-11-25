@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.2 - 2026-11-26 (lokales Quellpaket)
+
+- Button „HK1 jetzt aktualisieren“ heißt „Heizungsparameter jetzt aktualisieren“ und liest nur noch Block `05` (P13–P20, Heizkurven HK1/HK2). Bisher markierte er zusätzlich alle Parameterblöcke als fällig; dafür gibt es seit 0.9.0 „Parameter jetzt aktualisieren“. Der Button läuft jetzt als manuelle Aktualisierung mit Anzeige in „Manuelle Aktualisierung“. „Profil Anlagenwerte jetzt lesen“ verhält sich gleich.
+- Umbenennung als genehmigte Ausnahme von der Bestandssicherung (Nutzerentscheidung 26.11.2026). In Home Assistant entsteht eine neue Button-Entität; die Dashboards „Development_AI“, „Expert Corner“ und „WP Experte PC“ müssen auf sie umgestellt werden.
+- Manuelle Aktualisierungen laufen vor der Firmware-Abfrage.
+
 ## 0.9.1 - 2026-11-26 (lokales Quellpaket)
 
 - Einstellung „Heizkurven-Abfrageintervall HK1“ in „Parameter-Abfrageintervall“ umbenannt. Sie steuert seit 0.9.0 alle Parameterblöcke, die Wochenprogramme und die Betriebsstunden, nicht nur HK1. Ausnahme von der Bestandssicherung auf Nutzerentscheidung vom 26.11.2026; die Einstellung war auf keinem Dashboard und in keiner Automation eingebunden.

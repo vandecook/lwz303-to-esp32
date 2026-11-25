@@ -637,7 +637,7 @@
         "entity_category": "config"
       },
       "button[11]": {
-        "name": "HK1 jetzt aktualisieren"
+        "name": "Heizungsparameter jetzt aktualisieren"
       },
       "button[12]": {
         "name": "Kommunikationszähler zurücksetzen",
@@ -1312,7 +1312,7 @@
         "entity_category": "config"
       },
       "button[11]": {
-        "name": "HK1 jetzt aktualisieren"
+        "name": "Heizungsparameter jetzt aktualisieren"
       },
       "button[12]": {
         "name": "Kommunikationszähler zurücksetzen",
