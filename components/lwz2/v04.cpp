@@ -225,7 +225,7 @@ void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
     clock_stamp_ = "unbekannt";
     if (len >= 9 && d[2] < 24 && d[3] < 60 && d[4] < 60 && d[5] <= 99 &&
         d[7] >= 1 && d[7] <= 12 && d[8] >= 1 && d[8] <= 31) {
-      char stamp[24];
+      char stamp[32];  // Validated fields give 19 chars; room for the compiler's worst case.
       std::snprintf(stamp, sizeof(stamp), "%04u-%02u-%02u %02u:%02u:%02u", 2000U + d[5], d[7], d[8], d[2], d[3], d[4]);
       clock_stamp_ = stamp;
     }

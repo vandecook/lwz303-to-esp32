@@ -69,26 +69,25 @@ void v04_tests() {
   for (int i=0;i<15;i++) {fake_millis+=10000;feed(t,2,1,1,0,0,0);}
   assert(!f5.state && !f6.state); // Planned night OFF can last indefinitely.
   // P59 restart before setback end (ProgStateFAN 4/5): early running is OK, standstill no fault.
-  {
-    text_sensor::TextSensor reason, ex_status, sup_status;
-    t.set_v04_text("fan_run_reason",&reason);t.set_v04_text("exhaust_status",&ex_status);
-    t.set_v04_text("supply_status",&sup_status);
-    feed(t,1);assert(reason.state=="Zeitprogramm: Normalbetrieb (P07)");
-    feed(t,2);assert(reason.state=="Zeitprogramm: Absenkbetrieb (P08)" && ex_status.state=="Aus");
-    assert(sup_status.state=="Laeuft ohne Anforderung");
-    for (int code : {4,5}) {
-      t.reset_fan_faults();
-      for (int i=0;i<15;i++) {fake_millis+=10000;feed(t,code,1,1,0,0,32);}
-      assert(!f5.state && !f6.state && t.current_fan_stage_()==-1);
-      assert(reason.state=="Wiederanlauf vor Absenkende (P59)");
-      assert(ex_status.state=="Aus (Wiederanlauf P59 moeglich)" && sup_status.state=="Laeuft (Wiederanlauf P59)");
-    }
-    feed(t,4,0);assert(reason.state=="Handbetrieb (P12)");
-    feed(t,4,1,1,0,0,0,2,10);assert(reason.state=="Zeitweise Uebersteuerung");
-    feed(t,9);assert(reason.state=="Unbekannt (Programmcode 9)");
-    fake_millis+=31000;t.v04_tick_();assert(reason.state=="Unbekannt (Programmzustand nicht frisch)");
+  // The sensors live as long as t: the component keeps publishing to them afterwards.
+  text_sensor::TextSensor reason, ex_status, sup_status;
+  t.set_v04_text("fan_run_reason",&reason);t.set_v04_text("exhaust_status",&ex_status);
+  t.set_v04_text("supply_status",&sup_status);
+  feed(t,1);assert(reason.state=="Zeitprogramm: Normalbetrieb (P07)");
+  feed(t,2);assert(reason.state=="Zeitprogramm: Absenkbetrieb (P08)" && ex_status.state=="Aus");
+  assert(sup_status.state=="Laeuft ohne Anforderung");
+  for (int code : {4,5}) {
     t.reset_fan_faults();
+    for (int i=0;i<15;i++) {fake_millis+=10000;feed(t,code,1,1,0,0,32);}
+    assert(!f5.state && !f6.state && t.current_fan_stage_()==-1);
+    assert(reason.state=="Wiederanlauf vor Absenkende (P59)");
+    assert(ex_status.state=="Aus (Wiederanlauf P59 moeglich)" && sup_status.state=="Laeuft (Wiederanlauf P59)");
   }
+  feed(t,4,0);assert(reason.state=="Handbetrieb (P12)");
+  feed(t,4,1,1,0,0,0,2,10);assert(reason.state=="Zeitweise Uebersteuerung");
+  feed(t,9);assert(reason.state=="Unbekannt (Programmcode 9)");
+  fake_millis+=31000;t.v04_tick_();assert(reason.state=="Unbekannt (Programmzustand nicht frisch)");
+  t.reset_fan_faults();
   // Alternative E8 source: source change abandons the previous timer.
   t.set_fan_speed_source("sFan");feed(t);t.v04_tick_();
   std::vector<uint8_t> e8(22);e8[11]=50;e8[13]=40;
