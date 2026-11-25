@@ -40,7 +40,7 @@
           <tr><th scope="row"><code>F4</code></th><td><strong>Heizkreis 1:</strong> Heizkreiszustand, Raum-Sollwert und weitere Heizungswerte, abhängig vom Decoderprofil.</td></tr>
           <tr><th scope="row"><code>E8</code></th><td><strong>Lüfterdaten:</strong> Ist- und Sollwerte sowie Speed200-Analysewerte. Für Firmware 2.16 sind nicht alle Felder verfügbar.</td></tr>
           <tr><th scope="row"><code>09</code></th><td><strong>Betriebsstunden:</strong> Zähler 1 und 2 sowie Heizungs- und Warmwasserstunden. Kühlungsstunden werden bei der LWZ303 nicht angezeigt.</td></tr>
-          <tr><th scope="row"><code>0B</code></th><td><strong>Wochenprogramm Heizung:</strong> gespeicherte Schaltzeiten, Wochentage und Aktivierung für Heizkreis 1 und optional Heizkreis 2.</td></tr>
+          <tr><th scope="row"><code>0B</code></th><td><strong>Wochenprogramm Heizung:</strong> gespeicherte Schaltzeiten, Wochentage und Aktivierung für Heizprogramm 1 (HP1) und Heizprogramm 2 (HP2).</td></tr>
           <tr><th scope="row"><code>0C</code></th><td><strong>Wochenprogramm Warmwasser:</strong> gespeicherte Schaltzeiten, Wochentage und Aktivierung für Warmwasser.</td></tr>
           <tr><th scope="row"><code>0D</code></th><td><strong>Wochenprogramm Lüftung:</strong> gespeicherte Schaltzeiten, Wochentage und Aktivierung für zwei Zeitfenster.</td></tr>
           <tr><th scope="row"><code>EE</code></th><td><strong>Programmzustand:</strong> aktueller Betriebsmodus und Programmzustände für Heizung, Warmwasser und Lüftung.</td></tr>

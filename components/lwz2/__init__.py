@@ -133,7 +133,7 @@ LWZProfileName = lwz2_ns.class_("LWZProfileName", text.Text)
 LWZProfileValueNumber = lwz2_ns.class_("LWZProfileValueNumber", number.Number)
 LWZClockModeSelect = lwz2_ns.class_("LWZClockModeSelect", select.Select)
 V04_SENSORS = ("hc_stage", "dhw_stage", "current_fan_stage", "exhaust_fault_count", "supply_fault_count", "heat_request", "heat_request2", "defrost_evaporator_raw")
-V04_TEXT = ("hc_stage_text", "dhw_stage_text", "fan_stage_diagnostics", "exhaust_status", "supply_status",
+V04_TEXT = ("hc_stage_text", "dhw_stage_text", "fan_stage_diagnostics", "fan_run_reason", "exhaust_status", "supply_status",
             "exhaust_data_status", "supply_data_status", "exhaust_fault_begin", "exhaust_fault_end",
             "supply_fault_begin", "supply_fault_end", "fault_reset_reason", "persistence_status", "lwz_error_memory",
             "profile_selected", "profile_recognized", "profile_last_applied", "profile_action_status", "profile_data_status")

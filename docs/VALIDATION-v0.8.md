@@ -2,11 +2,11 @@
 
 Im ESPHome-Webinterface unter **Wochenprogramme** und als Textsensoren in Home Assistant erscheinen Heizkreis 1, Warmwasser und die beiden Lüftungszeitfenster. Der Sensorwert `Aktiviert | 06:50–22:10 | Mo, Mi, Fr` zeigt ein Zeitfenster für Montag, Mittwoch und Freitag.
 
-Heizkreis 2 ist für Anlagen mit einem zweiten Heizkreis optional. Dazu kann unter `lwz2` der Textsensor `heating_weekly_program_hc2` mit einem eigenen Namen ergänzt werden.
+Seit v0.8.1 ist der zweite Eintrag aus `0B` in den mitgelieferten Konfigurationen als „Wochenprogramm Heizprogramm 2“ (`heating_weekly_program_hc2`) aktiviert. Die Herstelleranleitung beschreibt HP1 und HP2 als zwei Absenkprogramme derselben Heizung. FHEM nennt die Einträge `progHC1`/`progHC2`. Die bestehende Entität „Wochenprogramm Heizkreis 1“ zeigt HP1 und behält Namen und ID.
 
 | LWZ-Block | Inhalt |
 | --- | --- |
-| `0B` | Je ein Zeitfenster für Heizkreis 1 und Heizkreis 2 |
+| `0B` | Je ein Zeitfenster für Heizprogramm 1 (HP1) und Heizprogramm 2 (HP2) |
 | `0C` | Ein Zeitfenster für Warmwasser |
 | `0D` | Zwei Zeitfenster für Lüftung |
 

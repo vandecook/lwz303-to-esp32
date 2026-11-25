@@ -4,11 +4,11 @@ Festlegung 08.11.2026 umgesetzt: F2ctrl-Heizungs-/Warmwasseranforderung als Basi
 
 **Decoder FW 2.16 vorbereitet:** eigenes Profil auf 2.06-Basis; sHC1-Innentemperatur und vier sFan-Ist-/Soll-Drehzahlen vorläufig nicht verfügbar. Relative sGlobal-Istwerte bleiben F5/F6-Quelle. [Details und Verifikation](docs/DECODER-FW2.16.md).
 
-Stand: **24.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
+Stand: **25.11.2026**. Geräte-Firmware laut Nutzer: **2.16**. Die Einstellungen **2.06 / 2.14 / 2.14j** bezeichnen getrennte FHEM-Decoderlayouts.
 
 **Praxisstand 13.11.2026:** Laut Nutzer sind die bisherigen Funktionen soweit getestet; das System läuft. Ältere Hinweise auf offene Geräteprüfungen unten dokumentieren den damaligen Prüfstand und sind keine neue pauschale Testsperre. Die Rückmeldung bestätigt keine Einzelprüfung aller Modelle und Sonderfälle.
 
-**Aktueller Stand:** v0.8.0 ergänzt lesbare Wochenprogramme für Heizkreis 1, Warmwasser und Lüftung. Dazu kommen die programmierten Parameter aus v0.7.0. **P86 bleibt mangels belegtem 2.x-Zugriff offen.** Der Abgleich der Wochenprogramme mit der Geräteanzeige steht aus. Die Abtau-Integration aus 0.6.2 ist vom Nutzer am 16.11.2026 als funktionierend bestätigt. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md), [Parameterkatalog](docs/PARAMETER-v0.7.md)
+**Aktueller Stand:** v0.8.0 ergänzt lesbare Wochenprogramme für Heizung, Warmwasser und Lüftung. Der Nutzer hat am 24.11.2026 das korrekte Auslesen der angezeigten Programme am Gerät bestätigt. v0.8.1 zeigt zusätzlich das zweite Heizzeitfenster als „Wochenprogramm Heizprogramm 2“ (HP2) an. Dazu kommen die programmierten Parameter aus v0.7.0. Offene Punkte sind unter [Offene Punkte](#offene-punkte-ohne-versionszuordnung) gesammelt. Die Abtau-Integration aus 0.6.2 ist vom Nutzer am 16.11.2026 als funktionierend bestätigt. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md), [Parameterkatalog](docs/PARAMETER-v0.7.md)
 
 Die Bearbeitung der Wochenprogramme und die HA-Auswertungen bleiben geplant.
 
@@ -33,8 +33,45 @@ Die Bearbeitung der Wochenprogramme und die HA-Auswertungen bleiben geplant.
 | **0.6.1** | **FHEM-Betriebsstunden ohne Kühlung, Anzeige letzter gültiger Werte, getrennte blockweise Datenfrische und vorläufiger Verdichter-Betriebszweck** | Lokal umgesetzt; neue Geräteprüfung und Veröffentlichung offen. Weitere unbelegte Zähler und noch zu definierende Plausibilitätsgrenzen bleiben für spätere 0.6.x |
 | **0.6.2** | **Verdampfer-Abtauzustand aus F2: Rohbyte, eigene Zustandsanzeige und Datenfrische; Abgleich mit Betriebsanforderung** | Umgesetzt; Abtau-Integration am 16.11.2026 vom Nutzer am Gerät als funktionierend bestätigt. Veröffentlichung offen |
 | **0.7.0** | Programmierte Parameter: 70 belegte P-Felder lesen; P1–P15, P19, P31, P32, P37–P42, P49, P54–P58 und P79 einstellbar; bestehende Entitäten erhalten | Lokal umgesetzt; P86 weiterhin offen (kein belegter 2.x-Zugriff). Neue Geräteprüfung und Veröffentlichung offen |
-| **0.8.0** | Wochenprogramme für Heizung, Warmwasser und Lüftung auslesen und in Home Assistant sowie im Webinterface anzeigen. Heizkreis 2 optional. | Lokal umgesetzt. Abgleich mit der Anzeige an der LWZ steht aus. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md) |
+| **0.8.0** | Wochenprogramme für Heizung, Warmwasser und Lüftung auslesen und in Home Assistant sowie im Webinterface anzeigen. Heizkreis 2 optional. | Lokal umgesetzt. Auslesen der angezeigten Programme am 24.11.2026 vom Nutzer am Gerät bestätigt. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md) |
+| **0.8.1** | Zweites Heizzeitfenster (HP2) aus Block `0B` als „Wochenprogramm Heizprogramm 2“ standardmäßig anzeigen. | Lokal umgesetzt. Abgleich mit getrennt eingestellten HP1-/HP2-Zeiten am Gerät steht aus. |
+| **0.8.2** | Lüfterdiagnose berücksichtigt P59 „Wiederanlauf vor Absenkende“ (ProgStateFAN 4/5): kein F5/F6, eigene Zustandsanzeige und neuer Textsensor „Lueftung Laufgrund“. | Lokal umgesetzt, Host-Tests und ESP32-C3-Build erfolgreich. Gerätebeobachtung der P59-Phase steht aus. |
 | **0.xx** | Wochenprogramme in Home Assistant bearbeiten, validieren, dauerhaft in die LWZ schreiben und zurücklesen. | Geplant. |
+
+## Offene Punkte (ohne Versionszuordnung)
+
+Stand 25.11.2026. Die Punkte sind gesammelt, aber bewusst noch keiner Version zugeordnet. Reihenfolge ohne Priorität.
+
+**Am Gerät prüfen**
+
+- **Heizprogramm 2 (HP2):** HP1 und HP2 mit unterschiedlichen Zeiten und Wochentagen einstellen und prüfen, dass beide Anzeigen getrennt richtig folgen.
+- **Programmende 24:00:** Die Herstelleranleitung nennt 24:00. Klären, wie die LWZ diesen Wert überträgt. Der Lesedecoder zeigt ihn derzeit als unbekannt.
+- **Parameter-Schreibwege:** Die in v0.7.0 ergänzten Schreibwege (P1–P15, P19, P31, P32, P37–P42, P49, P54–P58, P79) gezielt mit Rücklesen testen. Tatsächlich zulässige Gerätebereiche verifizieren; die UI-Grenzen sind Vorschläge.
+- **Heizkurvenprofile:** Anwenden der Profile (P13/P14/P15) mit gemeinsamer Rückleseprüfung physisch prüfen.
+- **Lüfterdiagnose:** F5/F6 im realen Fehlerfall und die Priorität der F6-Übersteuerung prüfen.
+- **P59-Phase der Lüftung:** Am Gerät beobachten, ob `ProgStateFAN` vor Absenkende 4 oder 5 meldet und der „Lueftung Laufgrund“ passend wechselt. Klären, welche Stufe die LWZ in dieser Phase fährt; erst dann könnte ein Stillstand in der P59-Phase als Fehler bewertet werden.
+- **Verdichter-Betriebszweck:** Zuordnung von `heatRequest`/`heatRequest2` und Umschaltverhalten auf FW 2.16 bestätigen.
+- **Booster-Zuordnung:** RS232-Boosterbits den Leistungsstufen der FW 2.16 zuordnen. [Booster-Zuordnung](docs/BOOSTER-ZUORDNUNG.md)
+- **Speed200 (OUT063/OUT064):** Physikalische Einheit und Bedeutung des Kalibrierpunkts klären.
+- **Andere Anlagen:** Aktive Solarfunktion und andere Modelle (z. B. LWZ 303 i) brauchen eigene Geräteprüfungen.
+
+**Decoder und Quellen**
+
+- **FW 2.16:** Ersatzoffsets für die sHC1-Innentemperatur sowie je zwei Ist-/Soll-Drehzahlen aus `E8` fehlen. [Decodergrenzen](docs/DECODER-FW2.16.md)
+- **P86:** Kein belegter 2.x-Zugriff. `0A05A3` aus einer neueren Protokollgeneration wird ohne Nachweis nicht verwendet.
+- **Betriebsdaten:** Belegte Quellen für einen echten Verdichterstartzähler und Zusatzheizungsstunden bestimmen.
+- **Plausibilitätsprüfungen:** Geprüfte Sensoren, Grenzen, Änderungsraten und Mindestdauern festlegen.
+
+**Funktionen**
+
+- **Wochenprogramme bearbeiten und schreiben:** Umfang siehe [v0.xx](#v0xx---alle-wochenprogramme-lesen-und-schreiben).
+- **HA-Auswertungen:** Verdichterstatistik als eigenständige HA-Version, siehe [HA 0.1.0](#ha-010---verdichterstatistik-und-auswertung).
+- **Echo II:** Bleibt eine unabhängige Option.
+
+**Projektpflege**
+
+- **Veröffentlichung:** Git-Tags und Pakete ab 0.6.x sind noch nicht veröffentlicht. `PACKAGE-SHA256.json` entspricht nicht dem aktuellen Stand.
+- **Referenz-Hash:** `tests/test_parameters.py` meldet für `docs/references/fhem/00_THZ.pm` einen abweichenden Hash, vermutlich wegen CRLF-Zeilenenden beim Windows-Checkout (z. B. per `.gitattributes` lösen).
 
 ## v0.4 – Wohnraumlüftung, Geräteauswahl und sControl (lokal umgesetzt)
 
@@ -155,7 +192,9 @@ Schreiben nur nach ausdrücklicher manueller Bedienung und mit bestehender Schre
 
 ## v0.xx - Alle Wochenprogramme lesen und schreiben
 
-**Festlegung 13.11.2026:** Wochenprogramme für **Heizung, Warmwasser und Lüftung** in einer gemeinsamen neuen Version bündeln. `0.xx` ist ein Platzhalter; die genaue Versionsnummer und der Umsetzungstermin bleiben offen. Noch nicht umgesetzt.
+**Festlegung 13.11.2026:** Wochenprogramme für **Heizung, Warmwasser und Lüftung** in einer gemeinsamen neuen Version bündeln. `0.xx` ist ein Platzhalter; die genaue Versionsnummer und der Umsetzungstermin bleiben offen.
+
+**Umsetzungsstand 25.11.2026:** Das Lesen ist mit v0.8.0 und v0.8.1 vorgezogen: je zwei Zeitfenster für Heizung (HP1/HP2) und Lüftung, eines für Warmwasser. Bearbeiten, Schreiben und Rücklesen sind noch nicht umgesetzt.
 
 - **Lesen:** Alle am gewählten Modell und Decoder belegten Wochenprogramme mit Wochentagen und Zeitfenstern aus der LWZ lesen und anzeigen. Vorhandene Tagesgruppen und mehrere Zeitfenster entsprechend dem tatsächlichen Geräteformat berücksichtigen.
 - **Bearbeiten:** Wochenprogramme in Home Assistant bearbeiten; Entwurf und tatsächlich aus der LWZ gelesenen Stand getrennt anzeigen. Änderungen erst durch ausdrückliches manuelles Anwenden übertragen.
@@ -255,6 +294,6 @@ Die HA-Verdichterstatistik erhält eine eigene Versionsfolge, unabhängig von de
 - Eindeutige Entitäten und Hauptquellen; keine zusätzlichen Ausgaben allein aufgrund mehrfacher Datenblöcke.
 - Keine automatische Heizungs-/Warmwasserregelung durch die neuen manuellen Schreibfunktionen.
 - Wärmepumpenneustart zur Fehlerbehebung wird durch HA gesteuert, nicht selbständig durch ESPHome. ESPHome-Fehlerstatus nach bestätigtem Neustart bzw. ausdrücklicher Rücksetzung aus der HA-Automation zurücksetzen; bestehende Neustart-/Fingerbot-Lösung bleibt bei HA.
-- Alle Wochenprogramme für Heizung, Warmwasser und Lüftung gemeinsam in v0.xx lesen und schreiben; aus den bisherigen Einzelplanungen zusammengeführt, konkrete Versionsnummer noch offen.
+- Alle Wochenprogramme für Heizung, Warmwasser und Lüftung gemeinsam in v0.xx bearbeiten und schreiben; das Lesen ist mit v0.8.0/v0.8.1 umgesetzt. Konkrete Versionsnummer noch offen.
 - Echo II bleibt eine unabhängige Option für eine spätere Version.
 - Energieeffizienz bleibt in der separaten Home-Assistant-Lösung außerhalb dieser Integration.

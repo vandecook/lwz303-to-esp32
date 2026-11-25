@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.2 - 2026-11-25 (lokales Quellpaket)
+
+- Lüfterdiagnose berücksichtigt P59 „Wiederanlauf vor Absenkende“. Meldet die LWZ für die Lüftung den Programmzustand 4 oder 5 (FHEM „restart“), darf die Lüftung schon vor dem Ende der Absenkung laufen. In dieser Phase entsteht kein lokaler F5/F6, weder bei laufendem noch bei stehendem Lüfter.
+- Abluft/Zuluft Zustand zeigt in dieser Phase „Laeuft (Wiederanlauf P59)“ bzw. „Aus (Wiederanlauf P59 moeglich)“. Läuft ein Lüfter bei angeforderter Stufe 0 ohne P59-Grund, erscheint „Laeuft ohne Anforderung“ als Hinweis, nicht als Fehler.
+- Neuer Textsensor „Lueftung Laufgrund“ (`fan_run_reason`): Zeitprogramm Normal-/Absenkbetrieb/Bereitschaft, Wiederanlauf vor Absenkende (P59), Handbetrieb oder zeitweise Übersteuerung. Grundlage ist der von der LWZ gemeldete Programmzustand, keine eigene Zeitrechnung.
+- Unverändert: Lüftung soll laufen (wirksame Stufe > 0) und steht 120 Sekunden → lokaler Fehler.
+
+## 0.8.1 - 2026-11-24 (lokales Quellpaket)
+
+- Zweites Heizzeitfenster aus Block `0B` als „Wochenprogramm Heizprogramm 2“ (`heating_weekly_program_hc2`) in allen mitgelieferten Konfigurationen aktiviert. Es entspricht dem Heizprogramm HP2 der LWZ-Bedienung. Der Decoder ist unverändert.
+- Bestehende Entität „Wochenprogramm Heizkreis 1“ behält Namen und ID. Sie zeigt HP1.
+- Webhilfe nennt für `0B` HP1 und HP2.
+
 ## 0.8.0 - 2026-11-24 (lokales Quellpaket)
 
 - Gespeicherte Wochenprogramme für Heizkreis 1, Warmwasser und zwei Lüftungszeitfenster aus der LWZ lesen. Home Assistant und Webinterface zeigen Start, Ende, Wochentage und Aktivierung.

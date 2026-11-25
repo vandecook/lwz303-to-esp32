@@ -22,7 +22,7 @@ static constexpr WeeklyProgramEntities WEEKLY_PROGRAMS[]{
 };
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.8.0 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.8.2 (device FW independent of decoder profile)");
   parameters_invalidate_();
   this->frame_.reserve(128);
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05, 0x0B, 0x0C, 0x0D}) {

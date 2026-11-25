@@ -86,7 +86,7 @@ void LWZ2Component::v04_invalidate_(bool clear_display) {
     auto defrost = v04_binary_.find("defrost_evaporator_active");
     if (defrost != v04_binary_.end()) defrost->second->invalidate_state();
     for (const char *k : {"hc_stage", "dhw_stage", "current_fan_stage", "heat_request", "heat_request2"}) v04_number_(k, NAN);
-    for (const char *k : {"hc_stage_text", "dhw_stage_text", "compressor_purpose", "simultaneous_demand"}) v04_publish_text_(k, "unbekannt");
+    for (const char *k : {"hc_stage_text", "dhw_stage_text", "compressor_purpose", "simultaneous_demand", "fan_run_reason"}) v04_publish_text_(k, "unbekannt");
   }
   // A decoder change/reconnect never clears a latched fault.
 }
@@ -125,7 +125,30 @@ int LWZ2Component::current_fan_stage_() const {
   if (fan_program_ == 1) return fan_day_;
   if (fan_program_ == 2) return fan_night_;
   if (fan_program_ == 3) return fan_standby_;
+  // 4/5 (FHEM "restart", P59) stays unknown: the LWZ may already run, so neither
+  // running nor standing still is a fault in this phase.
   return -1;
+}
+
+bool LWZ2Component::fan_restart_phase_() const {
+  return v04_fresh(program_seen_, program_ms_, diagnostic_max_age_ms_) &&
+      v04_fresh(override_seen_, override_ms_, diagnostic_max_age_ms_) &&
+      override_remaining_ == 0 && program_mode_ == 1 && (fan_program_ == 4 || fan_program_ == 5);
+}
+
+std::string LWZ2Component::fan_run_reason_() const {
+  if (!v04_fresh(program_seen_, program_ms_, diagnostic_max_age_ms_) ||
+      !v04_fresh(override_seen_, override_ms_, diagnostic_max_age_ms_))
+    return "Unbekannt (Programmzustand nicht frisch)";
+  if (override_remaining_ > 0) return "Zeitweise Uebersteuerung";
+  if (override_remaining_ != 0) return "Unbekannt (Uebersteuerung nicht lesbar)";
+  if (program_mode_ == 0) return "Handbetrieb (P12)";
+  if (program_mode_ != 1) return "Unbekannt (Betriebsart " + std::to_string(program_mode_) + ")";
+  if (fan_program_ == 1) return "Zeitprogramm: Normalbetrieb (P07)";
+  if (fan_program_ == 2) return "Zeitprogramm: Absenkbetrieb (P08)";
+  if (fan_program_ == 3) return "Zeitprogramm: Bereitschaft (P09)";
+  if (fan_program_ == 4 || fan_program_ == 5) return "Wiederanlauf vor Absenkende (P59)";
+  return "Unbekannt (Programmcode " + std::to_string(fan_program_) + ")";
 }
 
 void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
@@ -230,12 +253,19 @@ void LWZ2Component::v04_tick_(bool speed_observation) {
   publish_fan_stage_diagnostics_(stage);
   const bool data_ok = v04_fresh(speed_seen_, speed_ms_, diagnostic_max_age_ms_) && stage >= 0;
   v04_number_("current_fan_stage", fan_stage_display_last_ < 0 ? NAN : float(fan_stage_display_last_));
+  v04_publish_text_("fan_run_reason", fan_run_reason_());
+  const bool restart = fan_restart_phase_();
+  const bool speed_fresh = v04_fresh(speed_seen_, speed_ms_, diagnostic_max_age_ms_);
   for (unsigned i = 0; i < 2; i++) {
     std::string state = "Unbekannt";
     const bool valid = data_ok && std::isfinite(v04_speed_[i]) && v04_speed_[i] >= 0;
     if (!valid || stage == 0 || v04_speed_[i] > 0) zero_pending_[i] = false;
+    if (!valid && restart && speed_fresh && std::isfinite(v04_speed_[i]) && v04_speed_[i] >= 0) {
+      // P59 phase: early running is expected and OK; standing still is not yet a fault.
+      state = v04_speed_[i] > 0 ? "Laeuft (Wiederanlauf P59)" : "Aus (Wiederanlauf P59 moeglich)";
+    }
     if (valid) {
-      if (stage == 0) state = "Aus";
+      if (stage == 0) state = v04_speed_[i] > 0 ? "Laeuft ohne Anforderung" : "Aus";
       else if (v04_speed_[i] > 0) state = "Laeuft";
       else {
         if (!zero_pending_[i]) { zero_pending_[i] = true; zero_since_[i] = now; }

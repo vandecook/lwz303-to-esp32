@@ -258,6 +258,8 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void v04_invalidate_(bool clear_display = true);
   bool v04_save_();
   int current_fan_stage_() const;
+  bool fan_restart_phase_() const;  // LWZ ProgStateFAN 4/5: restart before setback end (P59).
+  std::string fan_run_reason_() const;
   void v04_history_();
   void clock_mode_publish_();
   void v04_number_(const std::string &key, float value);

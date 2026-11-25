@@ -45,8 +45,9 @@ Tag-/Nachtfenster der Wärmepumpe sind verbindlich. Keine zweite, unabhängig vo
 1. Einen am Gerät bestätigten aktuellen Stufenstatus bevorzugen. Falls dieser fehlt, die wirksame Stufe aus dem von der LWZ gemeldeten Betriebs-/Programmzustand und den passenden Einstellungen ableiten.
 2. Im zeitgesteuerten Normal-/Absenkbetrieb sind `sProgram.ProgStateFAN` und Tag-/Nachtwerte P07/P08 mögliche Quellen. Bereitschaft P09, manuelle Stufe P12 und zeitweise Übersteuerungen müssen entsprechend der tatsächlich wirksamen Betriebsart berücksichtigt werden.
 3. `sSystem.userSetFanStage` und Restzeit sind mögliche Quellen für Übersteuerungen; ihre Bedeutung und Priorität für FW 2.16 vor Verwendung prüfen. Weder eine gespeicherte Tagstufe noch die allgemeine Heizungsbetriebsart allein belegt die aktuelle Lüfterstufe.
-4. Wenn aus Status und Einstellungen keine eindeutige aktuelle Anforderung hervorgeht, „Unbekannt“ ausgeben. Dadurch wird z. B. eine geplante Nachtabschaltung nicht als Defekt bewertet.
-5. Für den nötigen Abgleich der Wochenzeitprogramme die Uhr der LWZ aus `sTimedate` verwenden. Wenn die LWZ ihren aktuellen Programmzustand bereits liefert, diesen nicht nochmals wegen Sommerzeit um eine Stunde verschieben.
+4. **P59 „Wiederanlauf vor Absenkende“ (seit v0.8.2):** Die LWZ kann um die in P59 eingestellte Zeit vor dem Ende der Absenkung wieder anlaufen. Sie meldet diese Phase in `sProgram.ProgStateFAN` mit 4 oder 5 (FHEM `OpModeHC` „restart“). Laufen ist dann in Ordnung, Stillstand ebenfalls noch kein Fehler. Deshalb startet in dieser Phase kein F5/F6-Prüfzeitraum. Die Zustandsanzeige lautet „Laeuft (Wiederanlauf P59)“ bzw. „Aus (Wiederanlauf P59 moeglich)“. Läuft ein Lüfter bei wirksamer Stufe 0 ohne diesen Grund, zeigt der Zustand „Laeuft ohne Anforderung“ als Hinweis ohne Fehlerbewertung. Der Textsensor „Lueftung Laufgrund“ nennt den aktuellen Grund: Zeitprogramm (Normal-/Absenkbetrieb, Bereitschaft), Wiederanlauf P59, Handbetrieb oder zeitweise Übersteuerung. Ob die Lüftung auf FW 2.16 den Code 4/5 tatsächlich meldet, ist am Gerät zu prüfen.
+5. Wenn aus Status und Einstellungen keine eindeutige aktuelle Anforderung hervorgeht, „Unbekannt“ ausgeben. Dadurch wird z. B. eine geplante Nachtabschaltung nicht als Defekt bewertet.
+6. Für den nötigen Abgleich der Wochenzeitprogramme die Uhr der LWZ aus `sTimedate` verwenden. Wenn die LWZ ihren aktuellen Programmzustand bereits liefert, diesen nicht nochmals wegen Sommerzeit um eine Stunde verschieben.
 
 Decoderquellen: [P07/P08/P09/P12](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm#L151), [Programmstatus](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm#L197), [zeitweise Lüfterstufe](https://github.com/mhop/fhem-mirror/blob/0178ba5567d8b203db51215d29406454f1c7d001/fhem/FHEM/00_THZ.pm#L281).
 
@@ -77,6 +78,8 @@ Für v0.4 ist eine manuelle Auswahl **Winterzeit / Sommerzeit** vorgesehen:
 | Stufe > 0, Abluft 0 für ≥ 120 s, fortlaufend frische Daten | Lokaler F5; Zuluft unabhängig |
 | Stufe > 0, Zuluft 0 für ≥ 120 s, fortlaufend frische Daten | Lokaler F6; Abluft unabhängig |
 | Nachtprogramm verlangt Stufe 0, beide Drehzahlen 0 | Keine neue lokale Störung; bereits gespeicherte Fehler bleiben erhalten |
+| Wiederanlauf vor Absenkende (ProgStateFAN 4/5), Lüfter läuft oder steht | Kein lokaler Fehler; Laufgrund „Wiederanlauf vor Absenkende (P59)“ |
+| Wirksame Stufe 0, Lüfter läuft ohne P59-Grund | Hinweis „Laeuft ohne Anforderung“, kein Fehler |
 | Tag-/Nachtwechsel oder zeitweise Stufe weicht vom Grundprogramm ab | Tatsächlich wirksame Stufe verwenden |
 | Daten fehlen, werden veraltet oder sind unplausibel | Datenqualität unbekannt; Prüfzeitraum zurücksetzen, gespeicherte Fehler erhalten |
 | Drehzahl wird nach bestätigtem F5/F6 positiv | Gespeicherten Fehler bis zur Rücksetzung erhalten |

@@ -11,7 +11,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.8.0"
+    version: "0.8.2"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -693,6 +693,10 @@ lwz2:
     name: "Wochenprogramm Heizkreis 1"
     web_server:
       sorting_group_id: lwz_weekly_programs
+  heating_weekly_program_hc2:
+    name: "Wochenprogramm Heizprogramm 2"
+    web_server:
+      sorting_group_id: lwz_weekly_programs
   dhw_weekly_program:
     name: "Wochenprogramm Warmwasser"
     web_server:
@@ -967,6 +971,8 @@ lwz2:
       sorting_group_id: lwz_expert
   current_fan_stage:
     name: "Aktuelle Luefterstufe"
+  fan_run_reason:
+    name: "Lueftung Laufgrund"
   exhaust_fault:
     name: "F5 Abluft lokal erkannt"
   supply_fault:

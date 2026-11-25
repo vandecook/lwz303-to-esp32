@@ -25,7 +25,7 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 
 ## Aktueller Funktionsstand
 
-**v0.8.0:** Der Bereich „Wochenprogramme“ zeigt die in der LWZ gespeicherten Zeiten für Heizkreis 1, Warmwasser und zwei Lüftungszeitfenster. In Home Assistant erscheinen dafür eigene Textsensoren. Jeder zeigt Start, Ende, Wochentage und Aktivierung. Die drei Programme werden etwa alle fünf Minuten gelesen. Frischesensoren kennzeichnen das Alter der letzten erfolgreichen Abfrage separat. Heizkreis 2 kann bei Bedarf über einen zusätzlichen Textsensor eingebunden werden. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md)
+**v0.8.0:** Der Bereich „Wochenprogramme“ zeigt die in der LWZ gespeicherten Zeiten für Heizkreis 1, Warmwasser und zwei Lüftungszeitfenster. In Home Assistant erscheinen dafür eigene Textsensoren. Jeder zeigt Start, Ende, Wochentage und Aktivierung. Die drei Programme werden etwa alle fünf Minuten gelesen. Frischesensoren kennzeichnen das Alter der letzten erfolgreichen Abfrage separat. Seit v0.8.1 erscheint zusätzlich das zweite Heizzeitfenster als „Wochenprogramm Heizprogramm 2“ (HP2). [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md)
 
 **v0.7.0:** Eigener Bereich „Programmierte Parameter“ mit 70 belegten P-Feldern. 31 der 32 gewünschten Parameter sind einstellbar: P1–P15, P19, P31, P32, P37–P42, P49, P54–P58 und P79. **P86 bleibt mangels belegtem 2.x-Zugriff offen.** Bestehende Entitätsnamen, IDs und HA-Zuordnungen bleiben erhalten; vorhandene reine Sensoren erhalten bei Bedarf ein zusätzliches Einstellfeld. Schreiben mit frischem Lesen, gezielter Änderung und unabhängiger Rückleseprüfung. [Bedienung, Katalog und Grenzen](docs/PARAMETER-v0.7.md), [Prüfbericht](docs/VALIDATION-v0.7.md).
 
