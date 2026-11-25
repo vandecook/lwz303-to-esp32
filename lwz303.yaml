@@ -1263,7 +1263,7 @@ button:
             - switch.turn_off: restart_confirm
             - lambda: App.safe_reboot();
           else:
-            - logger.log: "Neustart zuerst mit dem BestÃ¤tigungsschalter freigeben"
+            - logger.log: "Neustart zuerst mit dem Bestätigungsschalter freigeben"
   - platform: template
     name: "Parameter jetzt aktualisieren"
     on_press:
@@ -1316,7 +1316,7 @@ text_sensor:
     update_interval: 10s
     lambda: |-
       auto now = id(local_time).now();
-      if (!now.is_valid()) return {"nicht verfÃ¼gbar"};
+      if (!now.is_valid()) return {"nicht verfügbar"};
       return now.strftime("%Y-%m-%d %H:%M:%S %Z");
   - platform: template
     name: "Projektversion"
