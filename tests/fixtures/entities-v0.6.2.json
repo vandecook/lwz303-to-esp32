@@ -551,7 +551,7 @@
         "entity_category": "config"
       },
       "number[2]": {
-        "name": "Heizkurven-Abfrageintervall HK1",
+        "name": "Parameter-Abfrageintervall",
         "id": "config_interval",
         "entity_category": "config"
       },
@@ -1226,7 +1226,7 @@
         "entity_category": "config"
       },
       "number[2]": {
-        "name": "Heizkurven-Abfrageintervall HK1",
+        "name": "Parameter-Abfrageintervall",
         "id": "config_interval",
         "entity_category": "config"
       },

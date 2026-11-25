@@ -78,7 +78,7 @@ class SelectionTest(unittest.TestCase):
             self.assertNotIn('fan_interval',lwz)
             profile=next(e for e in config['select'] if e.get('id')=='lwz_firmware')
             self.assertIn('2.16',profile['options'])
-            self.assertEqual(config['esphome']['project']['version'],'0.9.0')
+            self.assertEqual(config['esphome']['project']['version'],'0.9.1')
             for key in ('heating_weekly_program_hc1', 'heating_weekly_program_hc2', 'dhw_weekly_program', 'fan_weekly_program_1',
                         'fan_weekly_program_2', 'block_0B_fresh', 'block_0C_fresh', 'block_0D_fresh'):
                 self.assertEqual(lwz[key]['web_server']['sorting_group_id'], 'lwz_weekly_programs')

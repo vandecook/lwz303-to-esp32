@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1 - 2026-11-26 (lokales Quellpaket)
+
+- Einstellung „Heizkurven-Abfrageintervall HK1“ in „Parameter-Abfrageintervall“ umbenannt. Sie steuert seit 0.9.0 alle Parameterblöcke, die Wochenprogramme und die Betriebsstunden, nicht nur HK1. Ausnahme von der Bestandssicherung auf Nutzerentscheidung vom 26.11.2026; die Einstellung war auf keinem Dashboard und in keiner Automation eingebunden.
+- Folgen in Home Assistant: Es entsteht eine neue Entität, die alte bleibt als „nicht verfügbar“ zurück und kann gelöscht werden. Der gespeicherte Wert wird nicht übernommen; die Einstellung startet mit 60 Minuten.
+- Die interne ID `config_interval` und die Funktion bleiben unverändert.
+
 ## 0.9.0 - 2026-11-25 (lokales Quellpaket)
 
 Neue Abfrageplanung mit drei Klassen. Die unveröffentlichte 0.8.3 ist hier aufgegangen.

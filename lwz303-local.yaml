@@ -11,7 +11,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.9.0"
+    version: "0.9.1"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -1080,7 +1080,7 @@ number:
       - lambda: id(lwz303).set_dynamic_interval(uint32_t(x * 1000));
   - platform: template
     id: config_interval
-    name: "Heizkurven-Abfrageintervall HK1"
+    name: "Parameter-Abfrageintervall"
     entity_category: config
     unit_of_measurement: min
     min_value: 1

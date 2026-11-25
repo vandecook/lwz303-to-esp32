@@ -1,4 +1,4 @@
-# LWZ303 to ESP32 – v0.9.0
+# LWZ303 to ESP32 – v0.9.1
 
 ## Zweck des Projekts
 
@@ -30,7 +30,7 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 | Klasse | Blöcke | Intervall |
 |---|---|---|
 | Betriebsdaten | `FB`, `F3`, `F4`, `E8`, `F2`, `F6`, `EE` | „Statusabfrage Standardintervall“ (langsam) oder „Statusabfrage Schnellintervall“ (schnell, bei Verdichter, Heizbetrieb oder Warmwasser) |
-| Parameter | `05`, `17`, `01`, `03`, `06`, `07`, `08`, `0A`, `0E`, `10`, Wochenprogramme `0B`–`0D`, Betriebsstunden `09` | „Heizkurven-Abfrageintervall HK1“, Startwert 60 Minuten (Name aus Bestandsgründen unverändert) |
+| Parameter | `05`, `17`, `01`, `03`, `06`, `07`, `08`, `0A`, `0E`, `10`, Wochenprogramme `0B`–`0D`, Betriebsstunden `09` | „Parameter-Abfrageintervall“ (bis 0.9.0 „Heizkurven-Abfrageintervall HK1“), Startwert 60 Minuten |
 | Uhrzeit und Datum | `FC` | fest alle 5 Minuten |
 
 Die frühere Begrenzung auf 10 Sekunden für die Lüfterdiagnose entfällt. F5/F6 bewerten Drehzahl, Programmzustand und Übersteuerung als frisch bis zum Dreifachen des längeren Betriebsdatenintervalls (mindestens 30 s). Gelesen wird immer der am längsten überfällige Block; reicht der Bus nicht, strecken sich alle Blöcke gleichmäßig, statt dass einzelne nie gelesen werden. Neue Buttons „Parameter jetzt aktualisieren“ und „Messwerte jetzt aktualisieren“ lesen die jeweiligen Blöcke einmal vorrangig; „Manuelle Aktualisierung“ zeigt den Fortschritt. „Status-Abfrageintervall Grund“, „Projektversion“ und „ESPHome-Version“ ergänzen die Anzeige. [Prüfstand v0.9.0](docs/VALIDATION-v0.9.md)
