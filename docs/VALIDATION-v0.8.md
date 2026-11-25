@@ -10,7 +10,7 @@ Seit v0.8.1 ist der zweite Eintrag aus `0B` in den mitgelieferten Konfiguratione
 | `0C` | Ein Zeitfenster für Warmwasser |
 | `0D` | Zwei Zeitfenster für Lüftung |
 
-Die Abfragen starten gestaffelt nach dem Einschalten und liegen danach etwa fünf Minuten auseinander. Die Frische-Anzeigen beziehen sich auf die letzte empfangene Antwort des jeweiligen Blocks. Nach mehr als 15 Minuten ohne gültige Antwort erlischt die Frische-Anzeige. Die zuletzt empfangenen Zeiten bleiben sichtbar. Vor der ersten gültigen Antwort zeigt der Textsensor „Nicht verfügbar“ an. Der ESP sendet für die Wochenprogramme ausschließlich Leseanfragen.
+Die Abfragen starten gestaffelt nach dem Einschalten und liegen danach etwa fünf Minuten auseinander. Seit v0.9.0 gilt für die Wochenprogramme das Parameterintervall (Startwert 60 Minuten), die Frist das Dreifache davon. Die Frische-Anzeigen beziehen sich auf die letzte empfangene Antwort des jeweiligen Blocks. Nach mehr als 15 Minuten ohne gültige Antwort erlischt die Frische-Anzeige. Die zuletzt empfangenen Zeiten bleiben sichtbar. Vor der ersten gültigen Antwort zeigt der Textsensor „Nicht verfügbar“ an. Der ESP sendet für die Wochenprogramme ausschließlich Leseanfragen.
 
 Die Zeitwerte sind 16-Bit-Zahlen in Big-Endian-Reihenfolge. Der dezimale Wert 650 steht für 06:50. Die Wochentage belegen die Bits 0 bis 6 von Montag bis Sonntag. Das Aktivierungsbyte hat die Werte 0 oder 1. [Mitgelieferte FHEM-Referenz](references/fhem/00_THZ.pm#L113-L139)
 

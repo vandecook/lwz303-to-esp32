@@ -1,4 +1,4 @@
-# LWZ303 to ESP32 – v0.8.0
+# LWZ303 to ESP32 – v0.9.0
 
 ## Zweck des Projekts
 
@@ -9,7 +9,7 @@ Dieses Projekt dient der **Migration der bisherigen FHEM-Anbindung einer Stiebel
 - **Nur für Geräte-Firmware der Reihe 2.x.** Die Firmwareversion bezeichnet hier die Wärmepumpe, nicht ESPHome oder die Projektversion. Firmware 4.x und andere Reihen gehören nicht zum vorgesehenen Umfang.
 - Das eigene **Decoderprofil für Geräte-Firmware 2.16** basiert auf dem FHEM-Decoderlayout 2.06, praktischen Tests und plausiblen Ergebnissen aus den bisherigen Beobachtungen. Bekannte Ausnahmen werden ausdrücklich als nicht verfügbar behandelt. [Details zum Decoderprofil 2.16](docs/DECODER-FW2.16.md).
 - **Praktisch getestet wurde bisher ausschließlich mit einer LWZ 303 SOL mit Geräte-Firmware 2.16. Die Solarfunktion war dabei deaktiviert.** Die aktiven Solarfunktionen und andere Gerätemodelle sind damit nicht als getestet ausgewiesen.
-- Tests und Beobachtungen bestätigen jeweils die dokumentierten Teilfunktionen; sie bedeuten keine vollständige Prüfung aller Messwerte und Schreibfunktionen. Ergänzend gibt es synthetische Softwaretests. [Validierungsstand](docs/VALIDATION-v0.7.md).
+- Tests und Beobachtungen bestätigen jeweils die dokumentierten Teilfunktionen; sie bedeuten keine vollständige Prüfung aller Messwerte und Schreibfunktionen. Ergänzend gibt es synthetische Softwaretests. [Validierungsstand](docs/VALIDATION-v0.9.md).
 
 ## Verwendete Hardware
 
@@ -25,7 +25,19 @@ Die Implementierung nutzt Informationen aus dem Projekt von **Robert Penz** sowi
 
 ## Aktueller Funktionsstand
 
-**v0.8.0:** Der Bereich „Wochenprogramme“ zeigt die in der LWZ gespeicherten Zeiten für Heizkreis 1, Warmwasser und zwei Lüftungszeitfenster. In Home Assistant erscheinen dafür eigene Textsensoren. Jeder zeigt Start, Ende, Wochentage und Aktivierung. Die drei Programme werden etwa alle fünf Minuten gelesen. Frischesensoren kennzeichnen das Alter der letzten erfolgreichen Abfrage separat. Seit v0.8.1 erscheint zusätzlich das zweite Heizzeitfenster als „Wochenprogramm Heizprogramm 2“ (HP2). [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md)
+**v0.9.0:** Neue Abfrageplanung in drei Klassen.
+
+| Klasse | Blöcke | Intervall |
+|---|---|---|
+| Betriebsdaten | `FB`, `F3`, `F4`, `E8`, `F2`, `F6`, `EE` | „Statusabfrage Standardintervall“ (langsam) oder „Statusabfrage Schnellintervall“ (schnell, bei Verdichter, Heizbetrieb oder Warmwasser) |
+| Parameter | `05`, `17`, `01`, `03`, `06`, `07`, `08`, `0A`, `0E`, `10`, Wochenprogramme `0B`–`0D`, Betriebsstunden `09` | „Heizkurven-Abfrageintervall HK1“, Startwert 60 Minuten (Name aus Bestandsgründen unverändert) |
+| Uhrzeit und Datum | `FC` | fest alle 5 Minuten |
+
+Die frühere Begrenzung auf 10 Sekunden für die Lüfterdiagnose entfällt. F5/F6 bewerten Drehzahl, Programmzustand und Übersteuerung als frisch bis zum Dreifachen des längeren Betriebsdatenintervalls (mindestens 30 s). Gelesen wird immer der am längsten überfällige Block; reicht der Bus nicht, strecken sich alle Blöcke gleichmäßig, statt dass einzelne nie gelesen werden. Neue Buttons „Parameter jetzt aktualisieren“ und „Messwerte jetzt aktualisieren“ lesen die jeweiligen Blöcke einmal vorrangig; „Manuelle Aktualisierung“ zeigt den Fortschritt. „Status-Abfrageintervall Grund“, „Projektversion“ und „ESPHome-Version“ ergänzen die Anzeige. [Prüfstand v0.9.0](docs/VALIDATION-v0.9.md)
+
+**v0.8.2:** Die Lüfterdiagnose berücksichtigt P59 „Wiederanlauf vor Absenkende“. Meldet die LWZ den Wiederanlauf (Programmzustand Lüftung 4/5), entsteht kein lokaler F5/F6, egal ob der Lüfter schon läuft oder noch steht. Der Textsensor „Lueftung Laufgrund“ nennt den Grund: Zeitprogramm, P59, Handbetrieb oder Übersteuerung. [Lüfterdiagnose](docs/LUEFTERDIAGNOSE-v0.4.md)
+
+**v0.8.0:** Der Bereich „Wochenprogramme“ zeigt die in der LWZ gespeicherten Zeiten für Heizkreis 1, Warmwasser und zwei Lüftungszeitfenster. In Home Assistant erscheinen dafür eigene Textsensoren. Jeder zeigt Start, Ende, Wochentage und Aktivierung. Die Programme werden seit v0.9.0 im Parameterintervall gelesen (vorher etwa alle fünf Minuten). Frischesensoren kennzeichnen das Alter der letzten erfolgreichen Abfrage separat. Seit v0.8.1 erscheint zusätzlich das zweite Heizzeitfenster als „Wochenprogramm Heizprogramm 2“ (HP2). [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md)
 
 **v0.7.0:** Eigener Bereich „Programmierte Parameter“ mit 70 belegten P-Feldern. 31 der 32 gewünschten Parameter sind einstellbar: P1–P15, P19, P31, P32, P37–P42, P49, P54–P58 und P79. **P86 bleibt mangels belegtem 2.x-Zugriff offen.** Bestehende Entitätsnamen, IDs und HA-Zuordnungen bleiben erhalten; vorhandene reine Sensoren erhalten bei Bedarf ein zusätzliches Einstellfeld. Schreiben mit frischem Lesen, gezielter Änderung und unabhängiger Rückleseprüfung. [Bedienung, Katalog und Grenzen](docs/PARAMETER-v0.7.md), [Prüfbericht](docs/VALIDATION-v0.7.md).
 
@@ -54,7 +66,7 @@ v0.4 ergänzt die freigegebene v0.3-Auswahl um dauerhafte Tag-/Nacht-Lüfterstuf
 - **Relative Drehzahl Hauptlüfter optional:** in HA standardmäßig deaktiviert, im Geräteweb unter Expert. Der Wert bleibt verfügbar und wird nicht für die F5-/F6-Bewertung von Abluft/Zuluft benötigt.
 - **Speed200 optional:** Zuluft- und Abluft-Speed200 sind in HA standardmäßig deaktiviert und im Geräteweb der Expert-Gruppe zugeordnet. Bereits in HA aktivierte Entitäten werden durch `disabled_by_default` nicht automatisch deaktiviert; dies bei Bedarf in HA ändern. Die relative Drehzahlquelle für F5/F6 bleibt unverändert.
 - **P07/P08 dauerhaft schreiben:** Lüfterstufe Tag und Nacht als Number 0–3. Frisch lesen, nur ein Byte des vollständigen Blocks 17 ändern, genau einen SET senden und unabhängig zurücklesen. Keine zeitweise Übersteuerung; Lüftungszeitprogramme werden nicht geschrieben.
-- **F5 Abluft / F6 Zuluft:** Wirksame Stufe > 0 und jeweilige gültige Istdrehzahl ununterbrochen 120 Sekunden null. Diagnose lokal im ESP; beide Lüfter unabhängig. Eine neue Störung wird erst an einem frischen bestätigenden Messpunkt gemeldet. Fehlende Daten unterbrechen die Prüfung.
+- **F5 Abluft / F6 Zuluft:** Wirksame Stufe > 0 und jeweilige gültige Istdrehzahl ununterbrochen 120 Sekunden null. Diagnose lokal im ESP; beide Lüfter unabhängig. Eine neue Störung wird erst an einem frischen bestätigenden Messpunkt gemeldet. Fehlende Daten unterbrechen die Prüfung. Frisch heißt seit v0.9.0: jünger als das Dreifache des längeren Betriebsdatenintervalls, mindestens 30 s. Beim Wiederanlauf vor Absenkende (P59) entsteht kein Fehler.
 - **Gespeicherte Fehler:** Positive Drehzahl, Stufe 0, Kommunikationsunterbrechung und ESP-Neustart löschen bestätigte Fehler nicht. Fehleranzahl, letzter Beginn, letztes Ende und Rücksetzgrund werden bei Ereignissen unmittelbar gespeichert. Der Speicherstatus zeigt Fehler beim Speichern an.
 - **HA-Rücksetzung:** Nach erfolgtem Wärmepumpenneustart die Taste „Lüfterfehler nach LWZ-Neustart zurücksetzen“ aus der eigenen HA-Automation aufrufen. Sie setzt nur den lokalen Fehlerstatus zurück. Kein automatischer LWZ-Neustart und keine vermeintliche Neustarterkennung aus einem Timeout. [HA-Anbindung und Benachrichtigungsvorlage](docs/HA-LUEFTERDIAGNOSE-v0.4.md).
 - **Aktuelle Lüfterstufe:** Aus LWZ-Programmzustand EE, P07/P08/P09/P12 und zeitweiser Stufe/Restzeit aus F6 ableiten. Die Anzeige behält die letzte gültige Stufe; „Luefterstufe Datenbasis“ markiert veraltete oder fehlende Quellen. F5/F6 verwenden weiterhin ausschließlich frische Daten, sonst „Unbekannt“. Die bestehende LWZ-Zeitsteuerung bleibt maßgeblich; keine zweite HA-Zeitschaltlogik. Die F6-Übersteuerungspriorität muss für FW 2.16 am Gerät bestätigt werden.
@@ -76,15 +88,15 @@ external_components:
     components: [lwz2]
 ```
 
-Solange v0.8.0 noch nicht im GitHub-Repository veröffentlicht ist, lädt diese Quelle möglicherweise einen älteren Stand. Für den Paketstand sind `lwz303-local.yaml` und `lwz303-sol-local.yaml` mit `source: components` vorgesehen. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
+Diese Quelle lädt den Stand von `main` im GitHub-Repository. Für Änderungen im Arbeitsverzeichnis sind `lwz303-local.yaml` und `lwz303-sol-local.yaml` mit `source: components` vorgesehen. Eigene Secrets bereitstellen und Board/Pins prüfen. Kein automatischer Upload, Flash oder Publish wird ausgeführt.
 
-Komponenteneinstellungen: `device_model: unknown`, `fan_speed_source: sGlobal`, `diagnostic_max_age: 30s`, `fan_interval: 10s`. Die Funktionen sind ohne Versions-Aktivierungsflags integriert. Beide mitgelieferten Hauptkonfigurationen enthalten die Profilbedienung. Das gespeicherte Modell ist vor der Interpretation der F2-Texte auszuwählen; bei unbekanntem Modell werden Rohcodes angezeigt.
+Komponenteneinstellungen: `device_model: unknown`, `fan_speed_source: sGlobal`, `diagnostic_max_age: 30s` (Mindestfrist der Lüfterdiagnose). Die Funktionen sind ohne Versions-Aktivierungsflags integriert. Beide mitgelieferten Hauptkonfigurationen enthalten die Profilbedienung. Das gespeicherte Modell ist vor der Interpretation der F2-Texte auszuwählen; bei unbekanntem Modell werden Rohcodes angezeigt.
 
-Für die aktive Diagnose wird das sGlobal-Abfrageintervall auf höchstens 10 Sekunden begrenzt, auch wenn ein größeres Standardintervall eingestellt ist; eine schnellere Dynamik bleibt möglich. Die Anzeige „Aktives Status-Abfrageintervall“ zeigt das tatsächlich geplante Intervall. Die serielle Übertragung kann zusätzliche Verzögerungen verursachen.
+Seit v0.9.0 gibt es keine 10-Sekunden-Grenze mehr. Die Anzeige „Aktives Status-Abfrageintervall“ zeigt das geplante Betriebsdatenintervall, „Status-Abfrageintervall Grund“ ob Standard- oder Schnellintervall gilt und warum. Die serielle Übertragung kann zusätzliche Verzögerungen verursachen.
 
 Quellen und unveränderte FHEM-/Herstellerreferenzen: [Referenzverzeichnis](docs/references/README.md). Die Stiebel-Eltron-Unterlagen sind nicht im Repo; die Originale gibt es beim Hersteller: [Bedienung und Installation](https://www.stiebel-eltron.com/static/ste/docportal/manual/DM0000017729-nsm.pdf) und [Gebrauchs- und Montageanweisung](https://www.stiebel-eltron.com/static/ste/docportal/manual/DM0000017729-iau.pdf). Lokale Kopien gehören nach `docs/references/stiebel-eltron/` (von Git ausgeschlossen).
 
-Prüfstand: [Softwarevalidierung v0.7.0](docs/VALIDATION-v0.7.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
+Prüfstand: [Softwarevalidierung v0.9.0](docs/VALIDATION-v0.9.md). Geräteprüfung einschließlich physischer Schreibtests, Drehzahlquelle, Betriebsartenpriorität und F2-Codes steht aus. Ausgeführte Softwaretests belegen keine Hardwarefreigabe für alle Modelle. Die folgenden Anschluss- und Diagnoseabschnitte stammen aus dem v0.2-Bestand und sind im Zusammenhang mit den v0.4-Regeln oben zu lesen.
 
 ## Anschluss und Installation
 
@@ -114,18 +126,20 @@ Das Beispiel lädt die lokale Komponente. Firmwareprofil passend zur LWZ im Webi
 
 | Daten | Quelle | Standard |
 |---|---|---|
-| Außen-, Vorlauf-, Rücklauf-, Warmwassertemperatur | FB / sGlobal | 10 s |
-| Kompressor, Heizbetrieb = HK-Pumpe, WW-Bereitung = WW-Pumpe | FB | gleicher Block |
-| HK1 Gradient P13, Fußpunkt P14 und Raumeinfluss P15 | 05 / pHeat1 | Boot, ab v0.5 standardmäßig jede Minute; manueller Refresh. Vorhandene gespeicherte Intervallwahl bleibt erhalten |
+| Temperaturen, Verdichter, Pumpen, Lüfterdrehzahlen | FB, F3, F4, E8 | Betriebsdatenintervall (langsam/schnell) |
+| Anforderungen, Abtauen, Übersteuerung, Programmzustand | F2, F6, EE | Betriebsdatenintervall (langsam/schnell) |
+| Programmierte Parameter einschließlich P13/P14/P15 | 05, 17, 01, 03, 06, 07, 08, 0A, 0E, 10 | Parameterintervall, Startwert 60 min; manuell per Button |
+| Wochenprogramme, Betriebsstunden | 0B–0D, 09 | Parameterintervall |
+| LWZ-Uhrzeit und Datum | FC | 5 min |
 | Firmwareversion | FD | beim Boot/Profilwechsel und manuell, für alle drei Decoderprofile |
 
 Dynamik ist standardmäßig aktiv: 5 s bei Kompressor **ODER** Heizbetrieb **ODER** Warmwasser. Alle drei Trigger sind anfangs ausgewählt. Ohne ausgewählten aktiven Trigger gilt das Normalintervall. Im Webinterface konfigurierbar: Normal- und Dynamikintervall (5–300 s), HK1-Intervall (1–1440 min), Dynamik ein/aus und drei Trigger. Speicherung erfolgt durch ESPHome nach etwa einer Minute; Stromausfall davor kann letzte Änderungen verlieren. Diagnosezähler bleiben flüchtig.
 
-Intervalle laufen ab Transaktionsabschluss; Kommunikation, Retries und Backoff verlängern reale Abstände. Es läuft nur eine Transaktion gleichzeitig. Manueller HK1-Refresh wird zwischen Transaktionen eingereiht; ausstehende Klicks werden zusammengefasst. Nach endgültigem HK1-Fehler wartet die Automatik das Konfigurationsintervall, ein manueller Refresh bleibt möglich.
+Intervalle laufen ab Transaktionsabschluss; Kommunikation, Retries und Backoff verlängern reale Abstände. Es läuft nur eine Transaktion gleichzeitig. Manuelle Aktualisierungen (HK1, Parameter, Messwerte) werden zwischen Transaktionen vor den Routineabfragen eingereiht; ausstehende Klicks werden zusammengefasst. Routineabfragen laufen nach ältester Fälligkeit. Nach endgültigem HK1-Fehler wartet die Automatik das Konfigurationsintervall, ein manueller Refresh bleibt möglich.
 
-Bestehende optionale F4-, E8-, 01- und 09-Entitäten und ihre Intervalloptionen bleiben verfügbar. Ihre Datenblöcke werden nur bei konfigurierten Verbrauchern gelesen. Das Minimalbeispiel fragt keinen dieser zusätzlichen Blöcke ab.
+Bestehende optionale F4-, E8-, 01- und 09-Entitäten bleiben verfügbar.
 
-Die bisherigen Optionen unter `lwz2` bleiben erhalten: `heating_interval` (F4, 10 s), `fan_interval` (E8, 30 s), `fan_config_interval` (01, 5 min) und `history_interval` (09, 5 min). F4 wird für `inside_temperature` oder `raw_f4` gelesen; die anderen Blöcke bei ihren jeweiligen Sensoren oder Raw-Entitäten.
+Die Optionen `heating_interval`, `fan_interval`, `fan_config_interval` und `history_interval` unter `lwz2` werden seit v0.9.0 noch akzeptiert, wirken aber nicht mehr: F4 und E8 folgen dem Betriebsdatenintervall, 01 und 09 dem Parameterintervall. Die Einträge können aus eigenen YAMLs entfernt werden.
 
 ## Lokales Webinterface
 
@@ -134,6 +148,8 @@ Die bisherigen Optionen unter `lwz2` bleiben erhalten: `heating_interval` (F4, 1
 Letzter Erfolg und HK1-Zeitpunkt sind ausdrücklich `boot+…s`, unabhängig von Netzzeit. Der Millisekundenzähler läuft nach etwa 49,7 Tagen um; Zeitstempel beginnen dann erneut. Die Intervallplanung berücksichtigt den Überlauf. Logs sind ein Live-Stream während der geöffneten Verbindung, kein dauerhaftes Archiv.
 
 - **HK1 jetzt aktualisieren:** lesende 05-Abfrage einreihen.
+- **Parameter jetzt aktualisieren:** alle Parameterblöcke, Wochenprogramme und Betriebsstunden einmal vorrangig lesen.
+- **Messwerte jetzt aktualisieren:** alle Betriebsdatenblöcke und die LWZ-Uhr einmal vorrangig lesen. „Manuelle Aktualisierung“ zeigt Fortschritt und fehlgeschlagene Blöcke.
 - **Kommunikationszähler zurücksetzen:** vier Zähler löschen; Backoff, Zustand und letzter Erfolg bleiben erhalten.
 - **RS232 neu initialisieren:** laufende Transaktion abbrechen, Empfangspuffer und Protokollzustand zurücksetzen, UART-Einstellungen erneut anwenden und frisch abfragen. Kein Reset der LWZ.
 - **ESP32 neu starten:** zuerst Bestätigungsschalter aktivieren, dann innerhalb von 30 s Neustarttaste drücken. Ohne Freigabe wirkungslos; Freigabe wird nicht gespeichert.
