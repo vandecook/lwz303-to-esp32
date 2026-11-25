@@ -210,6 +210,8 @@ CONFIG_SCHEMA = (
                 "2.06", "2.14", "2.14j", "2.16", lower=False
             ),
             cv.Optional(CONF_STATUS_INTERVAL, default="10s"): cv.positive_time_period_milliseconds,
+            # Since 0.9.0 still accepted, but without effect: live data uses status/fast interval,
+            # blocks 01/09 the parameter interval.
             cv.Optional(CONF_HEATING_INTERVAL, default="10s"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_FAN_INTERVAL, default="30s"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_HISTORY_INTERVAL, default="5min"): cv.positive_time_period_milliseconds,

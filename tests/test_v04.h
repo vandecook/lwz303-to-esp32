@@ -4,6 +4,7 @@ void v04_tests() {
     using LWZ2Component::v04_tick_;
     using LWZ2Component::saved_;
     using LWZ2Component::current_fan_stage_;
+    using LWZ2Component::clock_now_stamp_;
     using LWZ2Component::WriteStage;
     using LWZ2Component::write_stage_;
     using LWZ2Component::write_expected_;
@@ -45,7 +46,7 @@ void v04_tests() {
   V04 t;t.set_device_model("SOL");
   binary_sensor::BinarySensor f5,f6;t.set_v04_binary("exhaust_fault",&f5);t.set_v04_binary("supply_fault",&f6);
   t.setup();feed(t);
-  t.set_status_interval(300000);assert(t.effective_interval()==10000);t.set_status_interval(10000);
+  t.set_status_interval(300000);assert(t.effective_interval()==300000);t.set_status_interval(10000); // 0.9.0: no cap
   for(int i=1;i<12;i++){fake_millis+=10000;feed(t);assert(!f5.state);}
   fake_millis+=9999;feed(t);assert(!f5.state);
   fake_millis+=1;feed(t);assert(f5.state && !f6.state && t.saved_.fans[0].count==1);
@@ -141,6 +142,17 @@ void v04_tests() {
   fake_millis+=31000;assert(clock.request_clock_mode("Winterzeit"));fake_storage_ok=false;
   clock.write_response_(fc);assert(clock.write_stage_==V04::WriteStage::NONE);
   fake_storage_ok=true;
+  // 0.9.0: a slow 30 s interval (no 10 s cap) still detects F5; the window follows the interval.
+  {
+    fake_millis=5000000;V04 slow;slow.set_preferences_key(300);slow.set_status_interval(30000);
+    binary_sensor::BinarySensor f5s;slow.set_v04_binary("exhaust_fault",&f5s);slow.setup();feed(slow);
+    for(int i=0;i<3;i++){fake_millis+=30000;feed(slow);assert(!f5s.state);}  // 90 s observed
+    fake_millis+=30000;feed(slow);assert(f5s.state);
+    // LWZ clock is extrapolated between the 5-minute reads, across midnight and new year.
+    slow.parse_frame_(0xFC,frame(0xFC,{0,4,23,59,50,26,0,12,31}));
+    fake_millis+=20000;assert(slow.clock_now_stamp_()=="2027-01-01 00:00:10");
+    fake_millis+=900001;assert(slow.clock_now_stamp_()=="unbekannt");
+  }
   // Monotonic wrap does not shorten a 120s window.
   fake_millis=0xffff0000U;V04 wrap;wrap.set_preferences_key(200);wrap.setup();feed(wrap);
   for(int i=0;i<12;i++){fake_millis+=10000;feed(wrap);}

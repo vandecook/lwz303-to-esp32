@@ -36,6 +36,7 @@ Die Bearbeitung der Wochenprogramme und die HA-Auswertungen bleiben geplant.
 | **0.8.0** | Wochenprogramme für Heizung, Warmwasser und Lüftung auslesen und in Home Assistant sowie im Webinterface anzeigen. Heizkreis 2 optional. | Lokal umgesetzt. Auslesen der angezeigten Programme am 24.11.2026 vom Nutzer am Gerät bestätigt. [Wochenprogramme und Prüfstand](docs/VALIDATION-v0.8.md) |
 | **0.8.1** | Zweites Heizzeitfenster (HP2) aus Block `0B` als „Wochenprogramm Heizprogramm 2“ standardmäßig anzeigen. | Lokal umgesetzt. Abgleich mit getrennt eingestellten HP1-/HP2-Zeiten am Gerät steht aus. |
 | **0.8.2** | Lüfterdiagnose berücksichtigt P59 „Wiederanlauf vor Absenkende“ (ProgStateFAN 4/5): kein F5/F6, eigene Zustandsanzeige und neuer Textsensor „Lueftung Laufgrund“. | Lokal umgesetzt, Host-Tests und ESP32-C3-Build erfolgreich. Gerätebeobachtung der P59-Phase steht aus. |
+| **0.9.0** | Abfrageplanung in drei Klassen: Betriebsdaten langsam/schnell ohne 10-s-Deckel, Parameter (Standard 60 min), Uhr alle 5 min. Lüfterdiagnose folgt dem Intervall. Älteste Fälligkeit zuerst. Buttons „Parameter/Messwerte jetzt aktualisieren“. | Lokal umgesetzt, Hosttests und ESP32-C3-Build erfolgreich. Gerätebeobachtung steht aus. |
 | **0.xx** | Wochenprogramme in Home Assistant bearbeiten, validieren, dauerhaft in die LWZ schreiben und zurücklesen. | Geplant. |
 
 ## Offene Punkte (ohne Versionszuordnung)
@@ -64,6 +65,7 @@ Stand 25.11.2026. Die Punkte sind gesammelt, aber bewusst noch keiner Version zu
 
 **Funktionen**
 
+- **Manuelles Aktualisieren per Button:** in v0.9.0 umgesetzt („Parameter jetzt aktualisieren“, „Messwerte jetzt aktualisieren“, Status „Manuelle Aktualisierung“).
 - **Wochenprogramme bearbeiten und schreiben:** Umfang siehe [v0.xx](#v0xx---alle-wochenprogramme-lesen-und-schreiben).
 - **HA-Auswertungen:** Verdichterstatistik als eigenständige HA-Version, siehe [HA 0.1.0](#ha-010---verdichterstatistik-und-auswertung).
 - **Echo II:** Bleibt eine unabhängige Option.

@@ -8,7 +8,6 @@
 namespace esphome::lwz2 {
 
 static const char *const TAG = "lwz2";
-static constexpr uint32_t WEEKLY_PROGRAM_INTERVAL_MS = 300000;
 static constexpr uint8_t FIRST_WEEKLY_PROGRAM_COMMAND = 0x0B;
 struct WeeklyProgramEntities {
   const char *first;
@@ -22,7 +21,7 @@ static constexpr WeeklyProgramEntities WEEKLY_PROGRAMS[]{
 };
 
 void LWZ2Component::setup() {
-  ESP_LOGI(TAG, "Starting LWZ component v0.8.2 (device FW independent of decoder profile)");
+  ESP_LOGI(TAG, "Starting LWZ component v0.9.0 (device FW independent of decoder profile)");
   parameters_invalidate_();
   this->frame_.reserve(128);
   for (auto command : {0xFB, 0xF3, 0xF4, 0xE8, 9, 0xEE, 0xFC, 0x17, 0x05, 0x0B, 0x0C, 0x0D}) {
@@ -157,6 +156,13 @@ void LWZ2Component::reset_schedule_() {
   for (unsigned i = 0; i < 3; i++) weekly_program_due_[i] = now + 8000 + i * 2000;
 }
 
+bool LWZ2Component::low_priority_01_wanted_() const {
+  return parameters_enabled_ || this->raw_01_text_sensor_ || this->supply_stage1_airflow_sensor_ ||
+      this->supply_stage2_airflow_sensor_ || this->supply_stage3_airflow_sensor_ ||
+      this->exhaust_stage1_airflow_sensor_ || this->exhaust_stage2_airflow_sensor_ ||
+      this->exhaust_stage3_airflow_sensor_;
+}
+
 void LWZ2Component::scheduler_() {
   if (this->state_ != CommState::IDLE)
     return;
@@ -166,8 +172,8 @@ void LWZ2Component::scheduler_() {
     return;
 
   if (write_stage_ != WriteStage::NONE && v03_schedule_()) return;
-  // Configuration refresh is coalesced and runs only between transactions.
-  if (this->config_pending_ || this->time_reached_(now, this->next_config_ms_)) {
+  // Explicit user requests first: HK1 button, firmware probe, manual refresh buttons.
+  if (this->config_pending_) {
     this->config_pending_ = false;
     this->start_transaction_(0x05);
     return;
@@ -178,40 +184,40 @@ void LWZ2Component::scheduler_() {
     this->start_transaction_(0xFD);
     return;
   }
-  // FB is the common 2.x source for compressor/pump state, so it gets highest priority.
-  if (this->time_reached_(now, this->next_fb_ms_)) {
-    this->start_transaction_(0xFB);
-    return;
-  }
+  if (manual_schedule_()) return;
+
+  // Routine polls: earliest deadline first. When the bus cannot keep up (about 1.2 s per
+  // transaction incl. the mandatory gap), every block is stretched evenly and none starves.
+  bool found = false;
+  uint8_t best = 0;
+  uint32_t best_due = 0;
+  int weekly = -1;
+  auto consider = [&](uint8_t command, uint32_t due, bool enabled, int weekly_index = -1) {
+    if (!enabled || !this->time_reached_(now, due)) return;
+    if (found && static_cast<int32_t>(due - best_due) >= 0) return;
+    found = true; best = command; best_due = due; weekly = weekly_index;
+  };
+  consider(0xFB, this->next_fb_ms_, true);
+  for (unsigned i = 0; i < 2; i++) consider(i ? 0xF6 : 0xF2, v04_due_[i], true);
+  for (unsigned i = 0; i < 4; i++) consider(EXTRA_COMMANDS[i], v03_due_[i], true);
+  consider(0xF4, this->next_f4_ms_, true);
+  consider(0xE8, this->next_e8_ms_, true);
+  consider(0x05, this->next_config_ms_, true);
   for (unsigned i = 0; i < 3; i++) {
     const auto &entities = WEEKLY_PROGRAMS[i];
-    if (time_reached_(now, weekly_program_due_[i]) &&
-        (v04_text_.count(entities.first) || (entities.second && v04_text_.count(entities.second)) ||
-         v04_binary_.count(entities.fresh))) {
-      // Schedule on dispatch so even an unsupported block is only polled once per interval.
-      weekly_program_due_[i] = now + WEEKLY_PROGRAM_INTERVAL_MS;
-      start_transaction_(FIRST_WEEKLY_PROGRAM_COMMAND + i);
-      return;
-    }
+    const bool configured = v04_text_.count(entities.first) ||
+        (entities.second && v04_text_.count(entities.second)) || v04_binary_.count(entities.fresh);
+    consider(FIRST_WEEKLY_PROGRAM_COMMAND + i, weekly_program_due_[i], configured, int(i));
   }
-  if (v03_schedule_()) return;
-  if (this->time_reached_(now, this->next_f4_ms_)) {
-    this->start_transaction_(0xF4);
-    return;
-  }
-  if (this->time_reached_(now, this->next_e8_ms_)) {
-    this->start_transaction_(0xE8);
-    return;
-  }
-  if ((parameters_enabled_ || this->raw_01_text_sensor_ || this->supply_stage1_airflow_sensor_ || this->supply_stage2_airflow_sensor_ || this->supply_stage3_airflow_sensor_ || this->exhaust_stage1_airflow_sensor_ || this->exhaust_stage2_airflow_sensor_ || this->exhaust_stage3_airflow_sensor_) && this->time_reached_(now, this->next_01_ms_)) {
-    this->start_transaction_(0x01);
-    return;
-  }
-  if (this->time_reached_(now, this->next_09_ms_)) {
-    this->start_transaction_(0x09);
-    return;
-  }
-  parameters_schedule_();
+  consider(0x01, this->next_01_ms_, low_priority_01_wanted_());
+  consider(0x09, this->next_09_ms_, true);
+  for (unsigned i = 0; i < 7; i++)
+    consider(PARAMETER_COMMANDS[i], parameter_due_[i],
+             parameters_enabled_ && (PARAMETER_COMMANDS[i] != 0x08 || device_model_ == "SOL"));
+  if (!found) return;
+  // Weekly programs are rescheduled on dispatch so even an unsupported block polls once per interval.
+  if (weekly >= 0) weekly_program_due_[weekly] = now + config_interval_ms_;
+  this->start_transaction_(best);
 }
 
 void LWZ2Component::start_transaction_(uint8_t command) {
@@ -362,6 +368,7 @@ void LWZ2Component::fail_attempt_(const std::string &reason) {
 void LWZ2Component::finalize_failure_(const std::string &reason) {
   const uint32_t now = millis();
   this->v03_schedule_result_(current_command_);
+  manual_result_(current_command_, false);
   if (write_transaction_) write_failed_(reason);
   this->total_errors_++;
   this->consecutive_errors_++;
@@ -432,6 +439,7 @@ void LWZ2Component::mark_success_() {
   this->last_error_message_ = "none";
   this->state_ = CommState::IDLE;
   this->next_allowed_request_ms_ = now + MIN_REQUEST_GAP_MS;
+  manual_result_(current_command_, true);
 
   switch (this->current_command_) {
     case 0x05: this->next_config_ms_ = now + this->config_interval_ms_; break;
@@ -442,19 +450,19 @@ void LWZ2Component::mark_success_() {
       break;
     case 0xF4:
       this->last_f4_success_ms_ = now;
-      this->next_f4_ms_ = now + this->heating_interval_ms_;
+      this->next_f4_ms_ = now + this->effective_interval();
       break;
     case 0xE8:
       this->last_e8_success_ms_ = now;
-      this->next_e8_ms_ = now + std::min(fan_interval_ms_, uint32_t(10000));
+      this->next_e8_ms_ = now + this->effective_interval();
       break;
     case 0x01:
       this->last_01_success_ms_ = now;
-      this->next_01_ms_ = now + this->fan_config_interval_ms_;
+      this->next_01_ms_ = now + this->config_interval_ms_;
       break;
     case 0x09:
       this->last_09_success_ms_ = now;
-      this->next_09_ms_ = now + this->history_interval_ms_;
+      this->next_09_ms_ = now + this->config_interval_ms_;
       break;
     default:
       break;
@@ -471,11 +479,29 @@ void LWZ2Component::mark_success_() {
     this->last_error_text_sensor_->publish_state("none");
 }
 
+std::string LWZ2Component::effective_interval_reason() const {
+  const bool compressor = trigger_compressor_ && compressor_;
+  const bool heating = trigger_heating_ && heating_;
+  const bool dhw = trigger_dhw_ && dhw_;
+  const bool fast = dynamic_enabled_ && (compressor || heating || dhw);
+  const uint32_t chosen = fast ? dynamic_interval_ms_ : status_interval_ms_;
+  std::string text = std::string(fast ? "Schnellintervall " : "Standardintervall ") + std::to_string(chosen / 1000) + " s";
+  if (fast) {
+    std::string why;
+    if (compressor) why += "Verdichter";
+    if (heating) why += std::string(why.empty() ? "" : ", ") + "Heizbetrieb";
+    if (dhw) why += std::string(why.empty() ? "" : ", ") + "Warmwasser";
+    text += " (" + why + ")";
+  }
+  return text;
+}
+
 uint32_t LWZ2Component::effective_interval() const {
   const bool active = (this->trigger_compressor_ && this->compressor_) ||
                       (this->trigger_heating_ && this->heating_) || (this->trigger_dhw_ && this->dhw_);
   const uint32_t interval = this->dynamic_enabled_ && active ? this->dynamic_interval_ms_ : this->status_interval_ms_;
-  return speed_source_ == "sGlobal" ? std::min(interval, uint32_t(10000)) : interval;
+  // No cap for the fan diagnosis: its freshness window follows the configured intervals instead.
+  return interval;
 }
 
 void LWZ2Component::publish_diagnostics_() {
@@ -873,18 +899,98 @@ void LWZ2Component::publish_stale_numeric_states_() {
 #undef INVALIDATE_NUMERIC
 }
 
+uint32_t LWZ2Component::live_age_ms_() const {
+  // Three slow-interval periods (or the configured minimum) so one missed poll is not a data gap.
+  return std::max({diagnostic_max_age_ms_, stale_after_ms_,
+                   std::max(status_interval_ms_, dynamic_interval_ms_) * 3});
+}
+
+uint32_t LWZ2Component::parameter_age_ms_() const {
+  return std::max(stale_after_ms_, config_interval_ms_ * 3);
+}
+
+void LWZ2Component::reschedule_live_() {
+  // A shorter interval pulls the next live polls forward; a longer one takes effect after them.
+  const uint32_t interval = effective_interval();
+  auto pull = [&](uint32_t &due, uint8_t command) {
+    if (!block_seen_[command]) return;
+    const uint32_t target = block_success_[command] + interval;
+    if (static_cast<int32_t>(target - due) < 0) due = target;
+  };
+  next_fb_ms_ = last_fb_success_ms_ + interval;
+  pull(next_f4_ms_, 0xF4);
+  pull(next_e8_ms_, 0xE8);
+  pull(v04_due_[0], 0xF2);
+  pull(v04_due_[1], 0xF6);
+  pull(v03_due_[0], 0xF3);
+  pull(v03_due_[1], 0xEE);
+}
+
+void LWZ2Component::manual_add_(uint8_t command) {
+  if (manual_pending_[command]) return;
+  manual_pending_[command] = true;
+  manual_total_++;
+}
+
+void LWZ2Component::refresh_parameters() {
+  if (manual_done_ >= manual_total_) { manual_total_ = manual_done_ = 0; manual_failed_.clear(); }
+  for (uint8_t command : {0x05, 0x17, 0x09}) manual_add_(command);
+  if (low_priority_01_wanted_()) manual_add_(0x01);
+  if (parameters_enabled_)
+    for (uint8_t command : PARAMETER_COMMANDS)
+      if (command != 0x08 || device_model_ == "SOL") manual_add_(command);
+  for (unsigned i = 0; i < 3; i++) {
+    const auto &entities = WEEKLY_PROGRAMS[i];
+    if (v04_text_.count(entities.first) || (entities.second && v04_text_.count(entities.second)) ||
+        v04_binary_.count(entities.fresh))
+      manual_add_(FIRST_WEEKLY_PROGRAM_COMMAND + i);
+  }
+}
+
+void LWZ2Component::refresh_measurements() {
+  if (manual_done_ >= manual_total_) { manual_total_ = manual_done_ = 0; manual_failed_.clear(); }
+  for (uint8_t command : {0xFB, 0xF3, 0xF4, 0xE8, 0xF2, 0xF6, 0xEE, 0xFC}) manual_add_(command);
+}
+
+bool LWZ2Component::manual_schedule_() {
+  if (manual_done_ >= manual_total_) return false;
+  static constexpr uint8_t ORDER[]{0xFB, 0xF2, 0xF6, 0xF3, 0xEE, 0xF4, 0xE8, 0xFC, 0x05, 0x17, 0x01, 0x09,
+                                   0x03, 0x06, 0x07, 0x08, 0x0A, 0x0E, 0x10, 0x0B, 0x0C, 0x0D};
+  for (uint8_t command : ORDER) {
+    if (!manual_pending_[command]) continue;
+    start_transaction_(command);
+    return true;
+  }
+  return false;
+}
+
+void LWZ2Component::manual_result_(uint8_t command, bool ok) {
+  if (!manual_pending_[command]) return;
+  manual_pending_[command] = false;
+  manual_done_++;
+  if (!ok) {
+    char hex[4];
+    std::snprintf(hex, sizeof(hex), "%02X", command);
+    manual_failed_ += std::string(manual_failed_.empty() ? "" : ", ") + hex;
+  }
+}
+
+std::string LWZ2Component::manual_refresh_status() const {
+  if (manual_total_ == 0) return "keine manuelle Aktualisierung";
+  const std::string progress = std::to_string(manual_done_) + "/" + std::to_string(manual_total_);
+  if (manual_done_ < manual_total_) return "laeuft: " + progress + " Bloecke gelesen";
+  if (manual_failed_.empty()) return "fertig: " + progress + " Bloecke gelesen";
+  return "fertig: " + progress + "; fehlgeschlagen: " + manual_failed_;
+}
+
 uint32_t LWZ2Component::block_max_age_(uint8_t command) const {
-  if (command >= 0x0B && command <= 0x0D) return WEEKLY_PROGRAM_INTERVAL_MS * 3;
-  if (command == 0x03 || command == 0x06 || command == 0x07 || command == 0x08 ||
+  if (command == 0xFC) return std::max(stale_after_ms_, CLOCK_INTERVAL_MS * 3);
+  if ((command >= 0x0B && command <= 0x0D) || command == 0x05 || command == 0x17 || command == 0x01 ||
+      command == 0x09 || command == 0x03 || command == 0x06 || command == 0x07 || command == 0x08 ||
       command == 0x0A || command == 0x0E || command == 0x10)
-    return std::max(stale_after_ms_, config_interval_ms_ * 3);
-  if (command == 0x01) return std::max(stale_after_ms_, fan_config_interval_ms_ * 3);
-  const uint32_t interval = command == 5 ? config_interval_ms_ : command == 9 ? history_interval_ms_ :
-      command == 0x17 ? 60000 : command == 0xF4 ? heating_interval_ms_ :
-      command == 0xE8 ? fan_interval_ms_ :
-      (command == 0xFB || command == 0xF3) ? effective_interval() : 30000;
-  if (command == 0xF2 || command == 0xF6) return diagnostic_max_age_ms_;
-  return std::max(stale_after_ms_, interval * 3);
+    return parameter_age_ms_();
+  // FB, F3, F4, E8, F2, F6, EE: live operating data.
+  return live_age_ms_();
 }
 
 bool LWZ2Component::block_fresh_(uint8_t command) const {
@@ -913,7 +1019,7 @@ void LWZ2Component::v06_publish_() {
     binary(WEEKLY_PROGRAMS[i].fresh, block_fresh_(FIRST_WEEKLY_PROGRAM_COMMAND + i));
   v04_publish_text_("data_quality", quality);
   // Require a recent FB observation as well as F2. Held compressor state is display-only.
-  const bool live = block_fresh_(0xFB) && now - block_success_[0xFB] <= diagnostic_max_age_ms_;
+  const bool live = block_fresh_(0xFB) && now - block_success_[0xFB] <= live_age_ms_();
   const bool control = block_fresh_(0xF2);
   std::string status = !live ? "Verdichterstatus fehlt/veraltet" :
       !control ? "F2 fehlt/veraltet" : "frisch; FHEM-Zuordnung vorlaeufig";

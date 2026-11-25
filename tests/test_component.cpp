@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <set>
 using namespace esphome;
 using namespace esphome::lwz2;
 
@@ -18,6 +19,11 @@ struct Test : LWZ2Component {
   using LWZ2Component::total_errors_;
   using LWZ2Component::next_fb_ms_;
   using LWZ2Component::next_config_ms_;
+  using LWZ2Component::next_f4_ms_;
+  using LWZ2Component::next_e8_ms_;
+  using LWZ2Component::next_09_ms_;
+  using LWZ2Component::v03_due_;
+  using LWZ2Component::v04_due_;
   using LWZ2Component::config_pending_;
   using LWZ2Component::firmware_pending_;
   using LWZ2Component::firmware_;
@@ -99,6 +105,10 @@ static void weekly_program_tests() {
   scheduler.setup();
   scheduler.config_pending_ = scheduler.firmware_pending_ = false;
   scheduler.next_config_ms_ = scheduler.next_fb_ms_ = fake_millis + 100000;
+  // Earliest-deadline-first: keep the other routine blocks out of the way for this check.
+  scheduler.next_f4_ms_ = scheduler.next_e8_ms_ = scheduler.next_09_ms_ = fake_millis + 100000;
+  for (auto &due : scheduler.v03_due_) due = fake_millis + 100000;
+  for (auto &due : scheduler.v04_due_) due = fake_millis + 100000;
   fake_millis += 12000;
   scheduler.loop();
   assert(scheduler.current_command_ == DHW);
@@ -142,6 +152,10 @@ int main() {
       assert(t.effective_interval()==(mask ? 5000u : 10000u));
     }
     t.set_dynamic_enabled(false); assert(t.effective_interval()==10000);
+    // 0.9.0: no 10 s cap any more; the fan diagnosis follows the configured interval.
+    t.set_status_interval(20000); assert(t.effective_interval()==20000);
+    assert(t.effective_interval_reason()=="Standardintervall 20 s");
+    t.set_status_interval(10000); assert(t.effective_interval_reason()=="Standardintervall 10 s");
     t.current_command_=5; auto cfg=frame(5,{0,4,0,25});
     assert(t.validate_frame_(cfg,reason));t.parse_frame_(5,cfg);
     assert(std::abs(gradient.state-0.4f)<0.001f && low.state==2.5f);
@@ -227,6 +241,7 @@ int main() {
   // v0.5 polls the integrated blocks without any version activation flags.
   Test minimal;minimal.setup();minimal.config_pending_=false;minimal.firmware_pending_=false;
   minimal.next_config_ms_=fake_millis+100000;minimal.next_fb_ms_=fake_millis+100000;
+  minimal.next_f4_ms_=minimal.next_e8_ms_=minimal.next_09_ms_=fake_millis+100000; // EDF: isolate F3.
   fake_millis+=5000;minimal.loop();assert(!minimal.tx.empty() && minimal.current_command_==0xF3);
   // Oversized unterminated frames are rejected and enter the existing retry path.
   Test oversized;oversized.setup();oversized.loop();oversized.inject({0x10});oversized.inject({2});

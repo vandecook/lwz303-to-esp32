@@ -7,7 +7,7 @@ esphome:
   friendly_name: ${device_name}
   project:
     name: vandecook.lwz303-to-esp32
-    version: "0.8.2"
+    version: "0.9.0"
   min_version: 2026.10.2
   on_boot:
     priority: -100
@@ -371,7 +371,6 @@ lwz2:
   device_model: unknown
   fan_speed_source: sGlobal
   diagnostic_max_age: 30s
-  fan_interval: 10s
   status_interval: 10s
   stale_after: 30s
   outside_temperature:
@@ -1055,7 +1054,7 @@ number:
     min_value: 1
     max_value: 1440
     step: 1
-    initial_value: 1
+    initial_value: 60
     optimistic: true
     restore_value: true
     mode: box
@@ -1212,6 +1211,14 @@ button:
     on_press:
       - lambda: id(lwz303).refresh_config();
   - platform: template
+    name: "Parameter jetzt aktualisieren"
+    on_press:
+      - lambda: id(lwz303).refresh_parameters();
+  - platform: template
+    name: "Messwerte jetzt aktualisieren"
+    on_press:
+      - lambda: id(lwz303).refresh_measurements();
+  - platform: template
     name: "Kommunikationszähler zurücksetzen"
     entity_category: diagnostic
     on_press:
@@ -1256,6 +1263,21 @@ time:
     timezone: Europe/Vienna
 
 text_sensor:
+  - platform: template
+    name: "Projektversion"
+    # From esphome.project.version; published at boot and hourly.
+    update_interval: 60min
+    lambda: return {ESPHOME_PROJECT_VERSION};
+  - platform: version
+    name: "ESPHome-Version"
+  - platform: template
+    name: "Status-Abfrageintervall Grund"
+    update_interval: 5s
+    lambda: return id(lwz303).effective_interval_reason();
+  - platform: template
+    name: "Manuelle Aktualisierung"
+    update_interval: 2s
+    lambda: return id(lwz303).manual_refresh_status();
   - platform: template
     name: "ESP32 Laufzeit"
     id: lwz_uptime_readable

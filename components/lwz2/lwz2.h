@@ -87,7 +87,11 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void set_trigger_heating(bool v) { trigger_heating_ = v; reschedule_poll_(); }
   void set_trigger_dhw(bool v) { trigger_dhw_ = v; reschedule_poll_(); }
   uint32_t effective_interval() const;
+  std::string effective_interval_reason() const;  // Which interval applies and why (display only).
   void refresh_config() { config_pending_ = true; for (auto &due : parameter_due_) due = millis(); }
+  void refresh_parameters();    // Button: read all parameter blocks once, before routine polls.
+  void refresh_measurements();  // Button: read all live blocks and the clock once.
+  std::string manual_refresh_status() const;
   void refresh_firmware() {
     firmware_pending_ = true;
     if (firmware_version_text_sensor_) firmware_version_text_sensor_->publish_state("warte auf Abfrage");
@@ -248,7 +252,8 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   bool speed_seen_{false}, program_seen_{false}, settings_seen_{false}, override_seen_{false}, clock_seen_{false};
   int fan_day_{-1}, fan_night_{-1}, fan_standby_{-1}, fan_manual_{-1};
   int fan_program_{-1}, program_mode_{-1}, override_stage_{-1}, override_remaining_{-1};
-  std::string clock_stamp_{"unbekannt"};
+  int64_t clock_epoch_{0};  // LWZ clock as seconds since 2000-01-01 at clock_ms_.
+  std::string clock_now_stamp_() const;  // LWZ clock extrapolated with the monotonic uptime.
   std::string fan_stage_diagnostic_last_;
   int fan_stage_display_last_{-1};  // Display only; never used as evidence by F5/F6.
   void publish_fan_stage_diagnostics_(int stage);
@@ -279,7 +284,24 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void parameters_parse_(uint8_t command, const uint8_t *data, size_t len);
   void parameters_invalidate_();
   void parameters_publish_();
-  bool parameters_schedule_();
+  // late_ms > 0: only blocks overdue by at least that long (starvation guard).
+  bool parameters_schedule_(uint32_t late_ms = 0);
+  bool low_priority_01_wanted_() const;
+  // Three polling classes: live operating data (slow/fast interval), parameters (configurable,
+  // default 60 min) and the LWZ clock (fixed 5 min).
+  static constexpr uint32_t CLOCK_INTERVAL_MS = 300000;
+  static constexpr uint8_t EXTRA_COMMANDS[4]{0xF3, 0xEE, 0xFC, 0x17};
+  static constexpr uint8_t PARAMETER_COMMANDS[7]{0x03, 0x06, 0x07, 0x08, 0x0A, 0x0E, 0x10};
+  uint32_t live_age_ms_() const;       // Freshness window for live operating data and F5/F6.
+  uint32_t parameter_age_ms_() const;  // Freshness window for parameter-class blocks.
+  // Manual refresh: requested blocks go before routine polls, each once per batch.
+  bool manual_pending_[256]{};
+  uint16_t manual_total_{0}, manual_done_{0};
+  std::string manual_failed_;
+  void manual_add_(uint8_t command);
+  bool manual_schedule_();
+  void manual_result_(uint8_t command, bool ok);
+  void reschedule_live_();
   void parameters_result_(uint8_t command);
   bool writes_enabled_{false}, sending_set_{false}, write_transaction_{false};
   FirmwareProfile hc1_layout_{FirmwareProfile::FW_206};
@@ -345,8 +367,7 @@ class LWZ2Component : public Component, public uart::UARTDevice {
   void publish_diagnostics_();
   void reschedule_poll_() {
     // Restoring controls at boot must not postpone the first live-data poll.
-    if (setup_complete_ && last_fb_success_ms_ != 0)
-      next_fb_ms_ = last_fb_success_ms_ + effective_interval();
+    if (setup_complete_ && last_fb_success_ms_ != 0) reschedule_live_();
   }
   uint32_t next_fb_ms_{0};
   uint32_t next_f4_ms_{0};

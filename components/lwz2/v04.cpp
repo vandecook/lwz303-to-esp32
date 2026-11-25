@@ -93,16 +93,48 @@ void LWZ2Component::v04_invalidate_(bool clear_display) {
 static bool v04_fresh(bool seen, uint32_t at, uint32_t max_age) {
   return seen && millis() - at <= max_age;
 }
+// Days since 2000-01-01 for a proleptic Gregorian date (Howard Hinnant's algorithm).
+static int64_t v04_days_from_civil(int y, unsigned m, unsigned d) {
+  y -= m <= 2;
+  const int era = (y >= 0 ? y : y - 399) / 400;
+  const unsigned yoe = unsigned(y - era * 400);
+  const unsigned doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+  const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+  return int64_t(era) * 146097 + int64_t(doe) - 719468 - 10957;
+}
+static void v04_civil_from_days(int64_t z, int &y, unsigned &m, unsigned &d) {
+  z += 719468 + 10957;
+  const int64_t era = (z >= 0 ? z : z - 146096) / 146097;
+  const unsigned doe = unsigned(z - era * 146097);
+  const unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+  const unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+  const unsigned mp = (5 * doy + 2) / 153;
+  d = doy - (153 * mp + 2) / 5 + 1;
+  m = mp < 10 ? mp + 3 : mp - 9;
+  y = int(yoe) + int(era) * 400 + (m <= 2);
+}
+std::string LWZ2Component::clock_now_stamp_() const {
+  // The clock is read every 5 min; between reads the uptime advances it. Older than 3 reads: unknown.
+  if (!v04_fresh(clock_seen_, clock_ms_, CLOCK_INTERVAL_MS * 3)) return "unbekannt";
+  const int64_t now = clock_epoch_ + int64_t((millis() - clock_ms_) / 1000);
+  int y; unsigned m, d;
+  v04_civil_from_days(now / 86400, y, m, d);
+  const unsigned rest = unsigned(now % 86400);
+  char stamp[32];
+  std::snprintf(stamp, sizeof(stamp), "%04d-%02u-%02u %02u:%02u:%02u", y, m, d, rest / 3600, rest / 60 % 60, rest % 60);
+  return stamp;
+}
 void LWZ2Component::publish_fan_stage_diagnostics_(int stage) {
-  auto age = [&](bool seen, uint32_t at) {
+  auto age = [&](bool seen, uint32_t at, uint32_t max_age) {
     if (!seen) return std::string("fehlt");
-    return std::string(v04_fresh(seen, at, diagnostic_max_age_ms_) ? "frisch/" : "veraltet/") +
+    return std::string(v04_fresh(seen, at, max_age) ? "frisch/" : "veraltet/") +
         std::to_string((millis() - at) / 1000) + "s";
   };
   const std::string value = std::string("Stufe=") + (stage < 0 ?
       (fan_stage_display_last_ < 0 ? "unbekannt" : std::to_string(fan_stage_display_last_) + " (letzte gueltige; unbestaetigt)") : std::to_string(stage)) +
-      "; EE=" + age(program_seen_, program_ms_) + "; 17=" + age(settings_seen_, settings_ms_) +
-      "; F6=" + age(override_seen_, override_ms_) + "; Mode=" + std::to_string(program_mode_) +
+      "; EE=" + age(program_seen_, program_ms_, live_age_ms_()) +
+      "; 17=" + age(settings_seen_, settings_ms_, parameter_age_ms_()) +
+      "; F6=" + age(override_seen_, override_ms_, live_age_ms_()) + "; Mode=" + std::to_string(program_mode_) +
       "; ProgFAN=" + std::to_string(fan_program_) + "; P07/08/09/12=" +
       std::to_string(fan_day_) + "/" + std::to_string(fan_night_) + "/" +
       std::to_string(fan_standby_) + "/" + std::to_string(fan_manual_) +
@@ -114,9 +146,10 @@ void LWZ2Component::publish_fan_stage_diagnostics_(int stage) {
 }
 
 int LWZ2Component::current_fan_stage_() const {
-  if (!v04_fresh(program_seen_, program_ms_, diagnostic_max_age_ms_) ||
-      !v04_fresh(settings_seen_, settings_ms_, diagnostic_max_age_ms_) ||
-      !v04_fresh(override_seen_, override_ms_, diagnostic_max_age_ms_)) return -1;
+  // P07/P08/P09/P12 (block 17) are parameters; program state and override are live data.
+  if (!v04_fresh(program_seen_, program_ms_, live_age_ms_()) ||
+      !v04_fresh(settings_seen_, settings_ms_, parameter_age_ms_()) ||
+      !v04_fresh(override_seen_, override_ms_, live_age_ms_())) return -1;
   // Temporary overrides can exist at the LWZ even though v0.4 does not write them.
   if (override_remaining_ > 0) return override_stage_;
   if (override_remaining_ != 0) return -1;
@@ -131,14 +164,14 @@ int LWZ2Component::current_fan_stage_() const {
 }
 
 bool LWZ2Component::fan_restart_phase_() const {
-  return v04_fresh(program_seen_, program_ms_, diagnostic_max_age_ms_) &&
-      v04_fresh(override_seen_, override_ms_, diagnostic_max_age_ms_) &&
+  return v04_fresh(program_seen_, program_ms_, live_age_ms_()) &&
+      v04_fresh(override_seen_, override_ms_, live_age_ms_()) &&
       override_remaining_ == 0 && program_mode_ == 1 && (fan_program_ == 4 || fan_program_ == 5);
 }
 
 std::string LWZ2Component::fan_run_reason_() const {
-  if (!v04_fresh(program_seen_, program_ms_, diagnostic_max_age_ms_) ||
-      !v04_fresh(override_seen_, override_ms_, diagnostic_max_age_ms_))
+  if (!v04_fresh(program_seen_, program_ms_, live_age_ms_()) ||
+      !v04_fresh(override_seen_, override_ms_, live_age_ms_()))
     return "Unbekannt (Programmzustand nicht frisch)";
   if (override_remaining_ > 0) return "Zeitweise Uebersteuerung";
   if (override_remaining_ != 0) return "Unbekannt (Uebersteuerung nicht lesbar)";
@@ -181,7 +214,7 @@ void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
     }
   }
   if (cmd == 0x17) {
-    if (!v04_fresh(settings_seen_, settings_ms_, diagnostic_max_age_ms_))
+    if (!v04_fresh(settings_seen_, settings_ms_, parameter_age_ms_()))
       zero_pending_[0] = zero_pending_[1] = false;
     auto stage = [&](size_t pos) { return len > pos && d[pos] <= 3 ? int(d[pos]) : -1; };
     fan_day_ = stage(12); fan_night_ = stage(13); fan_standby_ = stage(14); fan_manual_ = stage(19);
@@ -190,14 +223,14 @@ void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
     settings_seen_ = true; settings_ms_ = now;
   }
   if (cmd == 0xEE) {
-    if (!v04_fresh(program_seen_, program_ms_, diagnostic_max_age_ms_))
+    if (!v04_fresh(program_seen_, program_ms_, live_age_ms_()))
       zero_pending_[0] = zero_pending_[1] = false;
     program_mode_ = len ? d[0] : -1;
     fan_program_ = len > 5 ? d[5] : -1;
     program_seen_ = true; program_ms_ = now;
   }
   if (cmd == 0xF6) {
-    if (!v04_fresh(override_seen_, override_ms_, diagnostic_max_age_ms_))
+    if (!v04_fresh(override_seen_, override_ms_, live_age_ms_()))
       zero_pending_[0] = zero_pending_[1] = false;
     override_stage_ = len > 13 && d[13] <= 3 ? d[13] : -1;
     override_remaining_ = len >= 18 ? be16u_(d + 16) : -1;
@@ -209,7 +242,7 @@ void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
   }
   if ((cmd == 0xFB && speed_source_ == "sGlobal") || (cmd == 0xE8 && speed_source_ == "sFan")) {
     // Check the previous observation before replacing its timestamp; gaps reset the timer.
-    if (!v04_fresh(speed_seen_, speed_ms_, diagnostic_max_age_ms_))
+    if (!v04_fresh(speed_seen_, speed_ms_, live_age_ms_()))
       zero_pending_[0] = zero_pending_[1] = false;
     if (cmd == 0xFB) {
       v04_speed_[0] = len > 26 ? d[26] : NAN; v04_speed_[1] = len > 27 ? d[27] : NAN;
@@ -222,14 +255,11 @@ void LWZ2Component::v04_parse_(uint8_t cmd, const uint8_t *d, size_t len) {
     v04_tick_(true);  // Threshold is confirmed only on a fresh speed observation.
   }
   if (cmd == 0xFC) {
-    clock_stamp_ = "unbekannt";
-    if (len >= 9 && d[2] < 24 && d[3] < 60 && d[4] < 60 && d[5] <= 99 &&
-        d[7] >= 1 && d[7] <= 12 && d[8] >= 1 && d[8] <= 31) {
-      char stamp[32];  // Validated fields give 19 chars; room for the compiler's worst case.
-      std::snprintf(stamp, sizeof(stamp), "%04u-%02u-%02u %02u:%02u:%02u", 2000U + d[5], d[7], d[8], d[2], d[3], d[4]);
-      clock_stamp_ = stamp;
-    }
-    clock_seen_ = clock_stamp_ != "unbekannt"; clock_ms_ = now;
+    clock_seen_ = len >= 9 && d[2] < 24 && d[3] < 60 && d[4] < 60 && d[5] <= 99 &&
+        d[7] >= 1 && d[7] <= 12 && d[8] >= 1 && d[8] <= 31;
+    if (clock_seen_)
+      clock_epoch_ = v04_days_from_civil(2000 + d[5], d[7], d[8]) * 86400LL + d[2] * 3600 + d[3] * 60 + d[4];
+    clock_ms_ = now;
   }
   if (cmd == 0x17 || cmd == 0xEE || cmd == 0xF6) v04_tick_();
 }
@@ -251,11 +281,11 @@ void LWZ2Component::v04_tick_(bool speed_observation) {
   const int stage = current_fan_stage_();
   if (stage >= 0) fan_stage_display_last_ = stage;
   publish_fan_stage_diagnostics_(stage);
-  const bool data_ok = v04_fresh(speed_seen_, speed_ms_, diagnostic_max_age_ms_) && stage >= 0;
+  const bool data_ok = v04_fresh(speed_seen_, speed_ms_, live_age_ms_()) && stage >= 0;
   v04_number_("current_fan_stage", fan_stage_display_last_ < 0 ? NAN : float(fan_stage_display_last_));
   v04_publish_text_("fan_run_reason", fan_run_reason_());
   const bool restart = fan_restart_phase_();
-  const bool speed_fresh = v04_fresh(speed_seen_, speed_ms_, diagnostic_max_age_ms_);
+  const bool speed_fresh = v04_fresh(speed_seen_, speed_ms_, live_age_ms_());
   for (unsigned i = 0; i < 2; i++) {
     std::string state = "Unbekannt";
     const bool valid = data_ok && std::isfinite(v04_speed_[i]) && v04_speed_[i] >= 0;
@@ -273,7 +303,7 @@ void LWZ2Component::v04_tick_(bool speed_observation) {
         if (!saved_.fans[i].active && now - zero_since_[i] >= 120000 && speed_observation) {
           auto &r = saved_.fans[i]; r.active = true;
           if (r.count < std::numeric_limits<uint32_t>::max()) r.count++;
-          const auto stamp = v04_fresh(clock_seen_, clock_ms_, diagnostic_max_age_ms_) ? clock_stamp_ : "unbekannt";
+          const auto stamp = clock_now_stamp_();
           std::snprintf(r.begin, sizeof(r.begin), "%s", stamp.c_str());
           r.end[0] = 0;
           v04_save_(); v04_history_();
@@ -287,7 +317,7 @@ void LWZ2Component::v04_tick_(bool speed_observation) {
   // F2 display values are retained; v0.6 exposes freshness separately.
 }
 void LWZ2Component::reset_fan_faults() {
-  const auto stamp = v04_fresh(clock_seen_, clock_ms_, diagnostic_max_age_ms_) ? clock_stamp_ : "unbekannt";
+  const auto stamp = clock_now_stamp_();
   for (auto &r : saved_.fans) if (r.active) {
     r.active = false; std::snprintf(r.end, sizeof(r.end), "%s", stamp.c_str());
   }

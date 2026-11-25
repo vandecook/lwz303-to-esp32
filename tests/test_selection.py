@@ -75,10 +75,10 @@ class SelectionTest(unittest.TestCase):
                         's_h_c1_hc_booster_stage','s_h_c1_hc_stage','s_d_h_w_dhw_booster_stage'):
                 self.assertEqual(lwz[key]['web_server']['sorting_group_id'],'lwz_expert')
                 self.assertEqual(lwz[key]['entity_category'],'diagnostic')
-            self.assertEqual(lwz['fan_interval'],'10s')
+            self.assertNotIn('fan_interval',lwz)
             profile=next(e for e in config['select'] if e.get('id')=='lwz_firmware')
             self.assertIn('2.16',profile['options'])
-            self.assertEqual(config['esphome']['project']['version'],'0.8.2')
+            self.assertEqual(config['esphome']['project']['version'],'0.9.0')
             for key in ('heating_weekly_program_hc1', 'heating_weekly_program_hc2', 'dhw_weekly_program', 'fan_weekly_program_1',
                         'fan_weekly_program_2', 'block_0B_fresh', 'block_0C_fresh', 'block_0D_fresh'):
                 self.assertEqual(lwz[key]['web_server']['sorting_group_id'], 'lwz_weekly_programs')

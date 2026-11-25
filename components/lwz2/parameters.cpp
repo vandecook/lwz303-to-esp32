@@ -2,7 +2,6 @@
 #include <algorithm>
 
 namespace esphome::lwz2 {
-static constexpr uint8_t PARAMETER_COMMANDS[]{0x03,0x06,0x07,0x08,0x0A,0x0E,0x10};
 
 const ParameterRule *LWZ2Component::parameter_rule_(uint8_t id) const {
   for (const auto &r : PARAMETER_RULES) if (r.id == id) return &r;
@@ -60,11 +59,11 @@ void LWZ2Component::parameters_publish_() {
       " Parameter frisch; P86: kein belegter 2.x-Zugriff" +
       (device_model_ == "unknown" ? "; Modell unbekannt, SOL-Felder ausgeblendet" : ""));
 }
-bool LWZ2Component::parameters_schedule_() {
+bool LWZ2Component::parameters_schedule_(uint32_t late_ms) {
   if (!parameters_enabled_) return false;
   for (unsigned i=0; i<7; i++) {
     if (PARAMETER_COMMANDS[i] == 0x08 && device_model_ != "SOL") continue;
-    if (time_reached_(millis(), parameter_due_[i])) {
+    if (time_reached_(millis(), parameter_due_[i] + late_ms)) {
       start_transaction_(PARAMETER_COMMANDS[i]); return true;
     }
   }

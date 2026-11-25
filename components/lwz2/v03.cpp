@@ -3,7 +3,6 @@
 #include <cmath>
 
 namespace esphome::lwz2 {
-static constexpr uint8_t EXTRA_COMMANDS[]{0xF3, 0xEE, 0xFC, 0x17};
 
 void LWZ2Component::set_writes_enabled(bool enabled) {
   writes_enabled_ = enabled;
@@ -117,10 +116,12 @@ bool LWZ2Component::v03_schedule_() {
 
 void LWZ2Component::v03_schedule_result_(uint8_t command) {
   parameters_result_(command);
+  // F3/EE are live data, FC the clock (5 min), 17 a parameter block.
   for (unsigned i = 0; i < 4; i++) if (command == EXTRA_COMMANDS[i])
-    v03_due_[i] = millis() + 10000;
+    v03_due_[i] = millis() + (command == 0xFC ? CLOCK_INTERVAL_MS :
+                              command == 0x17 ? config_interval_ms_ : effective_interval());
   for (unsigned i = 0; i < 2; i++) if (command == (i ? 0xF6 : 0xF2))
-    v04_due_[i] = millis() + 10000;
+    v04_due_[i] = millis() + effective_interval();
 }
 
 void LWZ2Component::v03_stale_() {

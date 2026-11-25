@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0 - 2026-11-25 (lokales Quellpaket)
+
+Neue Abfrageplanung mit drei Klassen. Die unveröffentlichte 0.8.3 ist hier aufgegangen.
+
+- **Betriebsdaten** (`FB`, `F3`, `F4`, `E8`, `F2`, `F6`, `EE`): nur noch langsames (Standard-) und schnelles Intervall. Die bisherige Begrenzung auf 10 Sekunden bei Drehzahlquelle `sGlobal` entfällt; ebenso die getrennten Intervalle für `F4` und `E8`. Die YAML-Schlüssel `heating_interval`, `fan_interval`, `history_interval` und `fan_config_interval` werden noch akzeptiert, wirken aber nicht mehr.
+- **Parameter** (`05`, `17`, `01`, `03`, `06`, `07`, `08`, `0A`, `0E`, `10`, Wochenprogramme `0B`–`0D`, Betriebsstunden `09`): einstellbares Intervall „Heizkurven-Abfrageintervall HK1“ (Name aus Bestandsgründen unverändert), Startwert jetzt 60 statt 1 Minute. Ein gespeicherter Wert bleibt erhalten.
+- **Uhrzeit und Datum** (`FC`): fest alle 5 Minuten. Fehler-Zeitstempel rechnen die zuletzt gelesene LWZ-Uhr mit der ESP-Laufzeit weiter, auch über Mitternacht und Jahreswechsel; älter als 15 Minuten ergibt „unbekannt“.
+- **Lüfterdiagnose F5/F6** hängt nicht mehr an 10 Sekunden. Drehzahl, Programmzustand und Übersteuerung gelten als frisch bis zum Dreifachen des längeren Betriebsdatenintervalls (mindestens `diagnostic_max_age`, 30 s). Die Lüfterstufen P07–P12 aus Block `17` gelten als Parameter. Bei langsamem Intervall meldet die 120-Sekunden-Regel den Fehler am ersten frischen Messpunkt danach.
+- **Abfragereihenfolge:** Es wird immer der am längsten überfällige Block gelesen. Reicht der Bus nicht (etwa 1,2 s je Abfrage samt Pflichtpause), strecken sich alle Blöcke gleichmäßig. Vorher kamen bei schnellem Intervall `01`, `09` und die Parameterblöcke nie an die Reihe; in Home Assistant blieben 50 von 70 P-Parametern und die Betriebsstunden unbekannt.
+- **Manuelles Aktualisieren:** Buttons „Parameter jetzt aktualisieren“ und „Messwerte jetzt aktualisieren“. Die Blöcke laufen vor den Routineabfragen, jeder einmal; Mehrfachklicks fügen nichts doppelt hinzu. Der Textsensor „Manuelle Aktualisierung“ zeigt Fortschritt und fehlgeschlagene Blöcke. „HK1 jetzt aktualisieren“ bleibt unverändert.
+- Versionsanzeige im Webinterface und in Home Assistant: „Projektversion“ (aus `esphome.project.version`) und „ESPHome-Version“ mit Build-Zeitpunkt.
+- Neuer Textsensor „Status-Abfrageintervall Grund“: Standard- oder Schnellintervall und der Auslöser (Verdichter, Heizbetrieb, Warmwasser).
+- Nutzerbeobachtung 25.11.2026: Nach Erhöhung des Statusintervalls von 10 auf 15 Sekunden erschienen die Parameter. Wegen der damaligen 10-Sekunden-Begrenzung änderte das den Takt nicht; wahrscheinlich hat das Ende des Schnellintervalls (Heizkreispumpe aus) den Bus entlastet.
+- Tests: ausgelasteter Bus über 300 s, Intervall je Blockklasse, F5 bei 30-s-Intervall, Uhr über den Jahreswechsel, Ablauf und Status der manuellen Aktualisierung.
+
 ## 0.8.2 - 2026-11-25 (lokales Quellpaket)
 
 - Lüfterdiagnose berücksichtigt P59 „Wiederanlauf vor Absenkende“. Meldet die LWZ für die Lüftung den Programmzustand 4 oder 5 (FHEM „restart“), darf die Lüftung schon vor dem Ende der Absenkung laufen. In dieser Phase entsteht kein lokaler F5/F6, weder bei laufendem noch bei stehendem Lüfter.
